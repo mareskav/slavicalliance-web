@@ -1,0 +1,14 @@
+{
+  "name": "slavicalliance",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:site": "npm --workspace apps/site run dev",
+    "build:site": "npm --workspace apps/site run build",
+    "dev:results": "npm --workspace apps/results run dev",
+    "build:results": "npm --workspace apps/results run build"
+  }
+}

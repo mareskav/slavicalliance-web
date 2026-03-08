@@ -1,0 +1,20 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "apps/site/public/uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "posts"
+    label: "Články"
+    folder: "content/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Titulek", name: "title", widget: "string" }
+      - { label: "Datum", name: "date", widget: "datetime" }
+      - { label: "Perex", name: "excerpt", widget: "text", required: false }
+      - { label: "Tagy", name: "tags", widget: "list", required: false }
+      - { label: "Cover obrázek", name: "cover", widget: "image", required: false }
+      - { label: "Obsah", name: "body", widget: "markdown" }

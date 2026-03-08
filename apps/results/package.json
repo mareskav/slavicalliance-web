@@ -1,0 +1,9 @@
+{
+  "name": "@slavicalliance-web/results",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "echo \"TODO: init results app\"",
+    "build": "echo \"TODO: build results app\""
+  }
+}
