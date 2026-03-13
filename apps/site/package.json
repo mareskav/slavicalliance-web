@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@repo/ui": "*",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
     "next": "16.1.6",
