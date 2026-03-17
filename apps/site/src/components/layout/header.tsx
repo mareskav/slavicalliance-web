@@ -17,7 +17,7 @@ function TeamMark() {
       <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(147,197,253,0.35),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_40%)]" />
         <Image
-          src="/slavic_alliance.svg"
+          src="/slavic_alliance-spin.svg"
           alt="Slavic Alliance"
           width={44}
           height={44}
