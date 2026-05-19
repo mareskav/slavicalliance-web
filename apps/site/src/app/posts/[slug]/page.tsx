@@ -21,13 +21,13 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-sans dark:bg-zinc-900">
-      <header className="bg-white dark:bg-zinc-800 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="font-sans">
+      <header>
+        <div className="max-w-4xl px-0 py-8">
           <nav className="mb-4">
             <a
               href="/"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="inline-flex items-center text-sm font-medium text-white/65 hover:text-white"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -40,18 +40,18 @@ export default async function PostPage({ params }: PostPageProps) {
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full"
+                className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/75"
               >
                 {tag}
               </span>
             ))}
           </div>
           
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+          <h1 className="mb-4 text-4xl font-bold text-white">
             {post.title}
           </h1>
           
-          <div className="flex items-center text-zinc-600 dark:text-zinc-400">
+          <div className="flex items-center text-white/55">
             <time dateTime={post.date}>
               {format(new Date(post.date), 'd. MMMM yyyy', { locale: cs })}
             </time>
@@ -59,9 +59,9 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <article className="bg-white dark:bg-zinc-800 rounded-lg p-8 shadow-sm">
-          <div className="prose prose-zinc dark:prose-invert max-w-none">
+      <main className="max-w-4xl py-10">
+        <article>
+          <div className="max-w-none text-lg leading-8 text-white/82">
             {post.content.split('\n').map((paragraph, index) => {
               if (paragraph.trim() === '') return <br key={index} />;
               return (
