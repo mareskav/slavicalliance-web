@@ -3,7 +3,7 @@ import { getLandingPage } from "@/lib/landing";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 
-function renderInlineMarkdown(text: string) {
+const renderInlineMarkdown = (text: string) => {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
@@ -17,7 +17,7 @@ function renderInlineMarkdown(text: string) {
   });
 }
 
-function LandingStory({ content }: { content: string }) {
+const LandingStory = ({ content }: { content: string }) => {
   return (
     <section className="mb-14">
       <div className="max-w-5xl space-y-9 text-white/86">
@@ -63,7 +63,7 @@ function LandingStory({ content }: { content: string }) {
   );
 }
 
-export default function Home() {
+const Home = () => {
   const posts = getAllPosts();
   const landing = getLandingPage();
 
@@ -115,3 +115,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;

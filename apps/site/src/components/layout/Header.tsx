@@ -1,9 +1,9 @@
-import Image from "next/image"
 import Link from "next/link"
 import { BarChart3, CalendarDays, Menu, Trophy } from "lucide-react"
 
 import { Button } from "@repo/ui/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@repo/ui/components/ui/sheet"
+import { TeamMark } from "@/components/layout/TeamMark"
 
 const navItems = [
   { href: "/", label: "Domů", icon: Trophy },
@@ -11,28 +11,7 @@ const navItems = [
   { href: "/statistiky", label: "Statistiky", icon: BarChart3 },
 ]
 
-function TeamMark() {
-  return (
-    <div className="flex items-center gap-3">
-      <Image
-        src="/slavic_alliance.svg"
-        alt="Slavic Alliance"
-        width={58}
-        height={58}
-        className="h-16 w-16 object-contain"
-        priority
-      />
-
-      <div className="min-w-0">
-        <div className="truncate text-lg font-semibold tracking-tight text-white">
-          Slavic Alliance
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function SlavicAllianceHeader() {
+export const SlavicAllianceHeader = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#05070c]/82 backdrop-blur-xl supports-[backdrop-filter]:bg-[#05070c]/72">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-200/20 to-transparent" />
@@ -62,12 +41,12 @@ export default function SlavicAllianceHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button
-            variant="outline"
-            className="rounded-xl border-white/15 bg-white/5 text-white hover:bg-sky-100/10 hover:text-white"
-          >
-            Poslední kvíz
-          </Button>
+          {/*<Button*/}
+          {/*  variant="outline"*/}
+          {/*  className="rounded-xl border-white/15 bg-white/5 text-white hover:bg-sky-100/10 hover:text-white"*/}
+          {/*>*/}
+          {/*  Poslední kvíz*/}
+          {/*</Button>*/}
           <Button className="rounded-xl bg-white text-neutral-950 hover:bg-white/90">
             Profil týmu
           </Button>

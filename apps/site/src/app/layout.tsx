@@ -1,9 +1,17 @@
-import "./globals.css"
-import SlavicAllianceHeader from "@/components/layout/header"
+import type { Metadata } from "next"
 
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{ children: React.ReactNode }>) {
+import "./globals.css"
+import { SlavicAllianceHeader } from "@/components/layout/Header"
+
+export const metadata: Metadata = {
+    icons: {
+        icon: "/icon.png",
+    },
+}
+
+const RootLayout = ({
+                        children,
+                    }: Readonly<{ children: React.ReactNode }>) => {
     return (
         <html lang="cs">
         <body className="min-h-screen bg-[#05070c] text-white antialiased">
@@ -16,3 +24,5 @@ export default function RootLayout({
         </html>
     )
 }
+
+export default RootLayout

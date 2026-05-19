@@ -9,7 +9,7 @@ export interface LandingPage {
   content: string;
 }
 
-export function getLandingPage(): LandingPage {
+export const getLandingPage = (): LandingPage => {
   if (!fs.existsSync(landingPath)) {
     return {
       title: "Historie a úspěchy Slavic Alliance",

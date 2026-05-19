@@ -13,7 +13,7 @@ export interface Post {
   content: string;
 }
 
-export function getAllPosts(): Post[] {
+export const getAllPosts = (): Post[] => {
   try {
     // Zkontrolujeme, jestli adresář existuje
     if (!fs.existsSync(postsDirectory)) {
@@ -38,7 +38,7 @@ export function getAllPosts(): Post[] {
   }
 }
 
-export function getPostBySlug(slug: string): Post | null {
+export const getPostBySlug = (slug: string): Post | null => {
   try {
     const fullPath = path.join(postsDirectory, `${slug}.md`);
 
@@ -64,7 +64,7 @@ export function getPostBySlug(slug: string): Post | null {
   }
 }
 
-export function getAllSlugs(): string[] {
+export const getAllSlugs = (): string[] => {
   try {
     if (!fs.existsSync(postsDirectory)) {
       return [];

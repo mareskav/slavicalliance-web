@@ -7,12 +7,12 @@ interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
+export const generateStaticParams = async () => {
   const slugs = getAllSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
-export default async function PostPage({ params }: PostPageProps) {
+const PostPage = async ({ params }: PostPageProps) => {
   const { slug } = await params;
   const post = getPostBySlug(slug);
 
@@ -76,3 +76,5 @@ export default async function PostPage({ params }: PostPageProps) {
     </div>
   );
 }
+
+export default PostPage;
