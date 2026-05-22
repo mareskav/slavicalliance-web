@@ -20,7 +20,7 @@ const renderInlineMarkdown = (text: string) => {
 const LandingStory = ({ content }: { content: string }) => {
   return (
     <section className="mb-14">
-      <div className="max-w-5xl space-y-9 text-white/86">
+      <div className="mx-auto max-w-4xl space-y-8 text-center text-white/86">
         {content
           .split(/\n\s*\n/)
           .map((block) => block.trim())
@@ -36,7 +36,7 @@ const LandingStory = ({ content }: { content: string }) => {
 
             if (block.startsWith("## ")) {
               return (
-                <h2 key={index} className="text-2xl font-bold text-white">
+                <h2 key={index} className="pt-4 text-2xl font-bold text-white">
                   {renderInlineMarkdown(block.replace(/^##\s+/, ""))}
                 </h2>
               );
@@ -44,7 +44,7 @@ const LandingStory = ({ content }: { content: string }) => {
 
             if (block.startsWith("- ")) {
               return (
-                <ul key={index} className="grid gap-2 text-lg leading-8">
+                <ul key={index} className="mx-auto grid max-w-3xl gap-2 text-left text-lg leading-8">
                   {block.split("\n").map((item) => (
                     <li key={item}>• {renderInlineMarkdown(item.replace(/^-\s+/, ""))}</li>
                   ))}
@@ -53,7 +53,7 @@ const LandingStory = ({ content }: { content: string }) => {
             }
 
             return (
-              <p key={index} className="text-lg leading-8">
+              <p key={index} className="mx-auto max-w-3xl text-lg leading-8">
                 {renderInlineMarkdown(block)}
               </p>
             );
