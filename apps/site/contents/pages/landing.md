@@ -4,7 +4,7 @@ title: "Slavic Alliance"
 
 # Slavic Alliance
 
-**Slavic Alliance** začala jako parta lidí, kterou baví kvízy, hospodská atmosféra a zdravě nezdravá chuť vyhrávat. Tým vznikl **25. srpna 2021**. První Hospodský kvíz jsme odehráli o necelé dva týdny později, **7. září 2021**. Název Slavic Alliance pro nás znamená Slovanskou alianci - tým různých hlav, znalostí a povah, které u stolu táhnou za jeden provaz.
+**Slavic Alliance** začala jako parta lidí, kterou baví kvízy, hospodská atmosféra a zdravě nezdravá chuť vyhrávat. Tým vznikl **25. srpna 2021**. První Hospodský kvíz jsme odehráli o necelé dva týdny později, **7. září 2021**. Název Slavic Alliance pro nás znamená slovanskou alianci - tým různých hlav, znalostí a povah, které u stolu táhnou za jeden provaz.
 
 Od pravidelných hospodských večerů jsme se dostali k medailím v pražských ligách, finálovým pódiím i výsledkům na celorepublikové úrovni.
 
