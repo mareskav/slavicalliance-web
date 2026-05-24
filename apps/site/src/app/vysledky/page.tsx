@@ -5,7 +5,7 @@ import { useEffect } from "react"
 const defaultTeam = "Slavic Alliance"
 
 const getResultsUrl = () => {
-  const baseUrl = process.env.NEXT_PUBLIC_RESULTS_APP_URL ?? "http://localhost:3001/vysledky"
+  const baseUrl = process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() || "http://localhost:3001/vysledky"
   const url = new URL(baseUrl)
 
   if (url.pathname === "/") {
