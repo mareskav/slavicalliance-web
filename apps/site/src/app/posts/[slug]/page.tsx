@@ -1,6 +1,7 @@
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 interface PostPageProps {
@@ -25,7 +26,7 @@ const PostPage = async ({ params }: PostPageProps) => {
       <header>
         <div className="max-w-4xl px-0 py-8">
           <nav className="mb-4">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center text-sm font-medium text-white/65 hover:text-white"
             >
@@ -33,7 +34,7 @@ const PostPage = async ({ params }: PostPageProps) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Zpět na hlavní stránku
-            </a>
+            </Link>
           </nav>
           
           <div className="flex flex-wrap gap-2 mb-4">

@@ -22,15 +22,20 @@ coverage/
 # Env (never commit secrets)
 .env
 .env.local
+.env.development
+.env.production
+.env.test
 .env.*.local
 
 # Allow committing an example env file
 !.env.example
+!.env.*.example
 
 # Vercel / Netlify / Cloudflare (optional, safe)
 .vercel/
 .netlify/
 .wrangler/
+.open-next/
 
 # OS junk
 .DS_Store
