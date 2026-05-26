@@ -75,6 +75,18 @@ const getPool = () => {
   return pool
 }
 
+const getQuizDetailsUrl = (quizDetailsId: string | null) => {
+  if (!quizDetailsId) {
+    return null
+  }
+
+  if (/^https?:\/\//i.test(quizDetailsId)) {
+    return quizDetailsId
+  }
+
+  return `https://www.hospodskykviz.cz/tymy/odehrane-kvizy/${quizDetailsId}`
+}
+
 const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
   const result = await getPool().query<{
     team_name: string
@@ -118,7 +130,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     quiz_date: Date
     pub: string | null
     pub_url: string
-    quiz_details_url: string | null
+    quiz_details_id: string | null
     tip_56_question: string | null
     doplnovacek: number | null
     clenu: number | null
@@ -133,7 +145,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
         quiz_date,
         pub,
         pub_url,
-        quiz_details_url,
+        quiz_details_id,
         tip_56_question,
         doplnovacek,
         clenu,
@@ -153,7 +165,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     quizDate: row.quiz_date.toISOString(),
     pub: row.pub,
     pubUrl: row.pub_url,
-    quizDetailsUrl: row.quiz_details_url,
+    quizDetailsUrl: getQuizDetailsUrl(row.quiz_details_id),
     tip56Question: row.tip_56_question,
     doplnovacek: row.doplnovacek,
     clenu: row.clenu,

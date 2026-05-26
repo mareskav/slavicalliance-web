@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { ArrowUpRight, MapPin, Medal, Trophy } from "lucide-react"
+import { ArrowUpRight, MapPin } from "lucide-react"
 
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
+import { TeamSelect } from "./TeamSelect"
 
 export const dynamic = "force-dynamic"
 
@@ -11,7 +11,14 @@ const dateFormatter = new Intl.DateTimeFormat("cs-CZ", {
   year: "numeric",
 })
 
+const compactDateFormatter = new Intl.DateTimeFormat("cs-CZ", {
+  day: "numeric",
+  month: "numeric",
+  year: "numeric",
+})
+
 const formatDate = (value: string) => dateFormatter.format(new Date(value))
+const formatCompactDate = (value: string) => compactDateFormatter.format(new Date(value)).replace(/\s/g, "")
 
 const formatNumber = (value: number | null) => {
   if (value === null) {
@@ -22,12 +29,61 @@ const formatNumber = (value: number | null) => {
 }
 
 const StatCard = ({ label, value, detail }: { label: string; value: string; detail: string }) => (
-  <div className="rounded-lg border border-white/10 bg-white/4.5 p-5 shadow-2xl shadow-sky-950/10">
-    <p className="text-sm text-white/55">{label}</p>
-    <p className="mt-1 text-3xl font-bold tracking-tight text-white">{value}</p>
-    <p className="mt-2 text-sm text-white/58">{detail}</p>
+  <div className="min-w-0 rounded-lg border border-white/10 bg-white/4.5 px-3 py-3.5 shadow-2xl shadow-sky-950/10 sm:px-4">
+    <p className="text-xs font-medium leading-4 text-white/52">{label}</p>
+    <p className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{value}</p>
+    <p className="mt-1.5 text-xs leading-5 text-white/56">{detail}</p>
   </div>
 )
+
+const placeBadgeClassNames: Record<number, string> = {
+  1: "border-amber-200/55 bg-amber-300/18 text-amber-100 shadow-amber-300/10",
+  2: "border-slate-200/45 bg-slate-200/14 text-slate-100 shadow-slate-200/10",
+  3: "border-orange-300/45 bg-orange-400/14 text-orange-100 shadow-orange-300/10",
+}
+
+const Placement = ({ place }: { place: number | null }) => {
+  if (!place) {
+    return (
+      <>
+        <span className="h-7 w-7" aria-hidden="true" />
+        <span className="text-lg font-semibold text-white">-</span>
+      </>
+    )
+  }
+
+  if (place <= 3) {
+    return (
+      <>
+        <span
+          className={`flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${placeBadgeClassNames[place]}`}
+          aria-label={`${place}. místo`}
+        >
+          {place}
+        </span>
+        <span className="sr-only">{place}. místo</span>
+      </>
+    )
+  }
+
+  if (place === 4) {
+    return (
+      <>
+        <span className="flex h-7 w-7 items-center justify-center text-lg leading-none" aria-hidden="true">
+          🥔
+        </span>
+        <span className="text-lg font-semibold text-white">{place}.</span>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <span className="h-7 w-7" aria-hidden="true" />
+      <span className="text-lg font-semibold text-white">{place}.</span>
+    </>
+  )
+}
 
 const ResultsPage = async ({
   searchParams,
@@ -39,12 +95,7 @@ const ResultsPage = async ({
   const selectedTeam = params?.team && teams.some((team) => team.teamName === params.team) ? params.team : teams[0]?.teamName
   const selectedSummary = teams.find((team) => team.teamName === selectedTeam)
   const results = selectedTeam ? await getTeamResults(selectedTeam) : []
-  const latestResult = results[0]
-  const previousResult = results[1]
-  const pointsDelta =
-    latestResult?.points !== null && latestResult?.points !== undefined && previousResult?.points !== null && previousResult?.points !== undefined
-      ? latestResult.points - previousResult.points
-      : null
+  const totalPoints = results.reduce((sum, result) => sum + (result.points ?? 0), 0)
 
   if (!selectedSummary) {
     return (
@@ -57,51 +108,28 @@ const ResultsPage = async ({
 
   return (
     <div className="space-y-10 font-sans">
-      <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-        <div>
-          <div className="mb-4 flex w-fit items-center gap-2 rounded-full border border-sky-100/15 bg-sky-100/10 px-3 py-1 text-sm font-medium text-sky-100/82">
-            <Trophy className="h-4 w-4" />
-            Výsledky kvízů
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">{selectedSummary.teamName}</h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-white/70">
-            Přehled odehraných kvízů pro jeden tým: body, umístění, místo konání a odkazy na detail kola.
-          </p>
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-8">
+        <div className="order-2 lg:order-1">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-4xl">{selectedSummary.teamName}</h1>
+          {/*<p className="mt-4 max-w-3xl text-lg leading-8 text-white/70">*/}
+          {/*  Přehled odehraných kvízů pro jeden tým: body, umístění, místo konání a odkazy na detail kola.*/}
+          {/*</p>*/}
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-white/4.5 p-4">
-          <p className="mb-3 text-sm font-medium text-white/62">Zobrazit tým</p>
-          <div className="grid gap-2">
-            {teams.map((team) => (
-              <Link
-                key={team.teamName}
-                href={`/vysledky?team=${encodeURIComponent(team.teamName)}`}
-                className={`rounded-lg px-3 py-2 text-sm transition ${
-                  team.teamName === selectedSummary.teamName
-                    ? "bg-sky-100/15 text-white"
-                    : "bg-white/[0.035] text-white/65 hover:bg-white/[0.07] hover:text-white"
-                }`}
-              >
-                <span className="flex items-center justify-between gap-3">
-                  {team.teamName}
-                  <span className="text-white/45">{team.quizCount}x</span>
-                </span>
-              </Link>
-            ))}
-          </div>
+        <div className="order-1 lg:order-2">
+          <TeamSelect teams={teams} selectedTeamName={selectedSummary.teamName} />
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Odehráno" value={`${selectedSummary.quizCount}x`} detail={`${formatDate(selectedSummary.firstDate)} - ${formatDate(selectedSummary.lastDate)}`} />
-        <StatCard label="Průměr bodů" value={formatNumber(selectedSummary.averagePoints)} detail="Průměr ze všech uložených kvízů" />
-        <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} detail={`Nejlepší umístění: ${selectedSummary.bestPlace}. místo`} />
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
-          label="Poslední změna"
-          value={pointsDelta === null ? "-" : `${pointsDelta > 0 ? "+" : ""}${formatNumber(pointsDelta)}`}
-          detail={latestResult ? `Poslední kvíz: ${formatDate(latestResult.quizDate)}` : "Bez posledního výsledku"}
+          label="Odehráno"
+          value={`${selectedSummary.quizCount} kvízů`}
+          detail={`${formatCompactDate(selectedSummary.firstDate)} - ${formatCompactDate(selectedSummary.lastDate)}`}
         />
+        <StatCard label="Průměr bodů" value={formatNumber(selectedSummary.averagePoints)} detail="" />
+        <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} detail={`Nejlepší umístění: ${selectedSummary.bestPlace}. místo`} />
+        <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} detail="" />
       </section>
 
       <section>
@@ -113,20 +141,29 @@ const ResultsPage = async ({
 
           <div className="divide-y divide-white/8">
             {results.map((result) => (
-              <article key={result.id} className="grid gap-3 px-5 py-3.5 md:grid-cols-[132px_minmax(0,1fr)_132px_84px] md:items-center">
-                <div>
-                  <p className="font-semibold text-white">{formatDate(result.quizDate)}</p>
-                  <p className="mt-1 text-sm text-white/48">{result.clenu ? `${result.clenu} členů` : "Počet členů neuveden"}</p>
+              <article key={result.id} className="grid gap-2 px-4 py-2.5 md:grid-cols-[72px_148px_196px_minmax(0,1fr)] md:items-center md:gap-4 md:px-5">
+                <div className="flex items-center gap-2 text-white">
+                  <Placement place={result.orderInQuiz} />
                 </div>
 
-                <div className="min-w-0">
-                  <p className="truncate text-white/84">{result.pub ?? "Místo neuvedeno"}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                <div>
+                  <p className="font-semibold text-white">{formatDate(result.quizDate)}</p>
+                  <p className="text-sm text-white/48">{result.clenu ? `${result.clenu} členů` : "Počet členů neuveden"}</p>
+                </div>
+
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-bold leading-none text-white">{formatNumber(result.points)}</p>
+                  <p className="text-sm text-white/45">bodů{result.maxBodyVKole ? ` / max ${formatNumber(result.maxBodyVKole)}` : null}</p>
+                </div>
+
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <p className="min-w-0 max-w-full truncate font-medium text-white/84 md:flex-1">{result.pub ?? "Místo neuvedeno"}</p>
+                  <div className="flex shrink-0 flex-wrap gap-2">
                     <a
                       href={result.pubUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-full bg-white/5.5 px-2.5 py-1 text-xs text-white/62 hover:bg-white/10 hover:text-white"
+                      className="inline-flex h-7 items-center gap-1 rounded-full bg-white/5.5 px-2.5 text-xs text-white/62 hover:bg-white/10 hover:text-white"
                     >
                       <MapPin className="h-3.5 w-3.5" />
                       Hospoda
@@ -136,24 +173,13 @@ const ResultsPage = async ({
                         href={result.quizDetailsUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 rounded-full bg-sky-100/10 px-2.5 py-1 text-xs text-sky-100/75 hover:bg-sky-100/15 hover:text-white"
+                        className="inline-flex h-7 items-center gap-1 rounded-full bg-sky-100/10 px-2.5 text-xs text-sky-100/75 hover:bg-sky-100/15 hover:text-white"
                       >
                         Detail kola
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </a>
                     ) : null}
                   </div>
-                </div>
-
-                <div>
-                  <p className="text-xs uppercase text-white/42">Body</p>
-                  <p className="mt-0.5 text-2xl font-bold text-white">{formatNumber(result.points)}</p>
-                  {result.maxBodyVKole ? <p className="text-sm text-white/45">max v kole {formatNumber(result.maxBodyVKole)}</p> : null}
-                </div>
-
-                <div className="flex items-center gap-2 text-white">
-                  <Medal className="h-5 w-5 text-amber-100/85" />
-                  <span className="text-lg font-semibold">{result.orderInQuiz ? `${result.orderInQuiz}.` : "-"}</span>
                 </div>
               </article>
             ))}

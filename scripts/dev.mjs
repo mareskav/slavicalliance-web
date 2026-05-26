@@ -5,9 +5,10 @@ const commands = [
   { name: "results", args: ["--workspace", "apps/results", "run", "dev"] },
 ]
 
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm"
+const npmExecPath = process.env.npm_execpath
+const npmCommand = npmExecPath ? process.execPath : process.platform === "win32" ? "npm.cmd" : "npm"
 const children = commands.map((command) => {
-  const child = spawn(npmCommand, command.args, {
+  const child = spawn(npmCommand, npmExecPath ? [npmExecPath, ...command.args] : command.args, {
     stdio: "inherit",
     shell: false,
   })
