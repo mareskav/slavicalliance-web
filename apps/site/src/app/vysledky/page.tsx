@@ -72,12 +72,12 @@ const VysledkyPage = () => {
               Zkusit znovu
             </button>
           ) : null}
-          <a
-            className="inline-flex h-10 items-center rounded-lg border border-white/10 px-4 text-sm font-medium text-sky-100 transition hover:border-sky-200/30 hover:bg-sky-100/10 hover:text-white"
-            href={resultsUrl}
-          >
-            Otevřít výsledky
-          </a>
+          {/*<a*/}
+          {/*  className="inline-flex h-10 items-center rounded-lg border border-white/10 px-4 text-sm font-medium text-sky-100 transition hover:border-sky-200/30 hover:bg-sky-100/10 hover:text-white"*/}
+          {/*  href={resultsUrl}*/}
+          {/*>*/}
+          {/*  Otevřít výsledky*/}
+          {/*</a>*/}
         </div>
       </div>
     </section>
