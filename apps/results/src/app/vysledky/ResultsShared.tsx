@@ -403,6 +403,7 @@ export const Placement = ({ place }: { place: number | null }) => {
         >
           {place}
         </span>
+        <span className="w-6" aria-hidden="true" />
         <span className="sr-only">{place}. místo</span>
       </>
     )

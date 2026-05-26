@@ -13,6 +13,12 @@
     "build:results": "npm --workspace apps/results run build",
     "preview:results": "npm --workspace apps/results run preview",
     "deploy:results": "npm --workspace apps/results run deploy",
-    "upload:results": "npm --workspace apps/results run upload"
+    "upload:results": "npm --workspace apps/results run upload",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3"
   }
 }
