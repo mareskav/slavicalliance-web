@@ -26,6 +26,7 @@ export type QuizResult = {
   doplnovacek: number | null
   clenu: number | null
   maxBodyVKole: number | null
+  specialName: string | null
 }
 
 export type LeagueStandings = {
@@ -155,6 +156,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     doplnovacek: number | null
     clenu: number | null
     max_body_v_kole: number | null
+    league_name: string | null
   }>(
     `
       select
@@ -169,7 +171,8 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
         tip_56_question,
         doplnovacek,
         clenu,
-        max_body_v_kole
+        max_body_v_kole,
+        nullif(trim(league_name), '') as league_name
       from public.quiz_results
       where team_name = $1
       order by quiz_date desc, id desc
@@ -190,6 +193,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     doplnovacek: row.doplnovacek,
     clenu: row.clenu,
     maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
+    specialName: row.league_name,
   }))
 }
 

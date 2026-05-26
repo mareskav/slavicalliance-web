@@ -82,7 +82,7 @@ export const getPaginationHref = (
 }
 
 export const getLeaguePaginationHref = (
-  teamName: string | undefined,
+  _teamName: string | undefined,
   page: number,
   pageSize: number,
   useCuts: boolean,
@@ -94,10 +94,6 @@ export const getLeaguePaginationHref = (
     page: String(page),
     pageSize: String(pageSize),
   })
-
-  if (teamName) {
-    params.set("team", teamName)
-  }
 
   if (!useCuts) {
     params.set("cuts", "0")
@@ -114,7 +110,7 @@ export const getLeaguePaginationHref = (
   return `/vysledky?${params.toString()}`
 }
 
-export const getLeagueCutsHref = (teamName: string | undefined, pageSize: number, sort: LeagueSortKey, direction: SortDirection, useCuts: boolean) => {
+export const getLeagueCutsHref = (_teamName: string | undefined, pageSize: number, sort: LeagueSortKey, direction: SortDirection, useCuts: boolean) => {
   const params = new URLSearchParams({
     view: "league",
     page: "1",
@@ -122,10 +118,6 @@ export const getLeagueCutsHref = (teamName: string | undefined, pageSize: number
     sort,
     dir: direction,
   })
-
-  if (teamName) {
-    params.set("team", teamName)
-  }
 
   if (!useCuts) {
     params.set("cuts", "0")
@@ -141,7 +133,7 @@ export const getViewHref = (view: ResultView, teamName?: string) => {
     params.set("view", view)
   }
 
-  if (teamName) {
+  if (view === "team" && teamName) {
     params.set("team", teamName)
   }
 
@@ -169,7 +161,7 @@ export const getTeamSortHref = (
 }
 
 export const getLeagueSortHref = (
-  teamName: string | undefined,
+  _teamName: string | undefined,
   sort: LeagueSortKey,
   activeSort: LeagueSortKey,
   direction: SortDirection,
@@ -184,10 +176,6 @@ export const getLeagueSortHref = (
     sort,
     dir: getNextSortDirection(activeSort, sort, direction, defaultDirection),
   })
-
-  if (teamName) {
-    params.set("team", teamName)
-  }
 
   if (!useCuts) {
     params.set("cuts", "0")
@@ -328,18 +316,22 @@ const SortIndicator = ({ isActive, direction }: { isActive: boolean; direction: 
 export const SortHeader = ({
   href,
   label,
+  title,
   align = "left",
   isActive,
   direction,
 }: {
   href: string
   label: ReactNode
+  title?: string
   align?: "left" | "right"
   isActive: boolean
   direction: SortDirection
 }) => (
   <Link
     href={href}
+    title={title}
+    aria-label={title}
     className={`inline-flex w-full items-center gap-1.5 transition hover:text-white ${align === "right" ? "justify-end" : "justify-start"}`}
   >
     <span>{label}</span>

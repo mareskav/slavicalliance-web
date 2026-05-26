@@ -1,9 +1,13 @@
+import { redirect } from "next/navigation"
+
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
 import { getLeagueCuts, getLeagueSortKey, getSortDirection, getTeamSortKey, type ResultView } from "./ResultsShared"
 import { TeamResultsPage } from "./TeamResultsPage"
 
 export const dynamic = "force-dynamic"
+
+const defaultTeamName = "Slavic Alliance"
 
 const ResultsPage = async ({
   searchParams,
@@ -12,8 +16,35 @@ const ResultsPage = async ({
 }) => {
   const params = await searchParams
   const teams = await getTeamSummaries()
-  const selectedTeam = params?.team && teams.some((team) => team.teamName === params.team) ? params.team : teams[0]?.teamName
+  const fallbackTeam = teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
+  const selectedTeam = params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
   const activeView: ResultView = params?.view === "league" ? "league" : "team"
+
+  if (activeView === "league" && params?.team) {
+    const canonicalParams = new URLSearchParams({ view: "league" })
+
+    if (params.page) {
+      canonicalParams.set("page", params.page)
+    }
+
+    if (params.pageSize) {
+      canonicalParams.set("pageSize", params.pageSize)
+    }
+
+    if (params.sort) {
+      canonicalParams.set("sort", params.sort)
+    }
+
+    if (params.dir) {
+      canonicalParams.set("dir", params.dir)
+    }
+
+    if (params.cuts) {
+      canonicalParams.set("cuts", params.cuts)
+    }
+
+    redirect(`/vysledky?${canonicalParams.toString()}`)
+  }
 
   if (activeView === "league") {
     return (

@@ -120,11 +120,11 @@ export const TeamResultsPage = ({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm md:min-w-[1180px] md:text-base">
+            <table className="w-full min-w-[730px] table-fixed text-left text-sm md:min-w-[1120px] md:text-base xl:min-w-full">
               <thead className="border-b border-white/10 text-xs uppercase text-white/45">
                 <tr>
                   <th
-                    className="w-16 px-1.5 py-3 font-semibold sm:px-2 md:w-20 md:px-3"
+                    className="w-[72px] px-1.5 py-3 font-semibold sm:px-2 md:w-[72px] md:px-2"
                     aria-sort={sort === "place" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
@@ -140,7 +140,7 @@ export const TeamResultsPage = ({
                     />
                   </th>
                   <th
-                    className="w-20 px-1.5 py-3 font-semibold sm:px-2 md:w-44 md:px-4"
+                    className="w-20 px-1 py-3 font-semibold sm:px-1.5 md:w-36 md:px-4"
                     aria-sort={sort === "date" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
@@ -151,7 +151,7 @@ export const TeamResultsPage = ({
                     />
                   </th>
                   <th
-                    className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-24 md:px-4"
+                    className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-20 md:px-3"
                     aria-sort={sort === "points" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
@@ -163,31 +163,33 @@ export const TeamResultsPage = ({
                     />
                   </th>
                   <th
-                    className="w-12 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-16 md:px-2"
+                    className="w-12 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-14 md:px-2"
                     aria-sort={sort === "doplnovacek" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
                       href={getTeamSortHref(selectedSummary.teamName, "doplnovacek", sort, direction, pageSize, "desc")}
                       label="Dopl."
+                      title="Doplňovačky"
                       align="right"
                       isActive={sort === "doplnovacek"}
                       direction={direction}
                     />
                   </th>
                   <th
-                    className="w-12 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-16 md:px-2"
+                    className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-16 md:px-2"
                     aria-sort={sort === "tip56" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
                       href={getTeamSortHref(selectedSummary.teamName, "tip56", sort, direction, pageSize, "asc")}
                       label="56. otázka"
+                      title="56. otázka"
                       align="right"
                       isActive={sort === "tip56"}
                       direction={direction}
                     />
                   </th>
                   <th
-                    className="w-[384px] px-1.5 py-3 font-semibold sm:px-2 md:w-[620px] md:px-4"
+                    className="w-[230px] px-1.5 py-3 font-semibold sm:w-[260px] sm:px-2 md:w-auto md:px-3"
                     aria-sort={sort === "pub" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
@@ -198,19 +200,20 @@ export const TeamResultsPage = ({
                     />
                   </th>
                   <th
-                    className="w-14 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-[72px] md:px-3"
+                    className="w-14 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-16 md:px-2"
                     aria-sort={sort === "maxPoints" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
                       href={getTeamSortHref(selectedSummary.teamName, "maxPoints", sort, direction, pageSize, "desc")}
-                      label="Max"
+                      label="MAX"
+                      title="MAX bodů v kole"
                       align="right"
                       isActive={sort === "maxPoints"}
                       direction={direction}
                     />
                   </th>
                   <th
-                    className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-20 md:px-3"
+                    className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-[72px] md:px-2"
                     aria-sort={sort === "members" ? (direction === "asc" ? "ascending" : "descending") : undefined}
                   >
                     <SortHeader
@@ -221,23 +224,24 @@ export const TeamResultsPage = ({
                       direction={direction}
                     />
                   </th>
+                  <th className="w-24 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-32 md:px-3">Speciály</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/8">
                 {paginatedResults.map((result) => (
                   <tr key={result.id} className="transition hover:bg-white/4">
-                    <td className="px-1.5 py-2.5 sm:px-2 md:px-3 md:py-3">
+                    <td className="px-1.5 py-2.5 sm:px-2 md:px-2 md:py-3">
                       <div className="flex items-center gap-2 text-white">
                         <Placement place={result.orderInQuiz} />
                       </div>
                     </td>
-                    <td className="px-1.5 py-2.5 sm:px-2 md:px-5 md:py-3">
+                    <td className="px-1 py-2.5 sm:px-1.5 md:px-4 md:py-3">
                       <p className="whitespace-nowrap font-semibold leading-5 text-white">
                         <span className="md:hidden">{formatCompactDate(result.quizDate)}</span>
                         <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
                       </p>
                     </td>
-                    <td className="px-1.5 py-2.5 text-right sm:px-2 md:px-4 md:py-3">
+                    <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-3 md:py-3">
                       <span className="text-base font-bold text-white md:text-lg">{formatNumber(result.points)}</span>
                     </td>
                     <td className="px-1 py-2.5 text-right font-semibold text-white/76 sm:px-1.5 md:px-2 md:py-3">{formatNumber(result.doplnovacek)}</td>
@@ -246,10 +250,10 @@ export const TeamResultsPage = ({
                         <Star className="ml-auto h-6 w-6 fill-amber-200 text-amber-200" aria-label="Zodpovězená 56. otázka" />
                       ) : null}
                     </td>
-                    <td className="px-1.5 py-2.5 sm:px-2 md:px-4 md:py-3">
-                      <div className="flex min-w-0 flex-col items-start gap-2 md:grid md:grid-cols-[minmax(0,1fr)_206px] md:items-center md:gap-3">
-                        <p className="min-w-0 whitespace-normal font-medium leading-5 text-white/84 md:whitespace-nowrap">{result.pub ?? "Místo neuvedeno"}</p>
-                        <div className="grid shrink-0 grid-cols-[88px_110px] gap-2">
+                    <td className="min-w-0 px-1.5 py-2.5 sm:px-2 md:px-3 md:py-3">
+                      <div className="flex min-w-0 flex-col items-start gap-2 md:grid md:grid-cols-[minmax(0,1fr)_190px] md:items-center md:gap-2">
+                        <p className="min-w-0 whitespace-normal font-medium leading-5 text-white/84 md:truncate">{result.pub ?? "Místo neuvedeno"}</p>
+                        <div className="grid shrink-0 grid-cols-[82px_102px] gap-1.5">
                           <a
                             href={result.pubUrl}
                             target="_blank"
@@ -275,8 +279,11 @@ export const TeamResultsPage = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-3 md:py-3">{formatNumber(result.maxBodyVKole)}</td>
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-3 md:py-3">{result.clenu ?? "-"}</td>
+                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">{formatNumber(result.maxBodyVKole)}</td>
+                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">{result.clenu ?? "-"}</td>
+                    <td className="px-1.5 py-2.5 text-right text-[10px] font-semibold leading-4 text-white/56 sm:px-2 md:px-3 md:py-3 md:text-xs">
+                      {result.specialName}
+                    </td>
                   </tr>
                 ))}
               </tbody>

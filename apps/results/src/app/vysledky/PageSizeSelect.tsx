@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Loader2 } from "lucide-react"
 import { useTransition } from "react"
 
@@ -11,6 +11,7 @@ type PageSizeSelectProps = {
 
 export const PageSizeSelect = ({ pageSize, options }: PageSizeSelectProps) => {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
@@ -27,7 +28,7 @@ export const PageSizeSelect = ({ pageSize, options }: PageSizeSelectProps) => {
             params.set("pageSize", event.target.value)
 
             startTransition(() => {
-              router.push(`/vysledky?${params.toString()}`)
+              router.push(`${pathname}?${params.toString()}`)
             })
           }}
           className="h-9 appearance-none rounded-lg border border-white/10 bg-slate-950/55 px-3 pr-9 text-sm font-semibold text-white outline-none transition hover:border-sky-200/25 focus:border-sky-200/45 focus:ring-3 focus:ring-sky-200/15 disabled:cursor-wait disabled:opacity-70"

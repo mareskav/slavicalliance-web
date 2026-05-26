@@ -8,7 +8,8 @@ const defaultTeam = "Slavic Alliance"
 const resultsHealthCheckTimeoutMs = 4000
 
 const getResultsUrl = () => {
-  const baseUrl = process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() || "http://localhost:3001/vysledky"
+  const baseUrl =
+    process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() || "http://localhost:3001/vysledky"
   const url = new URL(baseUrl)
 
   if (url.pathname === "/") {
@@ -34,7 +35,7 @@ const VysledkyPage = () => {
       await fetch(resultsUrl, {
         cache: "no-store",
         mode: "no-cors",
-        signal: controller.signal,
+        signal: controller.signal
       })
       window.location.replace(resultsUrl)
     } catch {
@@ -56,11 +57,6 @@ const VysledkyPage = () => {
         <h1 className="mt-8 text-2xl font-semibold tracking-normal">
           {isUnavailable ? "Výsledky nejsou dostupné" : "Načítáme výsledky"}
         </h1>
-        <p className="mt-3 max-w-xs text-sm leading-6 text-white/62">
-          {isUnavailable
-            ? "Samostatná aplikace s výsledky teď neodpovídá. Lokálně zkontrolujte, že běží na portu 3001."
-            : "Přesměrováváme vás do tabulky výsledků kvízů."}
-        </p>
 
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           {isUnavailable ? (
