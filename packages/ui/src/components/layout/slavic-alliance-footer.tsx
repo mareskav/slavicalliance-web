@@ -19,7 +19,7 @@ export const SlavicAllianceFooter = ({
 }: SlavicAllianceFooterProps) => {
   const navItems = [
     { href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
-    { href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays },
+    // { href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays },
     { href: resultsHref, label: "Výsledky", icon: BarChart3 }
   ]
 
