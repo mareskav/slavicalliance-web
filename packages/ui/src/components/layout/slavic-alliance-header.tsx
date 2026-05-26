@@ -1,6 +1,6 @@
 import { BarChart3, CalendarDays, Trophy, type LucideIcon } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
 import { TeamMark } from "./team-mark"
 
