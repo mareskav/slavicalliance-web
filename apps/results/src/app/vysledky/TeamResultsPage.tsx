@@ -247,7 +247,7 @@ export const TeamResultsPage = ({
                     <td className="px-1 py-2.5 text-right font-semibold text-white/76 sm:px-1.5 md:px-2 md:py-3">{formatNumber(result.doplnovacek)}</td>
                     <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-2 md:py-3">
                       {hasTip56Question(result.tip56Question) ? (
-                        <Star className="ml-auto h-6 w-6 fill-amber-200 text-amber-200" aria-label="Zodpovězená 56. otázka" />
+                        <Star className="ml-auto h-4 w-4 fill-amber-200 text-amber-200 md:h-5 md:w-5" aria-label="Zodpovězená 56. otázka" />
                       ) : null}
                     </td>
                     <td className="min-w-0 px-1.5 py-2.5 sm:px-2 md:px-3 md:py-3">
