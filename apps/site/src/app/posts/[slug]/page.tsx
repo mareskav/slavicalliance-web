@@ -1,4 +1,5 @@
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
+import type { Metadata } from 'next';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import Link from 'next/link';
@@ -11,6 +12,36 @@ interface PostPageProps {
 export const generateStaticParams = async () => {
   const slugs = getAllSlugs();
   return slugs.map((slug) => ({ slug }));
+}
+
+export const generateMetadata = async ({ params }: PostPageProps): Promise<Metadata> => {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
+
+  if (!post) {
+    return {
+      title: "Článek nenalezen",
+      robots: {
+        index: false,
+      },
+    };
+  }
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    alternates: {
+      canonical: `/posts/${post.slug}`,
+    },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description: post.excerpt,
+      url: `/posts/${post.slug}`,
+      publishedTime: post.date,
+      tags: post.tags,
+    },
+  };
 }
 
 const PostPage = async ({ params }: PostPageProps) => {

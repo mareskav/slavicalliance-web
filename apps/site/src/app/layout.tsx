@@ -3,7 +3,50 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { AppChrome } from "@/components/layout/AppChrome"
 
+const siteUrl = "https://slavicalliance.cz"
+const siteDescription =
+    "Slavic Alliance je kvízový tým s úspěchy v pražských ligách, finále Hospodského kvízu i celostátních soutěžích."
+
 export const metadata: Metadata = {
+    metadataBase: new URL(siteUrl),
+    title: {
+        default: "Slavic Alliance",
+        template: "%s | Slavic Alliance",
+    },
+    description: siteDescription,
+    alternates: {
+        canonical: "/",
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+        },
+    },
+    openGraph: {
+        type: "website",
+        locale: "cs_CZ",
+        url: siteUrl,
+        siteName: "Slavic Alliance",
+        title: "Slavic Alliance",
+        description: siteDescription,
+        images: [
+            {
+                url: "/icon.png",
+                width: 1024,
+                height: 1024,
+                alt: "Slavic Alliance",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary",
+        title: "Slavic Alliance",
+        description: siteDescription,
+        images: ["/icon.png"],
+    },
     icons: {
         icon: "/icon.png",
     },
