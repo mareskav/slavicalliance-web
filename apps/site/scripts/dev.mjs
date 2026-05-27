@@ -185,6 +185,8 @@ const wrangler = spawnChild(
     "--ip",
     publicHost,
     "--compatibility-date=2026-05-26",
+    "--r2",
+    "CONTENT_BUCKET",
     ...wranglerEnvArgs,
   ]),
   { stdio: ["inherit", "pipe", "pipe"] }

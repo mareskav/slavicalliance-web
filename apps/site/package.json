@@ -6,7 +6,7 @@
     "dev": "node scripts/dev.mjs",
     "dev:next": "next dev",
     "build": "next build",
-    "preview": "npm run build && wrangler pages dev out --compatibility-date=2026-05-26",
+    "preview": "npm run build && wrangler pages dev out --compatibility-date=2026-05-26 --r2 CONTENT_BUCKET",
     "deploy": "npm run build && wrangler pages deploy out --project-name=slavicalliance-web",
     "start": "next start",
     "lint": "eslint"

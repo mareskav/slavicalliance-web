@@ -145,7 +145,7 @@ const AdminEditor = () => {
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/12 pb-4">
           <div>
-            <h1 className="text-xl font-semibold">Landing page</h1>
+            <h1 className="text-xl font-semibold">Domácí stránka</h1>
             <p className="mt-1 text-sm text-white/58">contents/pages/landing.md</p>
           </div>
           <div className="flex items-center gap-2">
@@ -153,14 +153,14 @@ const AdminEditor = () => {
               onClick={handleLogout}
               className="h-10 rounded-md border border-white/14 px-4 text-sm text-white/76 hover:bg-white/8"
             >
-              Odhlasit
+              Odhlásit
             </button>
             <button
               onClick={handleSave}
               disabled={saveState === "saving"}
               className="h-10 rounded-md bg-sky-200 px-5 text-sm font-semibold text-slate-950 hover:bg-white disabled:cursor-wait disabled:opacity-70"
             >
-              {saveState === "saving" ? "Ukladam..." : "Ulozit"}
+              {saveState === "saving" ? "Ukládám..." : "Uložit"}
             </button>
           </div>
         </div>
@@ -172,7 +172,7 @@ const AdminEditor = () => {
         ) : null}
         {saveState === "saved" ? (
           <p className="mt-4 rounded-md border border-emerald-300/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-            Ulozeno do Cloudflare R2.
+            Soubor uložen a aktualizován.
           </p>
         ) : null}
 

@@ -214,10 +214,10 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
           (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
           quiz_date,
           id,
-          floor((quiz_date - $1::date)::numeric / 7)::int as league_week,
-          case when nullif(trim(league_name), '') is null then 0 else 1 end as is_special
+          floor((quiz_date - $1::date)::numeric / 7)::int as league_week
         from public.quiz_results
         where quiz_date between $1 and $2
+          and nullif(trim(league_name), '') is null
       ),
       picked_results as (
         select distinct on (team_name, league_week)
@@ -227,7 +227,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
           id,
           league_week + 1 as league_round
         from results_in_league
-        order by team_name, league_week, is_special desc, quiz_date desc, id desc
+        order by team_name, league_week, quiz_date desc, id desc
       ),
       team_totals as (
         select
