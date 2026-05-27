@@ -120,7 +120,7 @@ export const TeamResultsPage = ({
         <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} />
       </section>
 
-      <TestDataWarning />
+      {/*<TestDataWarning />*/}
 
       <section>
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/4">

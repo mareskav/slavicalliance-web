@@ -143,7 +143,7 @@ export const LeagueStandingsPage = async ({
         <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} />
       </section>
 
-      <TestDataWarning />
+      {/*<TestDataWarning />*/}
 
       <section>
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/4">
