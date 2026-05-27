@@ -15,9 +15,10 @@ import {
   getLeagueSortHref,
   getLeagueTeamsWithPlacements,
   getVisiblePages,
-  leagueDroppedRounds,
+  leagueCutOptions,
   pageSizeOptions,
   parsePositiveInt,
+  type LeagueCutCount,
   type LeagueSortKey,
   Placement,
   type SortDirection,
@@ -34,7 +35,7 @@ export const LeagueStandingsPage = async ({
   pageSize: requestedPageSizeValue,
   sort,
   direction,
-  useCuts,
+  cutCount,
   selectedRound
 }: {
   teamName?: string
@@ -42,7 +43,7 @@ export const LeagueStandingsPage = async ({
   pageSize?: string
   sort: LeagueSortKey
   direction: SortDirection
-  useCuts: boolean
+  cutCount: LeagueCutCount
   selectedRound?: string
 }) => {
   let standings
@@ -69,9 +70,10 @@ export const LeagueStandingsPage = async ({
   }
 
   const selectedRoundCount = getLeagueSelectedRoundCount(selectedRound, standings.playedRounds)
+  const useCuts = cutCount > 0
   const teamsWithPlacements = getLeagueTeamsWithPlacements(
     standings.teams,
-    useCuts,
+    cutCount,
     selectedRoundCount
   )
   const sortedTeams = sortLeagueTeams(teamsWithPlacements, sort, direction)
@@ -171,36 +173,38 @@ export const LeagueStandingsPage = async ({
                 <div>
                   <p className="text-sm font-semibold text-white">Škrtání výsledků</p>
                   <p className="mt-1 text-sm text-white/56">
-                    Škrtají se {leagueDroppedRounds} nejhorší výsledky
+                    {useCuts
+                      ? `Škrtá se ${cutCount === 1 ? "1 nejhorší výsledek" : "2 nejhorší výsledky"}`
+                      : "Počítají se všechny výsledky"}
                   </p>
                 </div>
-                <Link
-                  href={getLeagueCutsHref(
-                    teamName,
-                    pageSize,
-                    sort,
-                    direction,
-                    !useCuts,
-                    selectedRoundCount
-                  )}
-                  role="switch"
-                  aria-checked={useCuts}
-                  className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
-                    useCuts
-                      ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20 hover:bg-sky-100/18"
-                      : "bg-white/5 text-white/62 ring-1 ring-white/10 hover:bg-white/8 hover:text-white"
-                  }`}
+                <div
+                  className="inline-flex h-10 shrink-0 rounded-lg border border-white/10 bg-white/5 p-1"
+                  aria-label="Počet škrtaných výsledků"
                 >
-                  <span
-                    className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${useCuts ? "bg-sky-300/55" : "bg-white/18"}`}
-                    aria-hidden="true"
-                  >
-                    <span
-                      className={`h-4 w-4 rounded-full bg-white transition ${useCuts ? "translate-x-4" : "translate-x-0"}`}
-                    />
-                  </span>
-                  {useCuts ? "Zapnuto" : "Vypnuto"}
-                </Link>
+                  {leagueCutOptions.map((option) => (
+                    <Link
+                      key={option}
+                      href={getLeagueCutsHref(
+                        teamName,
+                        pageSize,
+                        sort,
+                        direction,
+                        option,
+                        selectedRoundCount
+                      )}
+                      scroll={false}
+                      aria-current={option === cutCount ? "true" : undefined}
+                      className={`inline-flex min-w-9 items-center justify-center rounded-md px-2 text-sm font-semibold transition ${
+                        option === cutCount
+                          ? "bg-sky-300/28 text-white shadow-sm shadow-sky-950/30 ring-1 ring-sky-100/38"
+                          : "text-white/58 hover:bg-white/7 hover:text-white"
+                      }`}
+                    >
+                      {option === 0 ? "Vyp." : option}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -228,7 +232,7 @@ export const LeagueStandingsPage = async ({
                         sort,
                         direction,
                         pageSize,
-                        useCuts,
+                        cutCount,
                         selectedRoundCount,
                         "asc"
                       )}
@@ -254,7 +258,7 @@ export const LeagueStandingsPage = async ({
                         sort,
                         direction,
                         pageSize,
-                        useCuts,
+                        cutCount,
                         selectedRoundCount,
                         "asc"
                       )}
@@ -280,7 +284,7 @@ export const LeagueStandingsPage = async ({
                         sort,
                         direction,
                         pageSize,
-                        useCuts,
+                        cutCount,
                         selectedRoundCount,
                         "desc"
                       )}
@@ -324,7 +328,7 @@ export const LeagueStandingsPage = async ({
                         sort,
                         direction,
                         pageSize,
-                        useCuts,
+                        cutCount,
                         selectedRoundCount,
                         "desc"
                       )}
@@ -393,7 +397,7 @@ export const LeagueStandingsPage = async ({
                     teamName,
                     Math.max(1, currentPage - 1),
                     pageSize,
-                    useCuts,
+                    cutCount,
                     selectedRoundCount,
                     sort,
                     direction
@@ -415,7 +419,7 @@ export const LeagueStandingsPage = async ({
                       teamName,
                       page,
                       pageSize,
-                      useCuts,
+                      cutCount,
                       selectedRoundCount,
                       sort,
                       direction
@@ -436,7 +440,7 @@ export const LeagueStandingsPage = async ({
                     teamName,
                     Math.min(totalPages, currentPage + 1),
                     pageSize,
-                    useCuts,
+                    cutCount,
                     selectedRoundCount,
                     sort,
                     direction

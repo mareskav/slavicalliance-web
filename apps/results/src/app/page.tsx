@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
 import {
-  getLeagueCuts,
+  getLeagueCutCount,
   getLeagueSortKey,
   getSortDirection,
   getTeamSortKey,
@@ -84,7 +84,7 @@ const ResultsPage = async ({
         pageSize={params?.pageSize}
         sort={getLeagueSortKey(params?.sort)}
         direction={getSortDirection(params?.dir, "desc")}
-        useCuts={getLeagueCuts(params?.cuts)}
+        cutCount={getLeagueCutCount(params?.cuts)}
         selectedRound={params?.rounds}
       />
     )

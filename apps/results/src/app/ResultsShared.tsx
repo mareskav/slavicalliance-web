@@ -5,7 +5,9 @@ import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Trophy, Users } from "l
 import type { LeagueStandingTeam, QuizResult } from "@/lib/quiz-results"
 
 export const pageSizeOptions = [20, 50, 100]
-export const leagueDroppedRounds = 2
+export const leagueCutOptions = [0, 1, 2] as const
+export const defaultLeagueCutCount = 2
+export type LeagueCutCount = (typeof leagueCutOptions)[number]
 
 export type ResultView = "team" | "league"
 export type SortDirection = "asc" | "desc"
@@ -98,7 +100,7 @@ export const getLeaguePaginationHref = (
   _teamName: string | undefined,
   page: number,
   pageSize: number,
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number,
   sort?: LeagueSortKey,
   direction?: SortDirection
@@ -109,8 +111,8 @@ export const getLeaguePaginationHref = (
     pageSize: String(pageSize)
   })
 
-  if (!useCuts) {
-    params.set("cuts", "0")
+  if (cutCount !== defaultLeagueCutCount) {
+    params.set("cuts", String(cutCount))
   }
 
   params.set("rounds", String(selectedRoundCount))
@@ -131,7 +133,7 @@ export const getLeagueCutsHref = (
   pageSize: number,
   sort: LeagueSortKey,
   direction: SortDirection,
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number
 ) => {
   const params = new URLSearchParams({
@@ -142,8 +144,8 @@ export const getLeagueCutsHref = (
     dir: direction
   })
 
-  if (!useCuts) {
-    params.set("cuts", "0")
+  if (cutCount !== defaultLeagueCutCount) {
+    params.set("cuts", String(cutCount))
   }
 
   params.set("rounds", String(selectedRoundCount))
@@ -191,7 +193,7 @@ export const getLeagueSortHref = (
   activeSort: LeagueSortKey,
   direction: SortDirection,
   pageSize: number,
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number,
   defaultDirection: SortDirection
 ) => {
@@ -203,8 +205,8 @@ export const getLeagueSortHref = (
     dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
 
-  if (!useCuts) {
-    params.set("cuts", "0")
+  if (cutCount !== defaultLeagueCutCount) {
+    params.set("cuts", String(cutCount))
   }
 
   params.set("rounds", String(selectedRoundCount))
@@ -242,7 +244,13 @@ export const getLeagueSortKey = (value: string | undefined): LeagueSortKey => {
   return value === "placement" || value === "team" || value === "rounds" ? value : "points"
 }
 
-export const getLeagueCuts = (value: string | undefined) => value !== "0"
+export const getLeagueCutCount = (value: string | undefined): LeagueCutCount => {
+  const parsed = Number(value)
+
+  return leagueCutOptions.includes(parsed as LeagueCutCount)
+    ? (parsed as LeagueCutCount)
+    : defaultLeagueCutCount
+}
 
 export const getLeagueSelectedRoundCount = (value: string | undefined, playedRounds: number) => {
   const parsed = Number(value)
@@ -308,10 +316,10 @@ export const sortTeamResults = (
 
 const getDroppedPoints = (
   team: LeagueStandingTeam,
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number
 ) => {
-  if (!useCuts) {
+  if (cutCount === 0) {
     return []
   }
 
@@ -319,7 +327,7 @@ const getDroppedPoints = (
     .filter((result) => result.round <= selectedRoundCount)
     .map((result) => result.points)
     .sort((a, b) => a - b)
-    .slice(0, leagueDroppedRounds)
+    .slice(0, cutCount)
 }
 
 const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
@@ -328,14 +336,14 @@ const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: 
 
 const getLeaguePoints = (
   team: LeagueStandingTeam,
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number
 ) => {
   const selectedTotal = getSelectedLeagueResults(team, selectedRoundCount).reduce(
     (total, result) => total + result.points,
     0
   )
-  const droppedTotal = getDroppedPoints(team, useCuts, selectedRoundCount).reduce(
+  const droppedTotal = getDroppedPoints(team, cutCount, selectedRoundCount).reduce(
     (total, points) => total + points,
     0
   )
@@ -345,13 +353,13 @@ const getLeaguePoints = (
 
 export const getLeagueTeamsWithPlacements = (
   teams: LeagueStandingTeam[],
-  useCuts: boolean,
+  cutCount: LeagueCutCount,
   selectedRoundCount: number
 ): LeagueStandingDisplayTeam[] => {
   const teamsByPoints = [...teams].sort((a, b) => {
     const compared =
-      getLeaguePoints(b, useCuts, selectedRoundCount) -
-      getLeaguePoints(a, useCuts, selectedRoundCount)
+      getLeaguePoints(b, cutCount, selectedRoundCount) -
+      getLeaguePoints(a, cutCount, selectedRoundCount)
 
     if (compared !== 0) {
       return compared
@@ -365,7 +373,7 @@ export const getLeagueTeamsWithPlacements = (
   let previousPlacement = 0
 
   teamsByPoints.forEach((team, index) => {
-    const points = getLeaguePoints(team, useCuts, selectedRoundCount)
+    const points = getLeaguePoints(team, cutCount, selectedRoundCount)
     const placement = previousPoints === points ? previousPlacement : index + 1
 
     placements.set(team.teamName, placement)
@@ -380,11 +388,11 @@ export const getLeagueTeamsWithPlacements = (
     return {
       ...team,
       placement: placements.get(team.teamName) ?? 0,
-      displayPoints: getLeaguePoints(team, useCuts, selectedRoundCount),
+      displayPoints: getLeaguePoints(team, cutCount, selectedRoundCount),
       displayQuizCount: selectedResults.length,
       displayLastQuizPoints: lastSelectedResult?.points ?? null,
       displayLastQuizDate: lastSelectedResult?.date ?? null,
-      droppedPoints: getDroppedPoints(team, useCuts, selectedRoundCount)
+      droppedPoints: getDroppedPoints(team, cutCount, selectedRoundCount)
     }
   })
 }

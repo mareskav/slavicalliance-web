@@ -1,5 +1,5 @@
 import { LeagueStandingsPage } from "../LeagueStandingsPage"
-import { getLeagueCuts, getLeagueSortKey, getSortDirection } from "../ResultsShared"
+import { getLeagueCutCount, getLeagueSortKey, getSortDirection } from "../ResultsShared"
 
 export const dynamic = "force-dynamic"
 
@@ -25,7 +25,7 @@ const LeaguePage = async ({
       pageSize={params?.pageSize}
       sort={getLeagueSortKey(params?.sort)}
       direction={getSortDirection(params?.dir, "desc")}
-      useCuts={getLeagueCuts(params?.cuts)}
+      cutCount={getLeagueCutCount(params?.cuts)}
       selectedRound={params?.rounds}
     />
   )
