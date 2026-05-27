@@ -17,6 +17,7 @@ import {
   SortHeader,
   sortTeamResults,
   StatCard,
+  TestDataWarning,
   type TeamSortKey,
   ViewSwitch,
 } from "./ResultsShared"
@@ -108,6 +109,8 @@ export const TeamResultsPage = ({
         <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} detail={`Nejlepší umístění: ${selectedSummary.bestPlace}. místo`} />
         <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} detail="" />
       </section>
+
+      <TestDataWarning />
 
       <section>
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/4">

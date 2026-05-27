@@ -1,5 +1,3 @@
-import fs from "node:fs"
-import path from "node:path"
 import { unstable_cache } from "next/cache"
 import { Pool } from "pg"
 
@@ -34,6 +32,7 @@ export type LeagueStandings = {
   periodStart: string
   periodStop: string
   totalRounds: number
+  totalPubs: number
   leagueUrl: string | null
   teams: LeagueStandingTeam[]
 }
@@ -51,38 +50,10 @@ let pool: Pool | null = null
 const quizResultsCacheSeconds = 300
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
-
-const readEnvFileValue = (filePath: string, key: string) => {
-  if (!fs.existsSync(filePath)) {
-    return undefined
-  }
-
-  const content = fs.readFileSync(filePath, "utf8")
-  const line = content
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .find((item) => item.startsWith(`${key}=`))
-
-  if (!line) {
-    return undefined
-  }
-
-  const value = line.slice(key.length + 1).trim()
-  return value.replace(/^["']|["']$/g, "")
-}
+const longTermLeagueCountedResults = 14
 
 const getDatabaseUrl = () => {
-  const directUrl = process.env.DATABASE_URL
-
-  if (directUrl) {
-    return directUrl
-  }
-
-  return (
-    readEnvFileValue(path.join(process.cwd(), ".env.local"), "DATABASE_URL") ??
-    readEnvFileValue(path.join(process.cwd(), "../../.env.local"), "DATABASE_URL") ??
-    readEnvFileValue(path.join(process.cwd(), "../site/.env.local"), "DATABASE_URL")
-  )
+  return process.env.DATABASE_URL?.trim()
 }
 
 const getPool = () => {
@@ -92,7 +63,13 @@ const getPool = () => {
     throw new Error("DATABASE_URL is missing for results app.")
   }
 
-  pool ??= new Pool({ connectionString })
+  pool ??= new Pool({
+    connectionString,
+    connectionTimeoutMillis: 3000,
+    idleTimeoutMillis: 30000,
+    query_timeout: 10000,
+    statement_timeout: 10000,
+  })
   return pool
 }
 
@@ -238,25 +215,38 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
           team_name,
           (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
           quiz_date,
-          id
+          id,
+          floor((quiz_date - $1::date)::numeric / 7)::int as league_week,
+          case when nullif(trim(league_name), '') is null then 0 else 1 end as is_special
         from public.quiz_results
         where quiz_date between $1 and $2
-          and nullif(trim(league_name), '') is null
+      ),
+      picked_results as (
+        select distinct on (team_name, league_week)
+          team_name,
+          league_points,
+          quiz_date,
+          id
+        from results_in_league
+        order by team_name, league_week, is_special desc, quiz_date desc, id desc
       ),
       ranked_results as (
         select
           team_name,
           league_points,
-          row_number() over (partition by team_name order by league_points, quiz_date, id) as worst_result_rank
-        from results_in_league
+          quiz_date,
+          id,
+          row_number() over (partition by team_name order by league_points, quiz_date, id) as worst_result_rank,
+          greatest(count(*) over (partition by team_name) - $3::int, 0) as dropped_result_count
+        from picked_results
       ),
       team_totals as (
         select
           team_name,
           coalesce(sum(league_points), 0)::float8 as total_points,
-          coalesce(sum(league_points) filter (where worst_result_rank > 2), 0)::float8 as adjusted_total_points,
+          coalesce(sum(league_points) filter (where worst_result_rank > dropped_result_count), 0)::float8 as adjusted_total_points,
           count(*)::int as quiz_count,
-          coalesce(array_agg(league_points order by league_points) filter (where worst_result_rank <= 2), array[]::float8[]) as dropped_points
+          coalesce(array_agg(league_points order by league_points) filter (where worst_result_rank <= dropped_result_count), array[]::float8[]) as dropped_points
         from ranked_results
         group by team_name
       ),
@@ -264,7 +254,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
         select distinct on (team_name)
           team_name,
           league_points as last_quiz_points
-        from results_in_league
+        from picked_results
         order by team_name, quiz_date desc, id desc
       )
       select
@@ -278,6 +268,15 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       left join latest_team_quiz on latest_team_quiz.team_name = team_totals.team_name
       order by total_points desc, team_name
     `,
+    [league.period_start, league.period_stop, longTermLeagueCountedResults],
+  )
+
+  const pubsResult = await getPool().query<{ total_pubs: number }>(
+    `
+      select count(distinct nullif(trim(pub), ''))::int as total_pubs
+      from public.quiz_results
+      where quiz_date between $1 and $2
+    `,
     [league.period_start, league.period_stop],
   )
 
@@ -286,6 +285,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
     periodStart: league.period_start.toISOString(),
     periodStop: league.period_stop.toISOString(),
     totalRounds: Math.floor((league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek) + 1,
+    totalPubs: pubsResult.rows[0]?.total_pubs ?? 0,
     leagueUrl: league.league_url,
     teams: standingsResult.rows.map((row) => ({
       teamName: row.team_name,

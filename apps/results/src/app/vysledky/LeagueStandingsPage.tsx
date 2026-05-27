@@ -3,6 +3,7 @@ import { ArrowUpRight, ListChecks } from "lucide-react"
 
 import { getLongTermLeagueStandings } from "@/lib/quiz-results"
 import { PageSizeSelect } from "./PageSizeSelect"
+import { ResultsUnavailable } from "./ResultsUnavailable"
 import {
   formatDroppedPoints,
   formatNumber,
@@ -16,8 +17,10 @@ import {
   type LeagueSortKey,
   Placement,
   type SortDirection,
+  StatCard,
   SortHeader,
   sortLeagueTeams,
+  TestDataWarning,
   ViewSwitch,
 } from "./ResultsShared"
 
@@ -36,7 +39,14 @@ export const LeagueStandingsPage = async ({
   direction: SortDirection
   useCuts: boolean
 }) => {
-  const standings = await getLongTermLeagueStandings()
+  let standings
+
+  try {
+    standings = await getLongTermLeagueStandings()
+  } catch (error) {
+    console.error(error)
+    return <ResultsUnavailable />
+  }
 
   if (!standings) {
     return (
@@ -98,13 +108,16 @@ export const LeagueStandingsPage = async ({
               <ArrowUpRight className="h-4 w-4" />
             </a>
           ) : null}
-
-          <div className="rounded-lg border border-white/10 bg-white/4.5 px-4 py-3 text-left shadow-2xl shadow-sky-950/10 lg:text-right">
-            <p className="text-xs font-medium leading-4 text-white/52">Celkem kol</p>
-            <p className="mt-1 text-3xl font-bold tracking-tight text-white">{standings.totalRounds}</p>
-          </div>
         </div>
       </section>
+
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard label="Týmů v soutěži" value={formatNumber(standings.teams.length)} detail="Počet týmů v dlouhodobé tabulce" />
+        <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} detail="Unikátní hospody v období soutěže" />
+        <StatCard label="Kol" value={formatNumber(standings.totalRounds)} detail="Celkový počet kol soutěže" />
+      </section>
+
+      <TestDataWarning />
 
       <section>
         <div className="overflow-hidden rounded-lg border border-white/10 bg-white/4">
@@ -119,7 +132,7 @@ export const LeagueStandingsPage = async ({
             <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[430px]">
               <div>
                 <p className="text-sm font-semibold text-white">Škrtání výsledků</p>
-                <p className="mt-1 text-sm text-white/56">Škrtají se 2 nejhorší výsledky každého týmu.</p>
+                <p className="mt-1 text-sm text-white/56">Započítává se nejvýše 14 výsledků, další nejhorší se škrtají.</p>
               </div>
               <Link
                 href={getLeagueCutsHref(teamName, pageSize, sort, direction, !useCuts)}

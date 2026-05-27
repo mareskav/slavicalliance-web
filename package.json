@@ -9,6 +9,8 @@
     "dev": "node scripts/dev.mjs",
     "dev:site": "npm --workspace apps/site run dev",
     "build:site": "npm --workspace apps/site run build",
+    "preview:site": "npm --workspace apps/site run preview",
+    "deploy:site": "npm --workspace apps/site run deploy",
     "dev:results": "npm --workspace apps/results run dev",
     "build:results": "npm --workspace apps/results run build",
     "preview:results": "npm --workspace apps/results run preview",

@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Slavic Alliance Web
 
-## Getting Started
+Monorepo for the public Slavic Alliance site and the quiz results app.
 
-First, run the development server:
+## Apps
+
+- `apps/site`: static Next export deployed to Cloudflare Pages. Runtime content APIs are Cloudflare Pages Functions backed by R2.
+- `apps/results`: dynamic Next app deployed to Cloudflare Workers through `@opennextjs/cloudflare`.
+- `packages/ui`: shared layout and UI components.
+
+`/admin` exists in the codebase, but it is intentionally outside the current production deploy scope.
+
+## Local Development
+
+Create `.env.local` from `.env.example`, then run:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Local URLs:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Site: `http://localhost:3000`
+- Results: `http://localhost:3001/vysledky`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cloudflare Setup
 
-## Learn More
+Create these Cloudflare resources:
 
-To learn more about Next.js, take a look at the following resources:
+- Pages project: `slavicalliance-site`
+- Worker: `slavicalliance-results`
+- R2 bucket for site content: `slavicalliance-site-content`
+- R2 bucket for Next incremental cache: `slavicalliance-results-next-cache`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Configure Cloudflare environment variables and secrets:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `apps/site` Pages project:
+  - `NEXT_PUBLIC_RESULTS_APP_URL`, for example `https://results.slavicalliance.cz/vysledky`
+  - R2 binding `CONTENT_BUCKET` to `slavicalliance-site-content`
+- `apps/results` Worker:
+  - secret `DATABASE_URL`
+  - `NEXT_PUBLIC_SITE_APP_URL` or `SITE_APP_URL`, for example `https://slavicalliance.cz`
+  - R2 binding `NEXT_INC_CACHE_R2_BUCKET` to `slavicalliance-results-next-cache`
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build:site
+npm run deploy:site
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm run build:results
+npm run deploy:results
+```
+
+On Windows, OpenNext may fail while creating symlinks during the Worker bundle step. Use WSL/Linux for `npm run deploy:results` if that happens.

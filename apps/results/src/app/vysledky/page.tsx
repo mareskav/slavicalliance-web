@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
 import { getLeagueCuts, getLeagueSortKey, getSortDirection, getTeamSortKey, type ResultView } from "./ResultsShared"
+import { ResultsUnavailable } from "./ResultsUnavailable"
 import { TeamResultsPage } from "./TeamResultsPage"
 
 export const dynamic = "force-dynamic"
@@ -15,10 +16,18 @@ const ResultsPage = async ({
   searchParams?: Promise<{ team?: string; page?: string; pageSize?: string; view?: string; sort?: string; dir?: string; cuts?: string }>
 }) => {
   const params = await searchParams
-  const teams = await getTeamSummaries()
+  const activeView: ResultView = params?.view === "league" ? "league" : "team"
+  let teams
+
+  try {
+    teams = await getTeamSummaries()
+  } catch (error) {
+    console.error(error)
+    return <ResultsUnavailable />
+  }
+
   const fallbackTeam = teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
   const selectedTeam = params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
-  const activeView: ResultView = params?.view === "league" ? "league" : "team"
 
   if (activeView === "league" && params?.team) {
     const canonicalParams = new URLSearchParams({ view: "league" })
@@ -60,7 +69,14 @@ const ResultsPage = async ({
   }
 
   const selectedSummary = teams.find((team) => team.teamName === selectedTeam)
-  const results = selectedTeam ? await getTeamResults(selectedTeam) : []
+  let results
+
+  try {
+    results = selectedTeam ? await getTeamResults(selectedTeam) : []
+  } catch (error) {
+    console.error(error)
+    return <ResultsUnavailable />
+  }
 
   return (
     <TeamResultsPage

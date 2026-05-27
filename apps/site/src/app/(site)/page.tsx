@@ -1,75 +1,12 @@
-import { getAllPosts } from "@/lib/posts";
-import { getLandingPage } from "@/lib/landing";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
-
-const renderInlineMarkdown = (text: string) => {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return (
-        <strong key={index} className="text-white">
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-
-    return part;
-  });
-}
-
-const LandingStory = ({ content }: { content: string }) => {
-  return (
-    <section className="mb-14">
-      <div className="mx-auto max-w-4xl space-y-8 text-center text-white/86">
-        {content
-          .split(/\n\s*\n/)
-          .map((block) => block.trim())
-          .filter(Boolean)
-          .map((block, index) => {
-            if (block.startsWith("# ")) {
-              return (
-                <h1 key={index} className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                  {renderInlineMarkdown(block.replace(/^#\s+/, ""))}
-                </h1>
-              );
-            }
-
-            if (block.startsWith("## ")) {
-              return (
-                <h2 key={index} className="pt-4 text-2xl font-bold text-white">
-                  {renderInlineMarkdown(block.replace(/^##\s+/, ""))}
-                </h2>
-              );
-            }
-
-            if (block.startsWith("- ")) {
-              return (
-                <ul key={index} className="mx-auto grid max-w-3xl gap-2 text-left text-lg leading-8">
-                  {block.split("\n").map((item) => (
-                    <li key={item}>• {renderInlineMarkdown(item.replace(/^-\s+/, ""))}</li>
-                  ))}
-                </ul>
-              );
-            }
-
-            return (
-              <p key={index} className="mx-auto max-w-3xl text-lg leading-8">
-                {renderInlineMarkdown(block)}
-              </p>
-            );
-          })}
-      </div>
-    </section>
-  );
-}
+import { getLandingPage } from "@/lib/landing"
+import { LandingStory } from "./LandingStory"
 
 const Home = () => {
-  const posts = getAllPosts();
-  const landing = getLandingPage();
+  const landing = getLandingPage()
 
   return (
     <div className="font-sans">
-      <LandingStory content={landing.content} />
+      <LandingStory initialContent={landing.content} />
 
       {/*<section>*/}
       {/*  <h2 className="mb-8 text-2xl font-bold text-white">📰 Nejnovější články</h2>*/}
@@ -113,7 +50,7 @@ const Home = () => {
       {/*  )}*/}
       {/*</section>*/}
     </div>
-  );
+  )
 }
 
-export default Home;
+export default Home
