@@ -9,6 +9,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..")
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.191"],
+  basePath: "/vysledky",
   turbopack: {
     root: repoRoot,
   },

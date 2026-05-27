@@ -5,7 +5,7 @@ Monorepo for the public Slavic Alliance site and the quiz results app.
 ## Apps
 
 - `apps/site`: static Next export deployed to Cloudflare Pages. Runtime content APIs are Cloudflare Pages Functions backed by R2.
-- `apps/results`: dynamic Next app deployed to Cloudflare Workers through `@opennextjs/cloudflare`.
+- `apps/results`: dynamic Next app deployed to Cloudflare Workers through `@opennextjs/cloudflare` under `https://slavicalliance.cz/vysledky`.
 - `packages/ui`: shared layout and UI components.
 
 `/admin` exists in the codebase, but it is intentionally outside the current production deploy scope.
@@ -36,11 +36,11 @@ Create these Cloudflare resources:
 Configure Cloudflare environment variables and secrets:
 
 - `apps/site` Pages project:
-  - `NEXT_PUBLIC_RESULTS_APP_URL`, for example `https://results.slavicalliance.cz/vysledky`
   - R2 binding `CONTENT_BUCKET` to `slavicalliance-site-content`
 - `apps/results` Worker:
   - secret `DATABASE_URL`
   - `NEXT_PUBLIC_SITE_APP_URL` or `SITE_APP_URL`, for example `https://slavicalliance.cz`
+  - route `slavicalliance.cz/vysledky*`
   - R2 binding `NEXT_INC_CACHE_R2_BUCKET` to `slavicalliance-results-next-cache`
 
 ## Deploy

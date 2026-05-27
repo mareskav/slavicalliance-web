@@ -34,7 +34,7 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
             const nextTeamName = event.target.value
 
             startTransition(() => {
-              router.push(`/vysledky?team=${encodeURIComponent(nextTeamName)}`)
+              router.push(`/?team=${encodeURIComponent(nextTeamName)}`)
             })
           }}
           className="h-10 w-full appearance-none rounded-lg border border-white/10 bg-slate-950/55 px-3 pr-10 text-sm font-semibold text-white outline-none transition hover:border-sky-200/25 focus:border-sky-200/45 focus:ring-3 focus:ring-sky-200/15 disabled:cursor-wait disabled:opacity-70"

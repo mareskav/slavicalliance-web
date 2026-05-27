@@ -91,7 +91,7 @@ export const getPaginationHref = (
     params.set("dir", direction)
   }
 
-  return `/vysledky?${params.toString()}`
+  return `/?${params.toString()}`
 }
 
 export const getLeaguePaginationHref = (
@@ -123,7 +123,7 @@ export const getLeaguePaginationHref = (
     params.set("dir", direction)
   }
 
-  return `/vysledky?${params.toString()}`
+  return `/?${params.toString()}`
 }
 
 export const getLeagueCutsHref = (
@@ -148,7 +148,7 @@ export const getLeagueCutsHref = (
 
   params.set("rounds", String(selectedRoundCount))
 
-  return `/vysledky?${params.toString()}`
+  return `/?${params.toString()}`
 }
 
 export const getViewHref = (view: ResultView, teamName?: string) => {
@@ -163,7 +163,7 @@ export const getViewHref = (view: ResultView, teamName?: string) => {
   }
 
   const query = params.toString()
-  return query ? `/vysledky?${query}` : "/vysledky"
+  return query ? `/?${query}` : "/"
 }
 
 export const getTeamSortHref = (
@@ -182,7 +182,7 @@ export const getTeamSortHref = (
     dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
 
-  return `/vysledky?${params.toString()}`
+  return `/?${params.toString()}`
 }
 
 export const getLeagueSortHref = (
@@ -209,7 +209,7 @@ export const getLeagueSortHref = (
 
   params.set("rounds", String(selectedRoundCount))
 
-  return `/vysledky?${params.toString()}`
+  return `/?${params.toString()}`
 }
 
 export const getVisiblePages = (currentPage: number, totalPages: number) => {

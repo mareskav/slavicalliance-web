@@ -12,6 +12,7 @@ type LeagueRoundSelectProps = {
 export const LeagueRoundSelect = ({ selectedRoundCount, playedRounds }: LeagueRoundSelectProps) => {
   const router = useRouter()
   const pathname = usePathname()
+  const appPathname = pathname.replace(/^\/vysledky(?=\/|$)/, "") || "/"
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const options = Array.from({ length: Math.max(playedRounds, 1) }, (_, index) => index + 1)
@@ -36,7 +37,7 @@ export const LeagueRoundSelect = ({ selectedRoundCount, playedRounds }: LeagueRo
             }
 
             startTransition(() => {
-              router.push(`${pathname}?${params.toString()}`, { scroll: false })
+              router.push(`${appPathname}?${params.toString()}`, { scroll: false })
             })
           }}
           className="h-9 appearance-none rounded-lg border border-white/10 bg-slate-950/55 px-3 pr-9 text-sm font-semibold text-white outline-none transition hover:border-sky-200/25 focus:border-sky-200/45 focus:ring-3 focus:ring-sky-200/15 disabled:cursor-wait disabled:opacity-70"

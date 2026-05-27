@@ -4,8 +4,8 @@
   "name": "slavicalliance-results",
   "routes": [
     {
-      "pattern": "results.slavicalliance.cz",
-      "custom_domain": true
+      "pattern": "slavicalliance.cz/vysledky*",
+      "zone_name": "slavicalliance.cz"
     }
   ],
   "compatibility_date": "2026-05-25",

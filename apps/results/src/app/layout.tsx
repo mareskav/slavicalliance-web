@@ -7,6 +7,9 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "Výsledky kvízů | Slavic Alliance",
   description: "Týmový přehled výsledků hospodských kvízů.",
+  icons: {
+    icon: "/icon.png",
+  },
 }
 
 const getSiteHref = () => {
