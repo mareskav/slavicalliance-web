@@ -2,13 +2,44 @@
 
 import { useEffect, useState } from "react"
 
+const isSafeLink = (href: string) =>
+  href.startsWith("https://") || href.startsWith("http://") || href.startsWith("mailto:")
+
 const renderInlineMarkdown = (text: string) => {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => {
+  return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|_[^_]+_)/g).map((part, index) => {
+    const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+
+    if (link) {
+      const [, label, href] = link
+
+      if (!isSafeLink(href)) {
+        return label
+      }
+
+      return (
+        <a
+          key={index}
+          href={href}
+          className="font-semibold text-sky-200 underline decoration-sky-200/40 underline-offset-4 hover:text-white"
+        >
+          {label}
+        </a>
+      )
+    }
+
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
         <strong key={index} className="text-white">
           {part.slice(2, -2)}
         </strong>
+      )
+    }
+
+    if (part.startsWith("_") && part.endsWith("_")) {
+      return (
+        <em key={index} className="text-white/95">
+          {part.slice(1, -1)}
+        </em>
       )
     }
 
@@ -73,6 +104,14 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
               )
             }
 
+            if (block.startsWith("### ")) {
+              return (
+                <h3 key={index} className="pt-2 text-xl font-bold text-white">
+                  {renderInlineMarkdown(block.replace(/^###\s+/, ""))}
+                </h3>
+              )
+            }
+
             if (block.startsWith("- ")) {
               return (
                 <ul
@@ -83,6 +122,24 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
                     <li key={item}>• {renderInlineMarkdown(item.replace(/^-\s+/, ""))}</li>
                   ))}
                 </ul>
+              )
+            }
+
+            if (block.startsWith("> ")) {
+              const lines = block.split("\n")
+
+              return (
+                <blockquote
+                  key={index}
+                  className="mx-auto max-w-3xl border-l-2 border-sky-200/50 pl-5 text-left text-lg leading-8 text-white/80"
+                >
+                  {lines.map((line, lineIndex) => (
+                    <span key={lineIndex}>
+                      {renderInlineMarkdown(line.replace(/^>\s+/, ""))}
+                      {lineIndex < lines.length - 1 ? <br /> : null}
+                    </span>
+                  ))}
+                </blockquote>
               )
             }
 

@@ -1,9 +1,32 @@
 "use client"
 
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 
 type LoadState = "checking" | "login" | "ready"
 type SaveState = "idle" | "saving" | "saved" | "error"
+type MarkdownAction =
+  | "bold"
+  | "italic"
+  | "heading-2"
+  | "heading-3"
+  | "bullet-list"
+  | "quote"
+  | "link"
+
+type SelectionRange = {
+  end: number
+  start: number
+}
+
+const markdownButtons: Array<{ action: MarkdownAction; label: string; title: string }> = [
+  { action: "bold", label: "B", title: "Tučný text" },
+  { action: "italic", label: "I", title: "Kurzíva" },
+  { action: "heading-2", label: "H2", title: "Nadpis" },
+  { action: "heading-3", label: "H3", title: "Menší nadpis" },
+  { action: "bullet-list", label: "•", title: "Odrážkový seznam" },
+  { action: "quote", label: ">", title: "Citace" },
+  { action: "link", label: "Link", title: "Odkaz" },
+]
 
 const AdminEditor = () => {
   const [loadState, setLoadState] = useState<LoadState>("checking")
@@ -11,6 +34,7 @@ const AdminEditor = () => {
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
   const [saveState, setSaveState] = useState<SaveState>("idle")
+  const editorRef = useRef<HTMLTextAreaElement>(null)
 
   const loadFile = async () => {
     const sessionResponse = await fetch("/api/admin/session")
@@ -92,6 +116,111 @@ const AdminEditor = () => {
     }
 
     setSaveState("saved")
+  }
+
+  const updateEditorSelection = ({ start, end }: SelectionRange) => {
+    window.requestAnimationFrame(() => {
+      editorRef.current?.focus()
+      editorRef.current?.setSelectionRange(start, end)
+    })
+  }
+
+  const wrapSelection = (before: string, after = before, placeholder = "text") => {
+    const editor = editorRef.current
+    if (!editor) {
+      return
+    }
+
+    const { selectionStart, selectionEnd } = editor
+    const selectedText = content.slice(selectionStart, selectionEnd) || placeholder
+    const nextContent =
+      content.slice(0, selectionStart) + before + selectedText + after + content.slice(selectionEnd)
+    const nextStart = selectionStart + before.length
+    const nextEnd = nextStart + selectedText.length
+
+    setContent(nextContent)
+    setSaveState("idle")
+    updateEditorSelection({ start: nextStart, end: nextEnd })
+  }
+
+  const formatSelectedLines = (prefix: string) => {
+    const editor = editorRef.current
+    if (!editor) {
+      return
+    }
+
+    const { selectionStart, selectionEnd } = editor
+    const lineStart = content.lastIndexOf("\n", selectionStart - 1) + 1
+    const lineEndIndex = content.indexOf("\n", selectionEnd)
+    const lineEnd = lineEndIndex === -1 ? content.length : lineEndIndex
+    const selectedLines = content.slice(lineStart, lineEnd) || "Text"
+    const formattedLines = selectedLines
+      .split("\n")
+      .map((line) => (line.startsWith(prefix) ? line.slice(prefix.length) : `${prefix}${line}`))
+      .join("\n")
+    const nextContent = content.slice(0, lineStart) + formattedLines + content.slice(lineEnd)
+    const lengthDiff = formattedLines.length - selectedLines.length
+
+    setContent(nextContent)
+    setSaveState("idle")
+    updateEditorSelection({ start: selectionStart, end: selectionEnd + lengthDiff })
+  }
+
+  const formatHeading = (prefix: "## " | "### ") => {
+    const editor = editorRef.current
+    if (!editor) {
+      return
+    }
+
+    const { selectionStart, selectionEnd } = editor
+    const lineStart = content.lastIndexOf("\n", selectionStart - 1) + 1
+    const lineEndIndex = content.indexOf("\n", selectionEnd)
+    const lineEnd = lineEndIndex === -1 ? content.length : lineEndIndex
+    const selectedLines = content.slice(lineStart, lineEnd) || "Nadpis"
+    const formattedLines = selectedLines
+      .split("\n")
+      .map((line) => `${prefix}${line.replace(/^#{1,6}\s+/, "")}`)
+      .join("\n")
+    const nextContent = content.slice(0, lineStart) + formattedLines + content.slice(lineEnd)
+    const lengthDiff = formattedLines.length - selectedLines.length
+
+    setContent(nextContent)
+    setSaveState("idle")
+    updateEditorSelection({ start: selectionStart + prefix.length, end: selectionEnd + lengthDiff })
+  }
+
+  const applyMarkdown = (action: MarkdownAction) => {
+    if (action === "bold") {
+      wrapSelection("**", "**", "tučný text")
+      return
+    }
+
+    if (action === "italic") {
+      wrapSelection("_", "_", "kurzíva")
+      return
+    }
+
+    if (action === "heading-2") {
+      formatHeading("## ")
+      return
+    }
+
+    if (action === "heading-3") {
+      formatHeading("### ")
+      return
+    }
+
+    if (action === "bullet-list") {
+      formatSelectedLines("- ")
+      return
+    }
+
+    if (action === "quote") {
+      formatSelectedLines("> ")
+      return
+    }
+
+    wrapSelection("[", "](https://)", "text odkazu")
   }
 
   const handleLogout = async () => {
@@ -181,15 +310,32 @@ const AdminEditor = () => {
           </p>
         ) : null}
 
-        <textarea
-          value={content}
-          onChange={(event) => {
-            setContent(event.target.value)
-            setSaveState("idle")
-          }}
-          spellCheck={false}
-          className="mt-5 min-h-[72vh] flex-1 resize-none rounded-md border border-white/12 bg-[#05070c] p-4 font-mono text-sm leading-6 text-white outline-none ring-sky-300/30 focus:ring-4"
-        />
+        <div className="mt-5 overflow-hidden rounded-md border border-white/12 bg-[#05070c]">
+          <div className="flex flex-wrap items-center gap-1 border-b border-white/12 bg-white/[0.04] p-2">
+            {markdownButtons.map((button) => (
+              <button
+                key={button.action}
+                type="button"
+                onClick={() => applyMarkdown(button.action)}
+                className="grid h-9 min-w-9 place-items-center rounded-md border border-white/12 px-2 text-sm font-semibold text-white/84 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sky-300/40"
+                title={button.title}
+                aria-label={button.title}
+              >
+                {button.label}
+              </button>
+            ))}
+          </div>
+          <textarea
+            ref={editorRef}
+            value={content}
+            onChange={(event) => {
+              setContent(event.target.value)
+              setSaveState("idle")
+            }}
+            spellCheck={false}
+            className="min-h-[72vh] w-full flex-1 resize-none bg-transparent p-4 font-mono text-sm leading-6 text-white outline-none ring-sky-300/30 focus:ring-4"
+          />
+        </div>
       </div>
     </main>
   )

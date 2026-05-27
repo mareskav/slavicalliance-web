@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.1.191"],
+  allowedDevOrigins: ["localhost:3000", "192.168.1.191"],
   output: "export",
   turbopack: {
     root: repoRoot,
