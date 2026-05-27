@@ -45,6 +45,17 @@ Configure Cloudflare environment variables and secrets:
 
 ## Deploy
 
+Automatic production deploys run from GitHub Actions on every push to `main`.
+Configure these repository secrets in GitHub:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+The Cloudflare API token needs permission to deploy the Pages project and Worker.
+Runtime secrets such as `DATABASE_URL`, `SESSION_SECRET`, and `ADMIN_PASSWORD` stay in Cloudflare.
+
+Manual deploy:
+
 ```bash
 npm run build:site
 npm run deploy:site
