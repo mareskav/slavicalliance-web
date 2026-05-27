@@ -121,7 +121,37 @@ const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
   }))
 }
 
-const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
+const mapQuizResultRow = (row: {
+  id: string
+  team_name: string
+  order_in_quiz: number | null
+  points: number | null
+  quiz_date: Date
+  pub: string | null
+  pub_url: string | null
+  quiz_details_id: string | null
+  tip_56_question: string | null
+  doplnovacek: number | null
+  clenu: number | null
+  max_body_v_kole: number | null
+  league_name: string | null
+}): QuizResult => ({
+  id: row.id,
+  teamName: row.team_name,
+  orderInQuiz: row.order_in_quiz,
+  points: row.points === null ? null : Number(row.points),
+  quizDate: row.quiz_date.toISOString(),
+  pub: row.pub,
+  pubUrl: row.pub_url ?? "#",
+  quizDetailsUrl: getQuizDetailsUrl(row.quiz_details_id),
+  tip56Question: row.tip_56_question,
+  doplnovacek: row.doplnovacek,
+  clenu: row.clenu,
+  maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
+  specialName: row.league_name
+})
+
+const loadAllTeamResults = async (): Promise<QuizResult[]> => {
   const result = await getPool().query<{
     id: string
     team_name: string
@@ -129,7 +159,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     points: number | null
     quiz_date: Date
     pub: string | null
-    pub_url: string
+    pub_url: string | null
     quiz_details_id: string | null
     tip_56_question: string | null
     doplnovacek: number | null
@@ -153,27 +183,11 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
         max_body_v_kole,
         nullif(trim(league_name), '') as league_name
       from public.quiz_results
-      where team_name = $1
-      order by quiz_date desc, id desc
-    `,
-    [teamName]
+      order by team_name, quiz_date desc, id desc
+    `
   )
 
-  return result.rows.map((row) => ({
-    id: row.id,
-    teamName: row.team_name,
-    orderInQuiz: row.order_in_quiz,
-    points: row.points === null ? null : Number(row.points),
-    quizDate: row.quiz_date.toISOString(),
-    pub: row.pub,
-    pubUrl: row.pub_url,
-    quizDetailsUrl: getQuizDetailsUrl(row.quiz_details_id),
-    tip56Question: row.tip_56_question,
-    doplnovacek: row.doplnovacek,
-    clenu: row.clenu,
-    maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
-    specialName: row.league_name
-  }))
+  return result.rows.map(mapQuizResultRow)
 }
 
 const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> => {
@@ -296,10 +310,15 @@ export const getTeamSummaries = unstable_cache(
   }
 )
 
-export const getTeamResults = unstable_cache(loadTeamResults, ["quiz-results", "team-results"], {
+const getAllTeamResults = unstable_cache(loadAllTeamResults, ["quiz-results", "all-team-results"], {
   revalidate: quizResultsCacheSeconds,
   tags: ["quiz-results"]
 })
+
+export const getTeamResults = async (teamName: string) => {
+  const results = await getAllTeamResults()
+  return results.filter((result) => result.teamName === teamName)
+}
 
 export const getLongTermLeagueStandings = unstable_cache(
   loadLongTermLeagueStandings,

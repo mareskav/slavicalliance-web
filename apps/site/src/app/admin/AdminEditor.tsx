@@ -95,9 +95,14 @@ const AdminEditor = () => {
   }
 
   const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST" })
-    setLoadState("login")
-    setContent("")
+    const response = await fetch("/api/admin/logout", { method: "POST" })
+
+    if (!response.ok) {
+      setError("Odhlaseni se nezdarilo.")
+      return
+    }
+
+    window.location.assign("/")
   }
 
   if (loadState === "checking") {

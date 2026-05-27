@@ -6,7 +6,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react"
 
 const ResultsErrorPage = ({
   error,
-  reset,
+  reset
 }: {
   error: Error & { digest?: string }
   reset: () => void
@@ -22,7 +22,9 @@ const ResultsErrorPage = ({
           <AlertTriangle className="h-7 w-7" />
         </div>
 
-        <h1 className="mt-6 text-3xl font-bold tracking-tight text-white">Výsledky se nepodařilo načíst</h1>
+        <h1 className="mt-6 text-3xl font-bold tracking-tight text-white">
+          Výsledky se nepodařilo načíst
+        </h1>
         <p className="mt-3 text-white/65">
           Databáze nebo server výsledků teď neodpovídá. Zkuste načtení znovu za chvíli.
         </p>
@@ -31,14 +33,14 @@ const ResultsErrorPage = ({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-sky-100 px-4 text-sm font-semibold text-slate-950 transition hover:bg-white"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-sky-200 px-4 text-sm font-semibold text-slate-950 shadow-sm shadow-sky-950/20 transition hover:bg-white"
           >
             <RefreshCw className="h-4 w-4" />
             Zkusit znovu
           </button>
           <Link
             href="/?team=Slavic%20Alliance"
-            className="inline-flex h-10 items-center rounded-lg border border-white/10 px-4 text-sm font-medium text-sky-100 transition hover:border-sky-200/30 hover:bg-sky-100/10 hover:text-white"
+            className="inline-flex h-10 items-center rounded-lg border border-white/10 px-4 text-sm font-medium text-white transition hover:border-sky-200/30 hover:bg-sky-100/10"
           >
             Zpět na výsledky
           </Link>
