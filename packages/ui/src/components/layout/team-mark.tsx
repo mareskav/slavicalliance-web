@@ -2,7 +2,7 @@ export type TeamMarkProps = {
   logoSrc?: string
 }
 
-export const TeamMark = ({ logoSrc = "/slavic_alliance.svg" }: TeamMarkProps) => {
+export const TeamMark = ({ logoSrc = "/slavic_alliance.svg?v=20260527" }: TeamMarkProps) => {
   return (
     <div className="flex items-center gap-3">
       <img
