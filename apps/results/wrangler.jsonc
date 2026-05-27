@@ -1,0 +1,33 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "slavicalliance-results",
+  "routes": [
+    {
+      "pattern": "slavicalliance.cz/vysledky*",
+      "zone_name": "slavicalliance.cz"
+    }
+  ],
+  "compatibility_date": "2026-05-25",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": {
+    "SITE_APP_URL": "https://slavicalliance.cz",
+    "NEXT_PUBLIC_SITE_APP_URL": "https://slavicalliance.cz"
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "slavicalliance-results"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "slavicalliance-results-next-cache"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "slavicalliance",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:site": "npm --workspace apps/site run dev",
+    "build:site": "npm --workspace apps/site run build",
+    "preview:site": "npm --workspace apps/site run preview",
+    "deploy:site": "npm --workspace apps/site run deploy",
+    "dev:results": "npm --workspace apps/results run dev",
+    "build:results": "npm --workspace apps/results run build",
+    "preview:results": "npm --workspace apps/results run preview",
+    "deploy:results": "npm --workspace apps/results run deploy",
+    "upload:results": "npm --workspace apps/results run upload",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3"
+  }
+}

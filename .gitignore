@@ -1,2 +1,57 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build / production
+build/
+dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Testing
+coverage/
+
+# Env (never commit secrets)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# Allow committing an example env file
+!.env.example
+!.env.*.example
+
+# Vercel / Netlify / Cloudflare (optional, safe)
+.vercel/
+.netlify/
+.wrangler/
+.open-next/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE / editor junk
 .idea/
+*.iml
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# TypeScript / tooling caches
+*.tsbuildinfo
+
+# Misc secrets
+*.pem
