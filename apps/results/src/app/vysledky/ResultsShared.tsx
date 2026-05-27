@@ -5,31 +5,44 @@ import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Trophy, Users } from "l
 import type { LeagueStandingTeam, QuizResult } from "@/lib/quiz-results"
 
 export const pageSizeOptions = [20, 50, 100]
+export const leagueDroppedRounds = 2
 
 export type ResultView = "team" | "league"
 export type SortDirection = "asc" | "desc"
-export type TeamSortKey = "date" | "place" | "points" | "doplnovacek" | "tip56" | "pub" | "maxPoints" | "members"
-export type LeagueSortKey = "team" | "points" | "rounds"
+export type TeamSortKey =
+  | "date"
+  | "place"
+  | "points"
+  | "doplnovacek"
+  | "tip56"
+  | "pub"
+  | "maxPoints"
+  | "members"
+export type LeagueSortKey = "placement" | "team" | "points" | "rounds"
 export type LeagueStandingDisplayTeam = LeagueStandingTeam & {
   placement: number
   displayPoints: number
   displayQuizCount: number
+  displayLastQuizPoints: number | null
+  displayLastQuizDate: string | null
+  droppedPoints: number[]
 }
 
 const dateFormatter = new Intl.DateTimeFormat("cs-CZ", {
   day: "numeric",
   month: "long",
-  year: "numeric",
+  year: "numeric"
 })
 
 const compactDateFormatter = new Intl.DateTimeFormat("cs-CZ", {
   day: "numeric",
   month: "numeric",
-  year: "numeric",
+  year: "numeric"
 })
 
 export const formatDate = (value: string) => dateFormatter.format(new Date(value))
-export const formatCompactDate = (value: string) => compactDateFormatter.format(new Date(value)).replace(/\s/g, "")
+export const formatCompactDate = (value: string) =>
+  compactDateFormatter.format(new Date(value)).replace(/\s/g, "")
 
 export const formatNumber = (value: number | null) => {
   if (value === null) {
@@ -62,12 +75,12 @@ export const getPaginationHref = (
   page: number,
   pageSize: number,
   sort?: TeamSortKey,
-  direction?: SortDirection,
+  direction?: SortDirection
 ) => {
   const params = new URLSearchParams({
     team: teamName,
     page: String(page),
-    pageSize: String(pageSize),
+    pageSize: String(pageSize)
   })
 
   if (sort) {
@@ -86,18 +99,21 @@ export const getLeaguePaginationHref = (
   page: number,
   pageSize: number,
   useCuts: boolean,
+  selectedRoundCount: number,
   sort?: LeagueSortKey,
-  direction?: SortDirection,
+  direction?: SortDirection
 ) => {
   const params = new URLSearchParams({
     view: "league",
     page: String(page),
-    pageSize: String(pageSize),
+    pageSize: String(pageSize)
   })
 
   if (!useCuts) {
     params.set("cuts", "0")
   }
+
+  params.set("rounds", String(selectedRoundCount))
 
   if (sort) {
     params.set("sort", sort)
@@ -110,18 +126,27 @@ export const getLeaguePaginationHref = (
   return `/vysledky?${params.toString()}`
 }
 
-export const getLeagueCutsHref = (_teamName: string | undefined, pageSize: number, sort: LeagueSortKey, direction: SortDirection, useCuts: boolean) => {
+export const getLeagueCutsHref = (
+  _teamName: string | undefined,
+  pageSize: number,
+  sort: LeagueSortKey,
+  direction: SortDirection,
+  useCuts: boolean,
+  selectedRoundCount: number
+) => {
   const params = new URLSearchParams({
     view: "league",
     page: "1",
     pageSize: String(pageSize),
     sort,
-    dir: direction,
+    dir: direction
   })
 
   if (!useCuts) {
     params.set("cuts", "0")
   }
+
+  params.set("rounds", String(selectedRoundCount))
 
   return `/vysledky?${params.toString()}`
 }
@@ -147,14 +172,14 @@ export const getTeamSortHref = (
   activeSort: TeamSortKey,
   direction: SortDirection,
   pageSize: number,
-  defaultDirection: SortDirection,
+  defaultDirection: SortDirection
 ) => {
   const params = new URLSearchParams({
     team: teamName,
     page: "1",
     pageSize: String(pageSize),
     sort,
-    dir: getNextSortDirection(activeSort, sort, direction, defaultDirection),
+    dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
 
   return `/vysledky?${params.toString()}`
@@ -167,19 +192,22 @@ export const getLeagueSortHref = (
   direction: SortDirection,
   pageSize: number,
   useCuts: boolean,
-  defaultDirection: SortDirection,
+  selectedRoundCount: number,
+  defaultDirection: SortDirection
 ) => {
   const params = new URLSearchParams({
     view: "league",
     page: "1",
     pageSize: String(pageSize),
     sort,
-    dir: getNextSortDirection(activeSort, sort, direction, defaultDirection),
+    dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
 
   if (!useCuts) {
     params.set("cuts", "0")
   }
+
+  params.set("rounds", String(selectedRoundCount))
 
   return `/vysledky?${params.toString()}`
 }
@@ -191,21 +219,40 @@ export const getVisiblePages = (currentPage: number, totalPages: number) => {
   return Array.from({ length: lastPage - firstPage + 1 }, (_, index) => firstPage + index)
 }
 
-export const getSortDirection = (value: string | undefined, fallback: SortDirection): SortDirection => {
+export const getSortDirection = (
+  value: string | undefined,
+  fallback: SortDirection
+): SortDirection => {
   return value === "asc" || value === "desc" ? value : fallback
 }
 
 export const getTeamSortKey = (value: string | undefined): TeamSortKey => {
-  return value === "place" || value === "points" || value === "doplnovacek" || value === "tip56" || value === "pub" || value === "maxPoints" || value === "members"
+  return value === "place" ||
+    value === "points" ||
+    value === "doplnovacek" ||
+    value === "tip56" ||
+    value === "pub" ||
+    value === "maxPoints" ||
+    value === "members"
     ? value
     : "date"
 }
 
 export const getLeagueSortKey = (value: string | undefined): LeagueSortKey => {
-  return value === "team" || value === "rounds" ? value : "points"
+  return value === "placement" || value === "team" || value === "rounds" ? value : "points"
 }
 
 export const getLeagueCuts = (value: string | undefined) => value !== "0"
+
+export const getLeagueSelectedRoundCount = (value: string | undefined, playedRounds: number) => {
+  const parsed = Number(value)
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return Math.max(playedRounds, 1)
+  }
+
+  return Math.min(parsed, Math.max(playedRounds, 1))
+}
 
 const compareNullableNumbers = (a: number | null, b: number | null, direction: SortDirection) => {
   if (a === null && b === null) {
@@ -223,40 +270,88 @@ const compareNullableNumbers = (a: number | null, b: number | null, direction: S
   return applyDirection(a - b, direction)
 }
 
-const applyDirection = (value: number, direction: SortDirection) => (direction === "asc" ? value : -value)
+const applyDirection = (value: number, direction: SortDirection) =>
+  direction === "asc" ? value : -value
 
-export const sortTeamResults = (results: QuizResult[], sort: TeamSortKey, direction: SortDirection) => {
+export const sortTeamResults = (
+  results: QuizResult[],
+  sort: TeamSortKey,
+  direction: SortDirection
+) => {
   return [...results].sort((a, b) => {
     const compared =
       sort === "date"
         ? new Date(a.quizDate).getTime() - new Date(b.quizDate).getTime()
         : sort === "place"
           ? compareNullableNumbers(a.orderInQuiz, b.orderInQuiz, direction)
-        : sort === "points"
-          ? compareNullableNumbers(a.points, b.points, direction)
-          : sort === "doplnovacek"
-            ? compareNullableNumbers(a.doplnovacek, b.doplnovacek, direction)
-            : sort === "members"
-              ? compareNullableNumbers(a.clenu, b.clenu, direction)
-              : sort === "maxPoints"
-                ? compareNullableNumbers(a.maxBodyVKole, b.maxBodyVKole, direction)
-                : sort === "tip56"
-                  ? (a.tip56Question ?? "").localeCompare(b.tip56Question ?? "", "cs")
-                  : (a.pub ?? "").localeCompare(b.pub ?? "", "cs")
+          : sort === "points"
+            ? compareNullableNumbers(a.points, b.points, direction)
+            : sort === "doplnovacek"
+              ? compareNullableNumbers(a.doplnovacek, b.doplnovacek, direction)
+              : sort === "members"
+                ? compareNullableNumbers(a.clenu, b.clenu, direction)
+                : sort === "maxPoints"
+                  ? compareNullableNumbers(a.maxBodyVKole, b.maxBodyVKole, direction)
+                  : sort === "tip56"
+                    ? (a.tip56Question ?? "").localeCompare(b.tip56Question ?? "", "cs")
+                    : (a.pub ?? "").localeCompare(b.pub ?? "", "cs")
 
     if (compared !== 0) {
-      return sort === "pub" || sort === "tip56" || sort === "date" ? applyDirection(compared, direction) : compared
+      return sort === "pub" || sort === "tip56" || sort === "date"
+        ? applyDirection(compared, direction)
+        : compared
     }
 
     return new Date(b.quizDate).getTime() - new Date(a.quizDate).getTime()
   })
 }
 
-const getLeaguePoints = (team: LeagueStandingTeam, useCuts: boolean) => (useCuts ? team.adjustedTotalPoints : team.totalPoints)
+const getDroppedPoints = (
+  team: LeagueStandingTeam,
+  useCuts: boolean,
+  selectedRoundCount: number
+) => {
+  if (!useCuts) {
+    return []
+  }
 
-export const getLeagueTeamsWithPlacements = (teams: LeagueStandingTeam[], useCuts: boolean): LeagueStandingDisplayTeam[] => {
+  return team.leagueResults
+    .filter((result) => result.round <= selectedRoundCount)
+    .map((result) => result.points)
+    .sort((a, b) => a - b)
+    .slice(0, leagueDroppedRounds)
+}
+
+const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
+  return team.leagueResults.filter((result) => result.round <= selectedRoundCount)
+}
+
+const getLeaguePoints = (
+  team: LeagueStandingTeam,
+  useCuts: boolean,
+  selectedRoundCount: number
+) => {
+  const selectedTotal = getSelectedLeagueResults(team, selectedRoundCount).reduce(
+    (total, result) => total + result.points,
+    0
+  )
+  const droppedTotal = getDroppedPoints(team, useCuts, selectedRoundCount).reduce(
+    (total, points) => total + points,
+    0
+  )
+
+  return selectedTotal - droppedTotal
+}
+
+export const getLeagueTeamsWithPlacements = (
+  teams: LeagueStandingTeam[],
+  useCuts: boolean,
+  selectedRoundCount: number
+): LeagueStandingDisplayTeam[] => {
   const teamsByPoints = [...teams].sort((a, b) => {
-    const compared = getLeaguePoints(b, useCuts) - getLeaguePoints(a, useCuts)
+    const compared =
+      getLeaguePoints(b, useCuts, selectedRoundCount) -
+      getLeaguePoints(a, useCuts, selectedRoundCount)
 
     if (compared !== 0) {
       return compared
@@ -270,7 +365,7 @@ export const getLeagueTeamsWithPlacements = (teams: LeagueStandingTeam[], useCut
   let previousPlacement = 0
 
   teamsByPoints.forEach((team, index) => {
-    const points = getLeaguePoints(team, useCuts)
+    const points = getLeaguePoints(team, useCuts, selectedRoundCount)
     const placement = previousPoints === points ? previousPlacement : index + 1
 
     placements.set(team.teamName, placement)
@@ -278,18 +373,36 @@ export const getLeagueTeamsWithPlacements = (teams: LeagueStandingTeam[], useCut
     previousPlacement = placement
   })
 
-  return teams.map((team) => ({
-    ...team,
-    placement: placements.get(team.teamName) ?? 0,
-    displayPoints: getLeaguePoints(team, useCuts),
-    displayQuizCount: team.quizCount,
-  }))
+  return teams.map((team) => {
+    const selectedResults = getSelectedLeagueResults(team, selectedRoundCount)
+    const lastSelectedResult = selectedResults.at(-1)
+
+    return {
+      ...team,
+      placement: placements.get(team.teamName) ?? 0,
+      displayPoints: getLeaguePoints(team, useCuts, selectedRoundCount),
+      displayQuizCount: selectedResults.length,
+      displayLastQuizPoints: lastSelectedResult?.points ?? null,
+      displayLastQuizDate: lastSelectedResult?.date ?? null,
+      droppedPoints: getDroppedPoints(team, useCuts, selectedRoundCount)
+    }
+  })
 }
 
-export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(teams: Team[], sort: LeagueSortKey, direction: SortDirection) => {
+export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(
+  teams: Team[],
+  sort: LeagueSortKey,
+  direction: SortDirection
+) => {
   return [...teams].sort((a, b) => {
     const compared =
-      sort === "team" ? a.teamName.localeCompare(b.teamName, "cs") : sort === "rounds" ? a.displayQuizCount - b.displayQuizCount : a.displayPoints - b.displayPoints
+      sort === "placement"
+        ? a.placement - b.placement
+        : sort === "team"
+          ? a.teamName.localeCompare(b.teamName, "cs")
+          : sort === "rounds"
+            ? a.displayQuizCount - b.displayQuizCount
+            : a.displayPoints - b.displayPoints
 
     if (compared !== 0) {
       return applyDirection(compared, direction)
@@ -299,7 +412,12 @@ export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(teams: T
   })
 }
 
-const getNextSortDirection = (activeSort: string, sort: string, direction: SortDirection, defaultDirection: SortDirection) => {
+const getNextSortDirection = (
+  activeSort: string,
+  sort: string,
+  direction: SortDirection,
+  defaultDirection: SortDirection
+) => {
   if (activeSort !== sort) {
     return defaultDirection
   }
@@ -307,10 +425,21 @@ const getNextSortDirection = (activeSort: string, sort: string, direction: SortD
   return direction === "asc" ? "desc" : "asc"
 }
 
-const SortIndicator = ({ isActive, direction }: { isActive: boolean; direction: SortDirection }) => {
+const SortIndicator = ({
+  isActive,
+  direction
+}: {
+  isActive: boolean
+  direction: SortDirection
+}) => {
   const Icon = !isActive ? ArrowUpDown : direction === "asc" ? ArrowUp : ArrowDown
 
-  return <Icon className={`h-3.5 w-3.5 ${isActive ? "text-sky-100/86" : "text-white/28"}`} aria-hidden="true" />
+  return (
+    <Icon
+      className={`h-3.5 w-3.5 ${isActive ? "text-sky-100/86" : "text-white/28"}`}
+      aria-hidden="true"
+    />
+  )
 }
 
 export const SortHeader = ({
@@ -319,7 +448,7 @@ export const SortHeader = ({
   title,
   align = "left",
   isActive,
-  direction,
+  direction
 }: {
   href: string
   label: ReactNode
@@ -339,11 +468,10 @@ export const SortHeader = ({
   </Link>
 )
 
-export const StatCard = ({ label, value, detail }: { label: string; value: string; detail: string }) => (
+export const StatCard = ({ label, value }: { label: string; value: string }) => (
   <div className="min-w-0 rounded-lg border border-white/10 bg-white/4.5 px-3 py-3.5 shadow-2xl shadow-sky-950/10 sm:px-4">
     <p className="text-xs font-medium leading-4 text-white/52">{label}</p>
     <p className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{value}</p>
-    <p className="mt-1.5 text-xs leading-5 text-white/56">{detail}</p>
   </div>
 )
 
@@ -364,12 +492,23 @@ export const TestDataWarning = () => (
   </section>
 )
 
-export const ViewSwitch = ({ activeView, teamName }: { activeView: ResultView; teamName?: string }) => (
-  <nav className="inline-flex rounded-lg border border-white/10 bg-white/4 p-1" aria-label="Přepnutí výsledků">
+export const ViewSwitch = ({
+  activeView,
+  teamName
+}: {
+  activeView: ResultView
+  teamName?: string
+}) => (
+  <nav
+    className="inline-flex rounded-lg border border-white/10 bg-white/4 p-1"
+    aria-label="Přepnutí výsledků"
+  >
     <Link
       href={getViewHref("team", teamName)}
       className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        activeView === "team" ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18" : "text-white/62 hover:bg-white/7 hover:text-white"
+        activeView === "team"
+          ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18"
+          : "text-white/62 hover:bg-white/7 hover:text-white"
       }`}
     >
       <Users className="h-4 w-4" />
@@ -378,7 +517,9 @@ export const ViewSwitch = ({ activeView, teamName }: { activeView: ResultView; t
     <Link
       href={getViewHref("league", teamName)}
       className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-        activeView === "league" ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18" : "text-white/62 hover:bg-white/7 hover:text-white"
+        activeView === "league"
+          ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18"
+          : "text-white/62 hover:bg-white/7 hover:text-white"
       }`}
     >
       <Trophy className="h-4 w-4" />
@@ -390,14 +531,16 @@ export const ViewSwitch = ({ activeView, teamName }: { activeView: ResultView; t
 const placeBadgeClassNames: Record<number, string> = {
   1: "border-amber-200/85 bg-amber-400/38 text-amber-50 shadow-amber-300/20",
   2: "border-zinc-100/75 bg-zinc-200/34 text-white shadow-zinc-100/16",
-  3: "border-orange-300/75 bg-orange-500/34 text-orange-50 shadow-orange-300/18",
+  3: "border-orange-300/75 bg-orange-500/34 text-orange-50 shadow-orange-300/18"
 }
 
 export const Placement = ({ place }: { place: number | null }) => {
   if (!place) {
     return (
       <>
-        <span className="flex h-7 w-7 items-center justify-center text-lg font-semibold text-white">-</span>
+        <span className="flex h-7 w-7 items-center justify-center text-lg font-semibold text-white">
+          -
+        </span>
         <span className="w-6" aria-hidden="true" />
       </>
     )
@@ -420,7 +563,9 @@ export const Placement = ({ place }: { place: number | null }) => {
 
   return (
     <>
-      <span className="flex h-7 w-7 items-center justify-center text-lg font-semibold text-white">{place}.</span>
+      <span className="flex h-7 w-7 items-center justify-center text-lg font-semibold text-white">
+        {place}.
+      </span>
       <span className="w-6" aria-hidden="true" />
     </>
   )

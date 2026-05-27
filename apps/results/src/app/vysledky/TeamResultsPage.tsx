@@ -19,7 +19,7 @@ import {
   StatCard,
   TestDataWarning,
   type TeamSortKey,
-  ViewSwitch,
+  ViewSwitch
 } from "./ResultsShared"
 import { TeamSelect } from "./TeamSelect"
 
@@ -32,7 +32,7 @@ export const TeamResultsPage = ({
   page,
   pageSize: requestedPageSizeValue,
   sort,
-  direction,
+  direction
 }: {
   teams: TeamSummary[]
   selectedSummary?: TeamSummary
@@ -45,7 +45,9 @@ export const TeamResultsPage = ({
   const sortedResults = sortTeamResults(results, sort, direction)
   const totalPoints = results.reduce((sum, result) => sum + (result.points ?? 0), 0)
   const requestedPageSize = parsePositiveInt(requestedPageSizeValue, pageSizeOptions[0])
-  const pageSize = pageSizeOptions.includes(requestedPageSize) ? requestedPageSize : pageSizeOptions[0]
+  const pageSize = pageSizeOptions.includes(requestedPageSize)
+    ? requestedPageSize
+    : pageSizeOptions[0]
   const totalResults = results.length
   const totalPages = Math.max(1, Math.ceil(totalResults / pageSize))
   const currentPage = Math.min(parsePositiveInt(page, 1), totalPages)
@@ -77,7 +79,9 @@ export const TeamResultsPage = ({
         <ViewSwitch activeView="team" />
         <section className="rounded-lg border border-white/10 bg-white/4.5 p-8">
           <h1 className="text-3xl font-bold text-white">Výsledky kvízů</h1>
-          <p className="mt-3 text-white/65">V tabulce public.quiz_results zatím nejsou žádná data.</p>
+          <p className="mt-3 text-white/65">
+            V tabulce public.quiz_results zatím nejsou žádná data.
+          </p>
         </section>
       </div>
     )
@@ -88,7 +92,9 @@ export const TeamResultsPage = ({
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-8">
         <div className="order-2 lg:order-1">
           <ViewSwitch activeView="team" teamName={selectedSummary.teamName} />
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">{selectedSummary.teamName}</h1>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
+            {selectedSummary.teamName}
+          </h1>
           <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
             Výsledky týmu u Hospodského kvízu
           </p>
@@ -100,14 +106,10 @@ export const TeamResultsPage = ({
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard
-          label="Odehráno"
-          value={`${selectedSummary.quizCount} kvízů`}
-          detail={`${formatCompactDate(selectedSummary.firstDate)} - ${formatCompactDate(selectedSummary.lastDate)}`}
-        />
-        <StatCard label="Průměr bodů" value={formatNumber(selectedSummary.averagePoints)} detail="" />
-        <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} detail={`Nejlepší umístění: ${selectedSummary.bestPlace}. místo`} />
-        <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} detail="" />
+        <StatCard label="Odehráno" value={`${selectedSummary.quizCount} kvízů`} />
+        <StatCard label="Průměr bodů" value={formatNumber(selectedSummary.averagePoints)} />
+        <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} />
+        <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} />
       </section>
 
       <TestDataWarning />
@@ -128,10 +130,23 @@ export const TeamResultsPage = ({
                 <tr>
                   <th
                     className="w-[72px] px-1.5 py-3 font-semibold sm:px-2 md:w-[72px] md:px-2"
-                    aria-sort={sort === "place" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "place"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "place", sort, direction, pageSize, "asc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "place",
+                        sort,
+                        direction,
+                        pageSize,
+                        "asc"
+                      )}
                       label={
                         <>
                           <span className="md:hidden">Místo</span>
@@ -144,10 +159,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-20 px-1 py-3 font-semibold sm:px-1.5 md:w-36 md:px-4"
-                    aria-sort={sort === "date" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "date"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "date", sort, direction, pageSize, "desc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "date",
+                        sort,
+                        direction,
+                        pageSize,
+                        "desc"
+                      )}
                       label="Datum"
                       isActive={sort === "date"}
                       direction={direction}
@@ -155,10 +183,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-20 md:px-3"
-                    aria-sort={sort === "points" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "points"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "points", sort, direction, pageSize, "desc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "points",
+                        sort,
+                        direction,
+                        pageSize,
+                        "desc"
+                      )}
                       label="Body"
                       align="right"
                       isActive={sort === "points"}
@@ -167,10 +208,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-12 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-14 md:px-2"
-                    aria-sort={sort === "doplnovacek" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "doplnovacek"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "doplnovacek", sort, direction, pageSize, "desc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "doplnovacek",
+                        sort,
+                        direction,
+                        pageSize,
+                        "desc"
+                      )}
                       label="Dopl."
                       title="Doplňovačky"
                       align="right"
@@ -180,10 +234,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-16 md:px-2"
-                    aria-sort={sort === "tip56" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "tip56"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "tip56", sort, direction, pageSize, "asc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "tip56",
+                        sort,
+                        direction,
+                        pageSize,
+                        "asc"
+                      )}
                       label="56. otázka"
                       title="56. otázka"
                       align="right"
@@ -193,10 +260,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-[230px] px-1.5 py-3 font-semibold sm:w-[260px] sm:px-2 md:w-auto md:px-3"
-                    aria-sort={sort === "pub" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "pub"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "pub", sort, direction, pageSize, "asc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "pub",
+                        sort,
+                        direction,
+                        pageSize,
+                        "asc"
+                      )}
                       label="Hospoda"
                       isActive={sort === "pub"}
                       direction={direction}
@@ -204,10 +284,23 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-14 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-16 md:px-2"
-                    aria-sort={sort === "maxPoints" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "maxPoints"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "maxPoints", sort, direction, pageSize, "desc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "maxPoints",
+                        sort,
+                        direction,
+                        pageSize,
+                        "desc"
+                      )}
                       label="MAX"
                       title="MAX bodů v kole"
                       align="right"
@@ -217,17 +310,32 @@ export const TeamResultsPage = ({
                   </th>
                   <th
                     className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-[72px] md:px-2"
-                    aria-sort={sort === "members" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "members"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getTeamSortHref(selectedSummary.teamName, "members", sort, direction, pageSize, "desc")}
+                      href={getTeamSortHref(
+                        selectedSummary.teamName,
+                        "members",
+                        sort,
+                        direction,
+                        pageSize,
+                        "desc"
+                      )}
                       label="Členové"
                       align="right"
                       isActive={sort === "members"}
                       direction={direction}
                     />
                   </th>
-                  <th className="w-24 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-32 md:px-3">Speciály</th>
+                  <th className="w-24 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-32 md:px-3">
+                    Speciály
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/8">
@@ -245,17 +353,26 @@ export const TeamResultsPage = ({
                       </p>
                     </td>
                     <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-3 md:py-3">
-                      <span className="text-base font-bold text-white md:text-lg">{formatNumber(result.points)}</span>
+                      <span className="text-base font-bold text-white md:text-lg">
+                        {formatNumber(result.points)}
+                      </span>
                     </td>
-                    <td className="px-1 py-2.5 text-right font-semibold text-white/76 sm:px-1.5 md:px-2 md:py-3">{formatNumber(result.doplnovacek)}</td>
+                    <td className="px-1 py-2.5 text-right font-semibold text-white/76 sm:px-1.5 md:px-2 md:py-3">
+                      {formatNumber(result.doplnovacek)}
+                    </td>
                     <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-2 md:py-3">
                       {hasTip56Question(result.tip56Question) ? (
-                        <Star className="ml-auto h-4 w-4 fill-amber-200 text-amber-200 md:h-5 md:w-5" aria-label="Zodpovězená 56. otázka" />
+                        <Star
+                          className="ml-auto h-4 w-4 fill-amber-200 text-amber-200 md:h-5 md:w-5"
+                          aria-label="Zodpovězená 56. otázka"
+                        />
                       ) : null}
                     </td>
                     <td className="min-w-0 px-1.5 py-2.5 sm:px-2 md:px-3 md:py-3">
                       <div className="flex min-w-0 flex-col items-start gap-2 md:grid md:grid-cols-[minmax(0,1fr)_190px] md:items-center md:gap-2">
-                        <p className="min-w-0 whitespace-normal font-medium leading-5 text-white/84 md:truncate">{result.pub ?? "Místo neuvedeno"}</p>
+                        <p className="min-w-0 whitespace-normal font-medium leading-5 text-white/84 md:truncate">
+                          {result.pub ?? "Místo neuvedeno"}
+                        </p>
                         <div className="grid shrink-0 grid-cols-[82px_102px] gap-1.5">
                           <a
                             href={result.pubUrl}
@@ -282,8 +399,12 @@ export const TeamResultsPage = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">{formatNumber(result.maxBodyVKole)}</td>
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">{result.clenu ?? "-"}</td>
+                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">
+                      {formatNumber(result.maxBodyVKole)}
+                    </td>
+                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-2 md:py-3">
+                      {result.clenu ?? "-"}
+                    </td>
                     <td className="px-1.5 py-2.5 text-right text-[10px] font-semibold leading-4 text-white/56 sm:px-2 md:px-3 md:py-3 md:text-xs">
                       {result.specialName}
                     </td>
@@ -303,10 +424,18 @@ export const TeamResultsPage = ({
 
               <nav className="flex items-center gap-1" aria-label="Stránkování výsledků">
                 <Link
-                  href={getPaginationHref(selectedSummary.teamName, Math.max(1, currentPage - 1), pageSize, sort, direction)}
+                  href={getPaginationHref(
+                    selectedSummary.teamName,
+                    Math.max(1, currentPage - 1),
+                    pageSize,
+                    sort,
+                    direction
+                  )}
                   aria-disabled={currentPage === 1}
                   className={`inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium transition ${
-                    currentPage === 1 ? "pointer-events-none text-white/28" : "text-white/68 hover:bg-white/7 hover:text-white"
+                    currentPage === 1
+                      ? "pointer-events-none text-white/28"
+                      : "text-white/68 hover:bg-white/7 hover:text-white"
                   }`}
                 >
                   Předchozí
@@ -315,10 +444,18 @@ export const TeamResultsPage = ({
                 {visiblePages.map((page) => (
                   <Link
                     key={page}
-                    href={getPaginationHref(selectedSummary.teamName, page, pageSize, sort, direction)}
+                    href={getPaginationHref(
+                      selectedSummary.teamName,
+                      page,
+                      pageSize,
+                      sort,
+                      direction
+                    )}
                     aria-current={page === currentPage ? "page" : undefined}
                     className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition ${
-                      page === currentPage ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20" : "text-white/58 hover:bg-white/7 hover:text-white"
+                      page === currentPage
+                        ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20"
+                        : "text-white/58 hover:bg-white/7 hover:text-white"
                     }`}
                   >
                     {page}
@@ -326,10 +463,18 @@ export const TeamResultsPage = ({
                 ))}
 
                 <Link
-                  href={getPaginationHref(selectedSummary.teamName, Math.min(totalPages, currentPage + 1), pageSize, sort, direction)}
+                  href={getPaginationHref(
+                    selectedSummary.teamName,
+                    Math.min(totalPages, currentPage + 1),
+                    pageSize,
+                    sort,
+                    direction
+                  )}
                   aria-disabled={currentPage === totalPages}
                   className={`inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium transition ${
-                    currentPage === totalPages ? "pointer-events-none text-white/28" : "text-white/68 hover:bg-white/7 hover:text-white"
+                    currentPage === totalPages
+                      ? "pointer-events-none text-white/28"
+                      : "text-white/68 hover:bg-white/7 hover:text-white"
                   }`}
                 >
                   Další

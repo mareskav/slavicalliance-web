@@ -32,25 +32,27 @@ export type LeagueStandings = {
   periodStart: string
   periodStop: string
   totalRounds: number
+  playedRounds: number
   totalPubs: number
   leagueUrl: string | null
   teams: LeagueStandingTeam[]
 }
 
+export type LeagueResultPoints = {
+  round: number
+  points: number
+  date: string
+}
+
 export type LeagueStandingTeam = {
   teamName: string
-  totalPoints: number
-  adjustedTotalPoints: number
-  quizCount: number
-  lastQuizPoints: number | null
-  droppedPoints: number[]
+  leagueResults: LeagueResultPoints[]
 }
 
 let pool: Pool | null = null
 const quizResultsCacheSeconds = 300
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
-const longTermLeagueCountedResults = 14
 
 const getDatabaseUrl = () => {
   return process.env.DATABASE_URL?.trim()
@@ -68,7 +70,7 @@ const getPool = () => {
     connectionTimeoutMillis: 3000,
     idleTimeoutMillis: 30000,
     query_timeout: 10000,
-    statement_timeout: 10000,
+    statement_timeout: 10000
   })
   return pool
 }
@@ -115,7 +117,7 @@ const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
     lastDate: row.last_date.toISOString(),
     averagePoints: Number(row.average_points),
     bestPoints: Number(row.best_points),
-    bestPlace: row.best_place,
+    bestPlace: row.best_place
   }))
 }
 
@@ -154,7 +156,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
       where team_name = $1
       order by quiz_date desc, id desc
     `,
-    [teamName],
+    [teamName]
   )
 
   return result.rows.map((row) => ({
@@ -170,7 +172,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     doplnovacek: row.doplnovacek,
     clenu: row.clenu,
     maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
-    specialName: row.league_name,
+    specialName: row.league_name
   }))
 }
 
@@ -192,7 +194,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       order by period_start desc, id desc
       limit 1
     `,
-    [longTermLeagueName],
+    [longTermLeagueName]
   )
 
   const league = leagueResult.rows[0]
@@ -203,11 +205,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
 
   const standingsResult = await getPool().query<{
     team_name: string
-    total_points: number
-    adjusted_total_points: number
-    quiz_count: number
-    last_quiz_points: number | null
-    dropped_points: number[]
+    league_results: LeagueResultPoints[]
   }>(
     `
       with results_in_league as (
@@ -226,49 +224,31 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
           team_name,
           league_points,
           quiz_date,
-          id
+          id,
+          league_week + 1 as league_round
         from results_in_league
         order by team_name, league_week, is_special desc, quiz_date desc, id desc
-      ),
-      ranked_results as (
-        select
-          team_name,
-          league_points,
-          quiz_date,
-          id,
-          row_number() over (partition by team_name order by league_points, quiz_date, id) as worst_result_rank,
-          greatest(count(*) over (partition by team_name) - $3::int, 0) as dropped_result_count
-        from picked_results
       ),
       team_totals as (
         select
           team_name,
-          coalesce(sum(league_points), 0)::float8 as total_points,
-          coalesce(sum(league_points) filter (where worst_result_rank > dropped_result_count), 0)::float8 as adjusted_total_points,
-          count(*)::int as quiz_count,
-          coalesce(array_agg(league_points order by league_points) filter (where worst_result_rank <= dropped_result_count), array[]::float8[]) as dropped_points
-        from ranked_results
-        group by team_name
-      ),
-      latest_team_quiz as (
-        select distinct on (team_name)
-          team_name,
-          league_points as last_quiz_points
+          coalesce(
+            json_agg(
+              json_build_object('round', league_round, 'points', league_points, 'date', quiz_date)
+              order by league_round, quiz_date, id
+            ),
+            '[]'::json
+          ) as league_results
         from picked_results
-        order by team_name, quiz_date desc, id desc
+        group by team_name
       )
       select
         team_totals.team_name,
-        team_totals.total_points,
-        team_totals.adjusted_total_points,
-        team_totals.quiz_count,
-        latest_team_quiz.last_quiz_points,
-        team_totals.dropped_points
+        team_totals.league_results
       from team_totals
-      left join latest_team_quiz on latest_team_quiz.team_name = team_totals.team_name
-      order by total_points desc, team_name
+      order by team_name
     `,
-    [league.period_start, league.period_stop, longTermLeagueCountedResults],
+    [league.period_start, league.period_stop]
   )
 
   const pubsResult = await getPool().query<{ total_pubs: number }>(
@@ -277,38 +257,55 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       from public.quiz_results
       where quiz_date between $1 and $2
     `,
-    [league.period_start, league.period_stop],
+    [league.period_start, league.period_stop]
   )
+
+  const teams = standingsResult.rows.map((row) => ({
+    teamName: row.team_name,
+    leagueResults: row.league_results.map((result) => ({
+      round: Number(result.round),
+      points: Number(result.points),
+      date: new Date(result.date).toISOString()
+    }))
+  }))
 
   return {
     leagueName: league.league_name,
     periodStart: league.period_start.toISOString(),
     periodStop: league.period_stop.toISOString(),
-    totalRounds: Math.floor((league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek) + 1,
+    totalRounds:
+      Math.floor(
+        (league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek
+      ) + 1,
+    playedRounds: Math.max(
+      0,
+      ...teams.flatMap((team) => team.leagueResults.map((result) => result.round))
+    ),
     totalPubs: pubsResult.rows[0]?.total_pubs ?? 0,
     leagueUrl: league.league_url,
-    teams: standingsResult.rows.map((row) => ({
-      teamName: row.team_name,
-      totalPoints: Number(row.total_points),
-      adjustedTotalPoints: Number(row.adjusted_total_points),
-      quizCount: row.quiz_count,
-      lastQuizPoints: row.last_quiz_points === null ? null : Number(row.last_quiz_points),
-      droppedPoints: row.dropped_points.map(Number),
-    })),
+    teams
   }
 }
 
-export const getTeamSummaries = unstable_cache(loadTeamSummaries, ["quiz-results", "team-summaries"], {
-  revalidate: quizResultsCacheSeconds,
-  tags: ["quiz-results"],
-})
+export const getTeamSummaries = unstable_cache(
+  loadTeamSummaries,
+  ["quiz-results", "team-summaries"],
+  {
+    revalidate: quizResultsCacheSeconds,
+    tags: ["quiz-results"]
+  }
+)
 
 export const getTeamResults = unstable_cache(loadTeamResults, ["quiz-results", "team-results"], {
   revalidate: quizResultsCacheSeconds,
-  tags: ["quiz-results"],
+  tags: ["quiz-results"]
 })
 
-export const getLongTermLeagueStandings = unstable_cache(loadLongTermLeagueStandings, ["quiz-results", "long-term-league-standings"], {
-  revalidate: quizResultsCacheSeconds,
-  tags: ["quiz-results"],
-})
+export const getLongTermLeagueStandings = unstable_cache(
+  loadLongTermLeagueStandings,
+  ["quiz-results", "long-term-league-standings"],
+  {
+    revalidate: quizResultsCacheSeconds,
+    tags: ["quiz-results"]
+  }
+)

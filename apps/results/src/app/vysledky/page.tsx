@@ -2,7 +2,13 @@ import { redirect } from "next/navigation"
 
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
-import { getLeagueCuts, getLeagueSortKey, getSortDirection, getTeamSortKey, type ResultView } from "./ResultsShared"
+import {
+  getLeagueCuts,
+  getLeagueSortKey,
+  getSortDirection,
+  getTeamSortKey,
+  type ResultView
+} from "./ResultsShared"
 import { ResultsUnavailable } from "./ResultsUnavailable"
 import { TeamResultsPage } from "./TeamResultsPage"
 
@@ -11,9 +17,18 @@ export const dynamic = "force-dynamic"
 const defaultTeamName = "Slavic Alliance"
 
 const ResultsPage = async ({
-  searchParams,
+  searchParams
 }: {
-  searchParams?: Promise<{ team?: string; page?: string; pageSize?: string; view?: string; sort?: string; dir?: string; cuts?: string }>
+  searchParams?: Promise<{
+    team?: string
+    page?: string
+    pageSize?: string
+    view?: string
+    sort?: string
+    dir?: string
+    cuts?: string
+    rounds?: string
+  }>
 }) => {
   const params = await searchParams
   const activeView: ResultView = params?.view === "league" ? "league" : "team"
@@ -26,8 +41,10 @@ const ResultsPage = async ({
     return <ResultsUnavailable />
   }
 
-  const fallbackTeam = teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
-  const selectedTeam = params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
+  const fallbackTeam =
+    teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
+  const selectedTeam =
+    params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
 
   if (activeView === "league" && params?.team) {
     const canonicalParams = new URLSearchParams({ view: "league" })
@@ -52,6 +69,10 @@ const ResultsPage = async ({
       canonicalParams.set("cuts", params.cuts)
     }
 
+    if (params.rounds) {
+      canonicalParams.set("rounds", params.rounds)
+    }
+
     redirect(`/vysledky?${canonicalParams.toString()}`)
   }
 
@@ -64,6 +85,7 @@ const ResultsPage = async ({
         sort={getLeagueSortKey(params?.sort)}
         direction={getSortDirection(params?.dir, "desc")}
         useCuts={getLeagueCuts(params?.cuts)}
+        selectedRound={params?.rounds}
       />
     )
   }

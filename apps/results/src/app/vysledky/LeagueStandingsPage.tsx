@@ -2,16 +2,20 @@ import Link from "next/link"
 import { ArrowUpRight, ListChecks } from "lucide-react"
 
 import { getLongTermLeagueStandings } from "@/lib/quiz-results"
+import { LeagueRoundSelect } from "./LeagueRoundSelect"
 import { PageSizeSelect } from "./PageSizeSelect"
 import { ResultsUnavailable } from "./ResultsUnavailable"
 import {
   formatDroppedPoints,
+  formatDate,
   formatNumber,
   getLeagueCutsHref,
   getLeaguePaginationHref,
+  getLeagueSelectedRoundCount,
   getLeagueSortHref,
   getLeagueTeamsWithPlacements,
   getVisiblePages,
+  leagueDroppedRounds,
   pageSizeOptions,
   parsePositiveInt,
   type LeagueSortKey,
@@ -21,7 +25,7 @@ import {
   SortHeader,
   sortLeagueTeams,
   TestDataWarning,
-  ViewSwitch,
+  ViewSwitch
 } from "./ResultsShared"
 
 export const LeagueStandingsPage = async ({
@@ -31,6 +35,7 @@ export const LeagueStandingsPage = async ({
   sort,
   direction,
   useCuts,
+  selectedRound
 }: {
   teamName?: string
   page?: string
@@ -38,6 +43,7 @@ export const LeagueStandingsPage = async ({
   sort: LeagueSortKey
   direction: SortDirection
   useCuts: boolean
+  selectedRound?: string
 }) => {
   let standings
 
@@ -54,16 +60,25 @@ export const LeagueStandingsPage = async ({
         <ViewSwitch activeView="league" teamName={teamName} />
         <section className="rounded-lg border border-white/10 bg-white/4.5 p-8">
           <h1 className="text-3xl font-bold text-white">Dlouhodobá soutěž</h1>
-          <p className="mt-3 text-white/65">V tabulce public.quiz_leagues není záznam Finále Praha.</p>
+          <p className="mt-3 text-white/65">
+            V tabulce public.quiz_leagues není záznam Finále Praha.
+          </p>
         </section>
       </div>
     )
   }
 
-  const teamsWithPlacements = getLeagueTeamsWithPlacements(standings.teams, useCuts)
+  const selectedRoundCount = getLeagueSelectedRoundCount(selectedRound, standings.playedRounds)
+  const teamsWithPlacements = getLeagueTeamsWithPlacements(
+    standings.teams,
+    useCuts,
+    selectedRoundCount
+  )
   const sortedTeams = sortLeagueTeams(teamsWithPlacements, sort, direction)
   const requestedPageSize = parsePositiveInt(requestedPageSizeValue, pageSizeOptions[0])
-  const pageSize = pageSizeOptions.includes(requestedPageSize) ? requestedPageSize : pageSizeOptions[0]
+  const pageSize = pageSizeOptions.includes(requestedPageSize)
+    ? requestedPageSize
+    : pageSizeOptions[0]
   const totalResults = standings.teams.length
   const totalPages = Math.max(1, Math.ceil(totalResults / pageSize))
   const currentPage = Math.min(parsePositiveInt(page, 1), totalPages)
@@ -73,21 +88,31 @@ export const LeagueStandingsPage = async ({
   const resultRangeStart = totalResults === 0 ? 0 : pageStartIndex + 1
   const resultRangeEnd = Math.min(pageStartIndex + pageSize, totalResults)
   const leagueYear = new Date(standings.periodStart).getFullYear()
-  const leaguePeriodStart = new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long" }).format(new Date(standings.periodStart))
-  const leaguePeriodStop = new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long" }).format(new Date(standings.periodStop))
+  const leaguePeriodStart = new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "long"
+  }).format(new Date(standings.periodStart))
+  const leaguePeriodStop = new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "long"
+  }).format(new Date(standings.periodStop))
   const sortDescription =
-    sort === "team"
-      ? `Seřazeno podle názvu týmu ${direction === "asc" ? "vzestupně" : "sestupně"}.`
-      : sort === "rounds"
-        ? `Seřazeno podle počtu odehraných kol ${direction === "asc" ? "vzestupně" : "sestupně"}.`
-        : `Seřazeno podle ${useCuts ? "součtu bodů po škrtech" : "součtu bodů"} ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+    sort === "placement"
+      ? `Seřazeno podle pořadí ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+      : sort === "team"
+        ? `Seřazeno podle názvu týmu ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+        : sort === "rounds"
+          ? `Seřazeno podle počtu odehraných kol ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+          : `Seřazeno podle ${useCuts ? "součtu bodů po škrtech" : "součtu bodů"} ${direction === "asc" ? "vzestupně" : "sestupně"}.`
 
   return (
     <div className="space-y-8 font-sans">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <ViewSwitch activeView="league" teamName={teamName} />
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">Dlouhodobá soutěž</h1>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
+            Dlouhodobá soutěž
+          </h1>
           <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
             Jak si stojíme v dlouhodobce u Hospodského kvízu?
           </p>
@@ -112,9 +137,9 @@ export const LeagueStandingsPage = async ({
       </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Týmů v soutěži" value={formatNumber(standings.teams.length)} detail="Počet týmů v dlouhodobé tabulce" />
-        <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} detail="Unikátní hospody v období soutěže" />
-        <StatCard label="Kol" value={formatNumber(standings.totalRounds)} detail="Celkový počet kol soutěže" />
+        <StatCard label="Týmů v soutěži" value={formatNumber(standings.teams.length)} />
+        <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} />
+        <StatCard label="Celkem kol" value={formatNumber(standings.totalRounds)} />
       </section>
 
       <TestDataWarning />
@@ -129,37 +154,109 @@ export const LeagueStandingsPage = async ({
               </div>
               <p className="mt-1 text-sm text-white/58">{sortDescription}</p>
             </div>
-            <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[430px]">
-              <div>
-                <p className="text-sm font-semibold text-white">Škrtání výsledků</p>
-                <p className="mt-1 text-sm text-white/56">Započítává se nejvýše 14 výsledků, další nejhorší se škrtají.</p>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+              <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[230px]">
+                <div>
+                  <p className="text-sm font-semibold text-white">Odehraná kola</p>
+                  {/*<p className="mt-1 text-sm text-white/56">Tabulka po vybraném kole.</p>*/}
+                </div>
+                <LeagueRoundSelect
+                  selectedRoundCount={selectedRoundCount}
+                  playedRounds={standings.playedRounds}
+                />
               </div>
-              <Link
-                href={getLeagueCutsHref(teamName, pageSize, sort, direction, !useCuts)}
-                role="switch"
-                aria-checked={useCuts}
-                className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
-                  useCuts
-                    ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20 hover:bg-sky-100/18"
-                    : "bg-white/5 text-white/62 ring-1 ring-white/10 hover:bg-white/8 hover:text-white"
-                }`}
-              >
-                <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${useCuts ? "bg-sky-300/55" : "bg-white/18"}`} aria-hidden="true">
-                  <span className={`h-4 w-4 rounded-full bg-white transition ${useCuts ? "translate-x-4" : "translate-x-0"}`} />
-                </span>
-                {useCuts ? "Zapnuto" : "Vypnuto"}
-              </Link>
+
+              <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[430px]">
+                <div>
+                  <p className="text-sm font-semibold text-white">Škrtání výsledků</p>
+                  <p className="mt-1 text-sm text-white/56">
+                    Škrtají se {leagueDroppedRounds} nejhorší výsledky
+                  </p>
+                </div>
+                <Link
+                  href={getLeagueCutsHref(
+                    teamName,
+                    pageSize,
+                    sort,
+                    direction,
+                    !useCuts,
+                    selectedRoundCount
+                  )}
+                  role="switch"
+                  aria-checked={useCuts}
+                  className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition ${
+                    useCuts
+                      ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20 hover:bg-sky-100/18"
+                      : "bg-white/5 text-white/62 ring-1 ring-white/10 hover:bg-white/8 hover:text-white"
+                  }`}
+                >
+                  <span
+                    className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${useCuts ? "bg-sky-300/55" : "bg-white/18"}`}
+                    aria-hidden="true"
+                  >
+                    <span
+                      className={`h-4 w-4 rounded-full bg-white transition ${useCuts ? "translate-x-4" : "translate-x-0"}`}
+                    />
+                  </span>
+                  {useCuts ? "Zapnuto" : "Vypnuto"}
+                </Link>
+              </div>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className={`w-full ${useCuts ? "min-w-[552px]" : "min-w-[440px]"} table-fixed text-left text-sm md:min-w-[820px] md:table-auto md:text-base`}>
+            <table
+              className={`w-full ${useCuts ? "min-w-[552px]" : "min-w-[440px]"} table-fixed text-left text-sm md:min-w-[820px] md:table-auto md:text-base`}
+            >
               <thead className="border-b border-white/10 text-xs uppercase text-white/45">
                 <tr>
-                  <th className="w-14 px-1.5 py-3 font-semibold sm:px-2 md:w-28 md:px-5">Pořadí</th>
-                  <th className="px-1.5 py-3 font-semibold sm:px-2 md:px-5" aria-sort={sort === "team" ? (direction === "asc" ? "ascending" : "descending") : undefined}>
+                  <th
+                    className="w-14 px-1.5 py-3 font-semibold sm:px-2 md:w-28 md:px-5"
+                    aria-sort={
+                      sort === "placement"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                  >
                     <SortHeader
-                      href={getLeagueSortHref(teamName, "team", sort, direction, pageSize, useCuts, "asc")}
+                      href={getLeagueSortHref(
+                        teamName,
+                        "placement",
+                        sort,
+                        direction,
+                        pageSize,
+                        useCuts,
+                        selectedRoundCount,
+                        "asc"
+                      )}
+                      label="Pořadí"
+                      isActive={sort === "placement"}
+                      direction={direction}
+                    />
+                  </th>
+                  <th
+                    className="px-1.5 py-3 font-semibold sm:px-2 md:px-5"
+                    aria-sort={
+                      sort === "team"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                  >
+                    <SortHeader
+                      href={getLeagueSortHref(
+                        teamName,
+                        "team",
+                        sort,
+                        direction,
+                        pageSize,
+                        useCuts,
+                        selectedRoundCount,
+                        "asc"
+                      )}
                       label="Tým"
                       isActive={sort === "team"}
                       direction={direction}
@@ -167,14 +264,31 @@ export const LeagueStandingsPage = async ({
                   </th>
                   <th
                     className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-36 md:px-5"
-                    aria-sort={sort === "points" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "points"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getLeagueSortHref(teamName, "points", sort, direction, pageSize, useCuts, "desc")}
+                      href={getLeagueSortHref(
+                        teamName,
+                        "points",
+                        sort,
+                        direction,
+                        pageSize,
+                        useCuts,
+                        selectedRoundCount,
+                        "desc"
+                      )}
                       label={
                         <>
                           <span className="md:hidden">Body</span>
-                          <span className="hidden md:inline">{useCuts ? "Body po škrtech" : "Body"}</span>
+                          <span className="hidden md:inline">
+                            {useCuts ? "Body po škrtech" : "Body"}
+                          </span>
                         </>
                       }
                       align="right"
@@ -194,10 +308,25 @@ export const LeagueStandingsPage = async ({
                   ) : null}
                   <th
                     className="w-20 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-44 md:px-5"
-                    aria-sort={sort === "rounds" ? (direction === "asc" ? "ascending" : "descending") : undefined}
+                    aria-sort={
+                      sort === "rounds"
+                        ? direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
                   >
                     <SortHeader
-                      href={getLeagueSortHref(teamName, "rounds", sort, direction, pageSize, useCuts, "desc")}
+                      href={getLeagueSortHref(
+                        teamName,
+                        "rounds",
+                        sort,
+                        direction,
+                        pageSize,
+                        useCuts,
+                        selectedRoundCount,
+                        "desc"
+                      )}
                       label={
                         <>
                           <span className="md:hidden">Kola</span>
@@ -219,13 +348,30 @@ export const LeagueStandingsPage = async ({
                         <Placement place={team.placement} />
                       </div>
                     </td>
-                    <td className="min-w-0 truncate px-1.5 py-2.5 font-semibold text-white sm:px-2 md:px-5 md:py-3">{team.teamName}</td>
-                    <td className="px-1.5 py-2.5 text-right text-base font-bold text-white sm:px-2 md:px-5 md:py-3 md:text-lg">{formatNumber(team.displayPoints)}</td>
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-5 md:py-3">{formatNumber(team.lastQuizPoints)}</td>
+                    <td className="min-w-0 truncate px-1.5 py-2.5 font-semibold text-white sm:px-2 md:px-5 md:py-3">
+                      {team.teamName}
+                    </td>
+                    <td className="px-1.5 py-2.5 text-right text-base font-bold text-white sm:px-2 md:px-5 md:py-3 md:text-lg">
+                      {formatNumber(team.displayPoints)}
+                    </td>
+                    <td
+                      className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-5 md:py-3"
+                      title={
+                        team.displayLastQuizDate
+                          ? `Kvíz hrán: ${formatDate(team.displayLastQuizDate)}`
+                          : undefined
+                      }
+                    >
+                      {formatNumber(team.displayLastQuizPoints)}
+                    </td>
                     {useCuts ? (
-                      <td className="whitespace-nowrap px-2 py-2.5 text-right font-semibold text-white/76 md:px-5 md:py-3">{formatDroppedPoints(team.droppedPoints)}</td>
+                      <td className="whitespace-nowrap px-2 py-2.5 text-right font-semibold text-white/76 md:px-5 md:py-3">
+                        {formatDroppedPoints(team.droppedPoints)}
+                      </td>
                     ) : null}
-                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-5 md:py-3">{team.displayQuizCount}</td>
+                    <td className="px-1.5 py-2.5 text-right font-semibold text-white/76 sm:px-2 md:px-5 md:py-3">
+                      {team.displayQuizCount}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -242,10 +388,20 @@ export const LeagueStandingsPage = async ({
 
               <nav className="flex items-center gap-1" aria-label="Stránkování výsledků">
                 <Link
-                  href={getLeaguePaginationHref(teamName, Math.max(1, currentPage - 1), pageSize, useCuts, sort, direction)}
+                  href={getLeaguePaginationHref(
+                    teamName,
+                    Math.max(1, currentPage - 1),
+                    pageSize,
+                    useCuts,
+                    selectedRoundCount,
+                    sort,
+                    direction
+                  )}
                   aria-disabled={currentPage === 1}
                   className={`inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium transition ${
-                    currentPage === 1 ? "pointer-events-none text-white/28" : "text-white/68 hover:bg-white/7 hover:text-white"
+                    currentPage === 1
+                      ? "pointer-events-none text-white/28"
+                      : "text-white/68 hover:bg-white/7 hover:text-white"
                   }`}
                 >
                   Předchozí
@@ -254,10 +410,20 @@ export const LeagueStandingsPage = async ({
                 {visiblePages.map((page) => (
                   <Link
                     key={page}
-                    href={getLeaguePaginationHref(teamName, page, pageSize, useCuts, sort, direction)}
+                    href={getLeaguePaginationHref(
+                      teamName,
+                      page,
+                      pageSize,
+                      useCuts,
+                      selectedRoundCount,
+                      sort,
+                      direction
+                    )}
                     aria-current={page === currentPage ? "page" : undefined}
                     className={`inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold transition ${
-                      page === currentPage ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20" : "text-white/58 hover:bg-white/7 hover:text-white"
+                      page === currentPage
+                        ? "bg-sky-100/14 text-white ring-1 ring-sky-100/20"
+                        : "text-white/58 hover:bg-white/7 hover:text-white"
                     }`}
                   >
                     {page}
@@ -265,10 +431,20 @@ export const LeagueStandingsPage = async ({
                 ))}
 
                 <Link
-                  href={getLeaguePaginationHref(teamName, Math.min(totalPages, currentPage + 1), pageSize, useCuts, sort, direction)}
+                  href={getLeaguePaginationHref(
+                    teamName,
+                    Math.min(totalPages, currentPage + 1),
+                    pageSize,
+                    useCuts,
+                    selectedRoundCount,
+                    sort,
+                    direction
+                  )}
                   aria-disabled={currentPage === totalPages}
                   className={`inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium transition ${
-                    currentPage === totalPages ? "pointer-events-none text-white/28" : "text-white/68 hover:bg-white/7 hover:text-white"
+                    currentPage === totalPages
+                      ? "pointer-events-none text-white/28"
+                      : "text-white/68 hover:bg-white/7 hover:text-white"
                   }`}
                 >
                   Další
