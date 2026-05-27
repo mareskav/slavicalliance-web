@@ -116,9 +116,6 @@ export const LeagueStandingsPage = async ({
           <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
             Jak si stojíme v dlouhodobce u Hospodského kvízu?
           </p>
-          <p className="mt-2 max-w-3xl text-base font-semibold leading-6 text-white/72 sm:text-lg">
-            {standings.leagueName} {leagueYear}: {leaguePeriodStart} - {leaguePeriodStop}
-          </p>
         </div>
 
         <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:min-w-40 lg:items-end">
@@ -136,10 +133,14 @@ export const LeagueStandingsPage = async ({
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard
+          label={`${standings.leagueName} ${leagueYear}`}
+          value={`${leaguePeriodStart} - ${leaguePeriodStop}`}
+        />
+        <StatCard label="Celkem kol" value={formatNumber(standings.totalRounds)} />
         <StatCard label="Týmů v soutěži" value={formatNumber(standings.teams.length)} />
         <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} />
-        <StatCard label="Celkem kol" value={formatNumber(standings.totalRounds)} />
       </section>
 
       <TestDataWarning />

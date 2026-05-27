@@ -106,9 +106,17 @@ export const TeamResultsPage = ({
       </section>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Odehráno" value={`${selectedSummary.quizCount} kvízů`} />
+        <StatCard
+          label="Odehráno"
+          value={`${selectedSummary.quizCount} kvízů`}
+          detail={`${formatDate(selectedSummary.firstDate)} - ${formatDate(selectedSummary.lastDate)}`}
+        />
         <StatCard label="Průměr bodů" value={formatNumber(selectedSummary.averagePoints)} />
-        <StatCard label="Nejlepší výsledek" value={formatNumber(selectedSummary.bestPoints)} />
+        <StatCard
+          label="Nejlepší výsledek"
+          value={formatNumber(selectedSummary.bestPoints)}
+          detail={`Nejlepší umístění: ${selectedSummary.bestPlace}. místo`}
+        />
         <StatCard label="Celkový počet bodů" value={formatNumber(totalPoints)} />
       </section>
 
