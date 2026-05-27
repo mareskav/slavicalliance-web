@@ -89,7 +89,7 @@ export const TeamResultsPage = ({
 
   return (
     <div className="space-y-10 font-sans">
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-8">
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-8 xl:grid-cols-[minmax(0,1fr)_480px]">
         <div className="order-2 lg:order-1">
           <ViewSwitch activeView="team" teamName={selectedSummary.teamName} />
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
