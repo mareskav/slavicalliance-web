@@ -35,7 +35,7 @@ export const SlavicAllianceHeader = ({
   const navItems: NavItem[] = [
     { id: "home", href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
     { id: "results", href: resultsHref, label: "Výsledky", icon: BarChart3 },
-    // { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays }
+    { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays }
   ]
 
   return (

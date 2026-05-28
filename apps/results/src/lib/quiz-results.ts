@@ -35,6 +35,7 @@ export type LeagueStandings = {
   playedRounds: number
   totalPubs: number
   leagueUrl: string | null
+  lastResultDate: string | null
   teams: LeagueStandingTeam[]
 }
 
@@ -265,14 +266,19 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
     [league.period_start, league.period_stop]
   )
 
-  const pubsResult = await getPool().query<{ total_pubs: number }>(
-    `
-      select count(distinct nullif(trim(pub), ''))::int as total_pubs
-      from public.quiz_results
-      where quiz_date between $1 and $2
-    `,
-    [league.period_start, league.period_stop]
-  )
+  const [pubsResult, lastResultResult] = await Promise.all([
+    getPool().query<{ total_pubs: number }>(
+      `
+        select count(distinct nullif(trim(pub), ''))::int as total_pubs
+        from public.quiz_results
+        where quiz_date between $1 and $2
+      `,
+      [league.period_start, league.period_stop]
+    ),
+    getPool().query<{ last_result_date: Date | null }>(
+      `select max(updated_at) as last_result_date from public.quiz_results`
+    )
+  ])
 
   const teams = standingsResult.rows.map((row) => ({
     teamName: row.team_name,
@@ -282,6 +288,10 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       date: new Date(result.date).toISOString()
     }))
   }))
+
+  const lastResultDate = lastResultResult.rows[0]?.last_result_date
+    ? lastResultResult.rows[0].last_result_date.toISOString()
+    : null
 
   return {
     leagueName: league.league_name,
@@ -297,6 +307,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
     ),
     totalPubs: pubsResult.rows[0]?.total_pubs ?? 0,
     leagueUrl: league.league_url,
+    lastResultDate,
     teams
   }
 }

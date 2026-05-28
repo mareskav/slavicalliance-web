@@ -105,7 +105,7 @@ export const TopTeamsList = ({ teams }: Props) => {
         <div className="flex items-baseline gap-3">
           <h2 className="text-2xl font-bold text-white">Top 10 dlouhodobky</h2>
           <span className="hidden text-xs font-semibold text-white/45 sm:inline">
-            Finále Praha — kdy hraje příště
+            Finále Praha — kdy se hraje příště
           </span>
         </div>
 

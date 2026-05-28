@@ -156,6 +156,19 @@ export const LeagueStandingsPage = async ({
                 <h2 className="text-2xl font-bold text-white">Pořadí týmů</h2>
               </div>
               <p className="mt-1 text-sm text-white/58">{sortDescription}</p>
+              {standings.lastResultDate ? (
+                <p className="mt-1 text-sm text-white/40">
+                  Data aktualizována{" "}
+                  {new Intl.DateTimeFormat("cs-CZ", {
+                    day: "numeric",
+                    month: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  }).format(new Date(standings.lastResultDate))}
+                  .
+                </p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
               <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[230px]">
