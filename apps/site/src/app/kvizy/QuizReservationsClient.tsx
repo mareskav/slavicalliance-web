@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { addWeeks, endOfWeek, format, startOfWeek } from "date-fns"
-import { cs } from "date-fns/locale"
 
 import type { QuizPubReservation, TopTeamNextReservation } from "@/lib/quiz-reservations"
 import { TeamReservationLookup, type TeamReservationOption } from "./TeamReservationLookup"
@@ -13,7 +12,13 @@ const weekStartsOn = 1 as const
 const toIsoDate = (date: Date) => format(date, "yyyy-MM-dd")
 
 const formatScrapedAt = (value: string) =>
-  format(new Date(value), "d. M. yyyy HH:mm", { locale: cs })
+  new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value))
 
 const countTeamsInRange = (reservations: QuizPubReservation[], startIso: string, endIso: string) =>
   new Set(
@@ -120,7 +125,7 @@ export const QuizReservationsClient = () => {
     <div className="space-y-10">
       <div className="grid grid-cols-2 gap-3">
         {latestScrape ? (
-          <p className="col-span-2 text-sm font-medium text-white/42">
+          <p className="col-span-2 text-sm text-white/40">
             Data aktualizována {formatScrapedAt(latestScrape)}.
           </p>
         ) : null}
