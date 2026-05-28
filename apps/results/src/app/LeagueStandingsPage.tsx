@@ -128,7 +128,6 @@ export const LeagueStandingsPage = async ({
                 hour: "2-digit",
                 minute: "2-digit"
               }).format(new Date(standings.lastResultDate))}
-              .
             </p>
           ) : null}
         </div>

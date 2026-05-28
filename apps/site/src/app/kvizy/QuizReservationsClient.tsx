@@ -82,7 +82,9 @@ export const QuizReservationsClient = () => {
           topTeams: TopTeamNextReservation[]
         }>
       })
-      .then((data) => setState({ status: "ok", reservations: data.reservations, topTeams: data.topTeams }))
+      .then((data) =>
+        setState({ status: "ok", reservations: data.reservations, topTeams: data.topTeams })
+      )
       .catch(() => setState({ status: "error" }))
 
     return () => controller.abort()
@@ -126,7 +128,7 @@ export const QuizReservationsClient = () => {
       <div className="grid grid-cols-2 gap-3">
         {latestScrape ? (
           <p className="col-span-2 text-sm text-white/40">
-            Data aktualizována {formatScrapedAt(latestScrape)}.
+            Data aktualizována {formatScrapedAt(latestScrape)}
           </p>
         ) : null}
         <Stat label="Týmů tento týden" value={String(thisWeekTeamCount)} />
