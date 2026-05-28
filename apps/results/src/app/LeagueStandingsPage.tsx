@@ -191,7 +191,8 @@ export const LeagueStandingsPage = async ({
                         sort,
                         direction,
                         option,
-                        selectedRoundCount
+                        selectedRoundCount,
+                        currentPage
                       )}
                       scroll={false}
                       aria-current={option === cutCount ? "true" : undefined}

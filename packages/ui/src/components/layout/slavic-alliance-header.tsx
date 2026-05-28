@@ -30,12 +30,12 @@ export const SlavicAllianceHeader = ({
   siteHref = "/",
   resultsHref = "/vysledky",
   logoSrc,
-  activeItem,
+  activeItem
 }: SlavicAllianceHeaderProps) => {
   const navItems: NavItem[] = [
     { id: "home", href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
-    // { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays },
     { id: "results", href: resultsHref, label: "Výsledky", icon: BarChart3 },
+    { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays }
   ]
 
   return (
@@ -43,7 +43,10 @@ export const SlavicAllianceHeader = ({
       <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-sky-200/20 to-transparent" />
 
       <div className="relative mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6 md:h-18 md:flex-row md:items-center md:py-0 lg:px-8">
-        <a href={joinUrl(siteHref, "/")} className="w-fit min-w-0 transition-transform hover:scale-[1.01]">
+        <a
+          href={joinUrl(siteHref, "/")}
+          className="w-fit min-w-0 transition-transform hover:scale-[1.01]"
+        >
           <TeamMark logoSrc={logoSrc} />
         </a>
 
@@ -59,10 +62,14 @@ export const SlavicAllianceHeader = ({
                 variant="ghost"
                 className={cn(
                   "h-10 rounded-xl px-4 text-sm text-white/75 hover:bg-sky-100/10 hover:text-white",
-                  isActive && "bg-sky-100/12 text-white ring-1 ring-sky-100/20",
+                  isActive && "bg-sky-100/12 text-white ring-1 ring-sky-100/20"
                 )}
               >
-                <a href={item.href} className="flex items-center gap-2" aria-current={isActive ? "page" : undefined}>
+                <a
+                  href={item.href}
+                  className="flex items-center gap-2"
+                  aria-current={isActive ? "page" : undefined}
+                >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </a>
@@ -83,10 +90,14 @@ export const SlavicAllianceHeader = ({
                 variant="ghost"
                 className={cn(
                   "h-10 min-w-0 rounded-lg px-2 text-white/78 hover:bg-sky-100/10 hover:text-white",
-                  isActive && "bg-sky-100/12 text-white ring-1 ring-sky-100/20",
+                  isActive && "bg-sky-100/12 text-white ring-1 ring-sky-100/20"
                 )}
               >
-                <a href={item.href} className="flex min-w-0 items-center gap-1.5 text-xs" aria-current={isActive ? "page" : undefined}>
+                <a
+                  href={item.href}
+                  className="flex min-w-0 items-center gap-1.5 text-xs"
+                  aria-current={isActive ? "page" : undefined}
+                >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </a>
