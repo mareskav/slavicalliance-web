@@ -134,11 +134,12 @@ export const getLeagueCutsHref = (
   sort: LeagueSortKey,
   direction: SortDirection,
   cutCount: LeagueCutCount,
-  selectedRoundCount: number
+  selectedRoundCount: number,
+  page: number
 ) => {
   const params = new URLSearchParams({
     view: "league",
-    page: "1",
+    page: String(page),
     pageSize: String(pageSize),
     sort,
     dir: direction

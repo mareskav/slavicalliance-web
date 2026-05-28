@@ -1,0 +1,44 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "apps/site/public/uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "pages"
+    label: "Stránky"
+    files:
+      - name: "landing"
+        label: "Landing page"
+        file: "apps/site/contents/pages/landing.md"
+        fields:
+          - { label: "Titulek", name: "title", widget: "string" }
+          - label: "Obsah"
+            name: "body"
+            widget: "markdown"
+            default_mode: "rich_text"
+            modes: ["rich_text", "raw"]
+            buttons:
+              - bold
+              - italic
+              - code
+              - link
+              - heading-one
+              - heading-two
+              - quote
+              - bulleted-list
+              - numbered-list
+
+  - name: "posts"
+    label: "Články"
+    folder: "apps/site/contents/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Titulek", name: "title", widget: "string" }
+      - { label: "Datum", name: "date", widget: "datetime" }
+      - { label: "Perex", name: "excerpt", widget: "text", required: false }
+      - { label: "Tagy", name: "tags", widget: "list", required: false }
+      - { label: "Cover obrázek", name: "cover", widget: "image", required: false }
+      - { label: "Obsah", name: "body", widget: "markdown" }

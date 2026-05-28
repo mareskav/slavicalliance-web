@@ -49,6 +49,12 @@ const localEnv = {
   ...process.env,
 }
 
+for (const [key, value] of Object.entries(localEnv)) {
+  if (value && process.env[key] === undefined) {
+    process.env[key] = value
+  }
+}
+
 const json = (response, payload, init = {}) => {
   const body = JSON.stringify(payload)
 
