@@ -204,7 +204,7 @@ const getQuizPool = () => {
 }
 
 const handleLocalApi = async (request, response, pathname) => {
-  if (request.method === "GET" && pathname === "/api/quiz-reservations") {
+  if (request.method === "GET" && pathname === "/vysledky/api/quiz-reservations") {
     const pool = getQuizPool()
     if (!pool) {
       json(response, { error: "DATABASE_URL is not configured." }, { status: 503 })

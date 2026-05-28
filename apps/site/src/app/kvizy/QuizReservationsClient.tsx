@@ -74,7 +74,7 @@ export const QuizReservationsClient = () => {
   useEffect(() => {
     const controller = new AbortController()
 
-    fetch("/api/quiz-reservations", { signal: controller.signal })
+    fetch("/vysledky/api/quiz-reservations", { signal: controller.signal, cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json() as Promise<{
@@ -85,7 +85,10 @@ export const QuizReservationsClient = () => {
       .then((data) =>
         setState({ status: "ok", reservations: data.reservations, topTeams: data.topTeams })
       )
-      .catch(() => setState({ status: "error" }))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return
+        setState({ status: "error" })
+      })
 
     return () => controller.abort()
   }, [])
