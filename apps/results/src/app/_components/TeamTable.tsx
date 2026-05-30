@@ -23,11 +23,11 @@ export const TeamTable = ({
   pageSize: number
 }) => (
   <div className="overflow-x-auto">
-    <table className="w-full min-w-[730px] table-fixed text-left text-sm md:min-w-[1120px] md:text-base xl:min-w-full">
+    <table className="w-full min-w-182.5 table-fixed text-left text-sm md:min-w-280 md:text-base xl:min-w-full">
       <thead className="border-b border-white/10 text-xs uppercase text-white/45">
         <tr>
           <th
-            className="w-[72px] px-1.5 py-3 font-semibold sm:px-2 md:w-[72px] md:px-2"
+            className="w-18 px-1.5 py-3 font-semibold sm:px-2 md:w-18 md:px-2"
             aria-sort={sort === "place" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
             <SortHeader
@@ -87,7 +87,7 @@ export const TeamTable = ({
             />
           </th>
           <th
-            className="w-[230px] px-1.5 py-3 font-semibold sm:w-[260px] sm:px-2 md:w-auto md:px-3"
+            className="w-57.5 px-1.5 py-3 font-semibold sm:w-65 sm:px-2 md:w-auto md:px-3"
             aria-sort={sort === "pub" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
             <SortHeader
@@ -111,7 +111,7 @@ export const TeamTable = ({
             />
           </th>
           <th
-            className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-[72px] md:px-2"
+            className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-18 md:px-2"
             aria-sort={sort === "members" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
             <SortHeader
@@ -130,8 +130,8 @@ export const TeamTable = ({
       <tbody className="divide-y divide-white/8">
         {results.map((result) => (
           <tr key={result.id} className="transition hover:bg-white/4">
-            <td className="px-1.5 py-2.5 sm:px-2 md:px-2 md:py-3">
-              <div className="flex items-center gap-2 text-white">
+            <td className="px-2 py-2.5 sm:px-2 md:px-2 md:py-3">
+              <div className="flex items-center gap-1 text-white">
                 <Placement place={result.orderInQuiz} />
               </div>
             </td>
