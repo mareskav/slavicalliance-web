@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Check, ChevronDown, Loader2, Search, Users } from "lucide-react"
+import { Check, ChevronDown, Loader2, Search, Users, X } from "lucide-react"
 import { KeyboardEvent, useEffect, useMemo, useRef, useState, useTransition } from "react"
 
 type TeamSelectOption = {
@@ -130,8 +130,9 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
           autoComplete="off"
           value={query}
           disabled={isPending}
-          onFocus={() => {
+          onFocus={(event) => {
             setIsOpen(true)
+            event.target.select()
           }}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -141,8 +142,26 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
           className="h-10 w-full rounded-lg border border-white/10 bg-slate-950/55 px-9 pr-10 text-sm font-semibold text-white outline-none transition placeholder:text-white/34 hover:border-sky-200/25 focus:border-sky-200/45 focus:ring-3 focus:ring-sky-200/15 disabled:cursor-wait disabled:opacity-70"
         />
 
-        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/54">
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronDown className="h-4 w-4" />}
+        <div className="absolute inset-y-0 right-3 flex items-center text-white/54">
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : query ? (
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                setQuery("")
+                setIsOpen(true)
+                inputRef.current?.focus()
+              }}
+              className="transition hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : (
+            <ChevronDown className="h-4 w-4 pointer-events-none" />
+          )}
         </div>
 
         {isOpen ? (

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, Search, Users } from "lucide-react"
+import { ChevronDown, Search, Users, X } from "lucide-react"
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react"
 import { format, isToday, isTomorrow, parseISO } from "date-fns"
 import { cs } from "date-fns/locale"
@@ -154,8 +154,9 @@ export const TeamReservationLookup = ({ teams }: Props) => {
             autoComplete="off"
             placeholder="Začni psát název týmu..."
             value={query}
-            onFocus={() => {
+            onFocus={(event) => {
               setIsOpen(true)
+              event.target.select()
             }}
             onChange={(event) => {
               setQuery(event.target.value)
@@ -166,8 +167,24 @@ export const TeamReservationLookup = ({ teams }: Props) => {
             className="h-10 w-full rounded-lg border border-white/10 bg-slate-950/55 px-9 pr-10 text-sm font-semibold text-white outline-none transition placeholder:text-white/34 hover:border-sky-200/25 focus:border-sky-200/45 focus:ring-3 focus:ring-sky-200/15"
           />
 
-          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/54">
-            <ChevronDown className="h-4 w-4" />
+          <div className="absolute inset-y-0 right-3 flex items-center text-white/54">
+            {query ? (
+              <button
+                type="button"
+                tabIndex={-1}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  setQuery("")
+                  setIsOpen(true)
+                  inputRef.current?.focus()
+                }}
+                className="transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <ChevronDown className="h-4 w-4 pointer-events-none" />
+            )}
           </div>
 
           {isOpen ? (
