@@ -101,6 +101,61 @@ Vytvoří tabulku `public.push_subscriptions`:
 
 ---
 
+## Automatické push notifikace (cron)
+
+GitHub Actions workflow `.github/workflows/push-notify.yml` volá každých 10 minut:
+
+```
+POST /vysledky/api/push/notify
+Authorization: Bearer <CRON_SECRET>
+```
+
+Endpoint (`apps/results/src/lib/push-notify.ts`) porovná aktuální DB stav se snapshoty a odešle
+push jen pokud se něco změnilo:
+
+| Událost | Snapshot klíč | Obsah notifikace |
+|---|---|---|
+| Změna top 10 v Dlouhodobé soutěži | `league_top10` | Pořadí 1.–3. týmu s body |
+| Změna rezervací top 10 týmů | `reservations_top10` | Jméno týmu + hospoda + datum |
+
+Snapshoty jsou uloženy v `public.push_notification_snapshots` (migrace 002).
+
+### První spuštění
+
+Migrace 002 vloží prázdné (`''`) snapshot hodnoty. První cron run uloží aktuální stav bez odeslání
+notifikace. Od druhého spuštění se porovnává a notifikace jdou ven jen při změně.
+
+### Nastavení `CRON_SECRET`
+
+```bash
+# Vygeneruj bezpečný secret
+openssl rand -hex 32
+
+# Přidej do GitHub secrets repozitáře jako CRON_SECRET
+# Přidej do Cloudflare Worker secrets:
+wrangler secret put CRON_SECRET --name slavicalliance-results
+```
+
+### Ruční spuštění cron jobu
+
+V GitHub Actions → Push notify → Run workflow.
+
+Nebo přímo:
+```bash
+curl -X POST https://slavicalliance.cz/vysledky/api/push/notify \
+  -H "Authorization: Bearer <CRON_SECRET>"
+```
+
+Odpověď ukazuje co se změnilo a kolik pushů bylo odesláno:
+```json
+{
+  "leagueChanged": true,
+  "reservationsChanged": false,
+  "leaguePush": { "sent": 5, "expired": 1, "failed": 0 },
+  "reservationsPush": null
+}
+```
+
 ## Test push notifikace
 
 ### Možnost A – Node.js script (přímý přístup na DB)

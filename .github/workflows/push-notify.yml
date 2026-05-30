@@ -1,0 +1,44 @@
+name: Push notify
+
+on:
+  schedule:
+    # Every 10 minutes. GitHub Actions cron may be delayed up to ~30 min during peak times.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — only print what would be sent, do not actually push'
+        type: boolean
+        default: false
+
+jobs:
+  notify:
+    name: Check for changes and notify
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: none
+
+    steps:
+      - name: Validate secret
+        run: |
+          test -n "${{ secrets.CRON_SECRET }}" \
+            || (echo "Missing GitHub secret: CRON_SECRET" && exit 1)
+
+      - name: Call notify endpoint
+        id: notify
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "https://slavicalliance.cz/vysledky/api/push/notify")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Notify endpoint returned $HTTP_CODE" && exit 1
+          fi
