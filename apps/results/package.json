@@ -20,7 +20,8 @@
     "next": "16.2.6",
     "pg": "^8.21.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",
@@ -28,6 +29,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4.3.0",

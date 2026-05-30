@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 
 import "./globals.css"
 import { AppChrome } from "@/components/layout/AppChrome"
@@ -7,6 +7,10 @@ const siteUrl = "https://slavicalliance.cz"
 const siteDescription =
   "Slavic Alliance je kvízový tým s úspěchy v pražských ligách, finále Hospodského kvízu i celostátních soutěžích."
 
+export const viewport: Viewport = {
+  themeColor: "#08111b"
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -14,6 +18,12 @@ export const metadata: Metadata = {
     template: "%s | Slavic Alliance"
   },
   description: siteDescription,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Slavic Alliance"
+  },
   alternates: {
     canonical: "/"
   },
@@ -51,7 +61,11 @@ export const metadata: Metadata = {
     images: ["/icon.png"]
   },
   icons: {
-    icon: "/icon.png"
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: "/apple-touch-icon.png"
   }
 }
 
