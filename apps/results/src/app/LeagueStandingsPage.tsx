@@ -181,12 +181,12 @@ export const LeagueStandingsPage = async ({
                 />
               </div>
 
-              <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[430px]">
+              <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:min-w-[460px]">
                 <div>
                   <p className="text-sm font-semibold text-white">Škrtání výsledků</p>
                   <p className="mt-1 text-sm text-white/56">
                     {useCuts
-                      ? `Škrtá se ${cutCount === 1 ? "1 nejhorší výsledek" : "2 nejhorší výsledky"}`
+                      ? `Škrtá se ${cutCount === 1 ? "1 nejhorší výsledek" : `${cutCount} nejhorší výsledky`}`
                       : "Počítají se všechny výsledky"}
                   </p>
                 </div>
@@ -319,7 +319,7 @@ export const LeagueStandingsPage = async ({
                     <span className="hidden md:inline">Poslední kvíz</span>
                   </th>
                   {useCuts ? (
-                    <th className="w-28 px-2 py-3 text-right font-semibold md:w-36 md:px-5">
+                    <th className="w-28 px-2 py-3 text-right font-semibold md:w-44 md:px-5">
                       <span className="md:hidden">Škrt.</span>
                       <span className="hidden md:inline">Škrtnuto</span>
                     </th>

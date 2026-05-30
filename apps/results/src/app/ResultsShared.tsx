@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Trophy, Users } from "l
 import type { LeagueStandingTeam, QuizResult } from "@/lib/quiz-results"
 
 export const pageSizeOptions = [20, 50, 100]
-export const leagueCutOptions = [0, 1, 2] as const
+export const leagueCutOptions = [0, 1, 2, 3] as const
 export const defaultLeagueCutCount = 2
 export type LeagueCutCount = (typeof leagueCutOptions)[number]
 
