@@ -1,15 +1,10 @@
 import { redirect } from "next/navigation"
 
 import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
+import { getLeagueCutCount, getLeagueSortKey, getSortDirection, getTeamSortKey } from "./_lib/navigation"
+import type { ResultView } from "./_lib/types"
+import { ResultsUnavailable } from "./_components/ResultsUnavailable"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
-import {
-  getLeagueCutCount,
-  getLeagueSortKey,
-  getSortDirection,
-  getTeamSortKey,
-  type ResultView
-} from "./ResultsShared"
-import { ResultsUnavailable } from "./ResultsUnavailable"
 import { TeamResultsPage } from "./TeamResultsPage"
 
 export const dynamic = "force-dynamic"

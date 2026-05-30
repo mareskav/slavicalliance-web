@@ -2,26 +2,17 @@ import Link from "next/link"
 import { ArrowUpRight, ListChecks, MapPin, Star } from "lucide-react"
 
 import type { QuizResult, TeamSummary } from "@/lib/quiz-results"
-import { PageSizeSelect } from "./PageSizeSelect"
-import {
-  formatCompactDate,
-  formatDate,
-  formatNumber,
-  getPaginationHref,
-  getTeamSortHref,
-  getVisiblePages,
-  pageSizeOptions,
-  parsePositiveInt,
-  Placement,
-  type SortDirection,
-  SortHeader,
-  sortTeamResults,
-  StatCard,
-  TestDataWarning,
-  type TeamSortKey,
-  ViewSwitch
-} from "./ResultsShared"
-import { TeamSelect } from "./TeamSelect"
+import { pageSizeOptions } from "./_lib/constants"
+import { formatCompactDate, formatDate, formatNumber, parsePositiveInt } from "./_lib/formatters"
+import { getPaginationHref, getTeamSortHref, getVisiblePages } from "./_lib/navigation"
+import { sortTeamResults } from "./_lib/sort"
+import type { SortDirection, TeamSortKey } from "./_lib/types"
+import { PageSizeSelect } from "./_components/PageSizeSelect"
+import { Placement } from "./_components/Placement"
+import { SortHeader } from "./_components/SortHeader"
+import { StatCard } from "./_components/StatCard"
+import { TeamSelect } from "./_components/TeamSelect"
+import { ViewSwitch } from "./_components/ViewSwitch"
 
 const hasTip56Question = (value: string | null) => value === "1"
 

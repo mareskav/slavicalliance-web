@@ -2,32 +2,25 @@ import Link from "next/link"
 import { ArrowUpRight, ListChecks } from "lucide-react"
 
 import { getLongTermLeagueStandings } from "@/lib/quiz-results"
-import { LeagueRoundSelect } from "./LeagueRoundSelect"
-import { PageSizeSelect } from "./PageSizeSelect"
-import { ResultsUnavailable } from "./ResultsUnavailable"
+import { leagueCutOptions, pageSizeOptions, type LeagueCutCount } from "./_lib/constants"
+import { formatDate, formatDroppedPoints, formatNumber, parsePositiveInt } from "./_lib/formatters"
+import { getLeagueTeamsWithPlacements } from "./_lib/league"
 import {
-  formatDroppedPoints,
-  formatDate,
-  formatNumber,
   getLeagueCutsHref,
   getLeaguePaginationHref,
   getLeagueSelectedRoundCount,
   getLeagueSortHref,
-  getLeagueTeamsWithPlacements,
-  getVisiblePages,
-  leagueCutOptions,
-  pageSizeOptions,
-  parsePositiveInt,
-  type LeagueCutCount,
-  type LeagueSortKey,
-  Placement,
-  type SortDirection,
-  StatCard,
-  SortHeader,
-  sortLeagueTeams,
-  TestDataWarning,
-  ViewSwitch
-} from "./ResultsShared"
+  getVisiblePages
+} from "./_lib/navigation"
+import { sortLeagueTeams } from "./_lib/sort"
+import type { LeagueSortKey, SortDirection } from "./_lib/types"
+import { LeagueRoundSelect } from "./_components/LeagueRoundSelect"
+import { PageSizeSelect } from "./_components/PageSizeSelect"
+import { Placement } from "./_components/Placement"
+import { ResultsUnavailable } from "./_components/ResultsUnavailable"
+import { SortHeader } from "./_components/SortHeader"
+import { StatCard } from "./_components/StatCard"
+import { ViewSwitch } from "./_components/ViewSwitch"
 
 export const LeagueStandingsPage = async ({
   teamName,

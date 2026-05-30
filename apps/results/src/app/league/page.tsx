@@ -1,5 +1,5 @@
 import { LeagueStandingsPage } from "../LeagueStandingsPage"
-import { getLeagueCutCount, getLeagueSortKey, getSortDirection } from "../ResultsShared"
+import { getLeagueCutCount, getLeagueSortKey, getSortDirection } from "../_lib/navigation"
 
 export const dynamic = "force-dynamic"
 

@@ -1,0 +1,83 @@
+import type { LeagueStandingTeam } from "@/lib/quiz-results"
+import type { LeagueCutCount } from "./constants"
+import type { LeagueStandingDisplayTeam } from "./types"
+
+const getDroppedPoints = (
+  team: LeagueStandingTeam,
+  cutCount: LeagueCutCount,
+  selectedRoundCount: number
+) => {
+  if (cutCount === 0) {
+    return []
+  }
+  return team.leagueResults
+    .filter((result) => result.round <= selectedRoundCount)
+    .map((result) => result.points)
+    .sort((a, b) => a - b)
+    .slice(0, cutCount)
+}
+
+const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
+  return team.leagueResults.filter((result) => result.round <= selectedRoundCount)
+}
+
+const getLeaguePoints = (
+  team: LeagueStandingTeam,
+  cutCount: LeagueCutCount,
+  selectedRoundCount: number
+) => {
+  const selectedTotal = getSelectedLeagueResults(team, selectedRoundCount).reduce(
+    (total, result) => total + result.points,
+    0
+  )
+  const droppedTotal = getDroppedPoints(team, cutCount, selectedRoundCount).reduce(
+    (total, points) => total + points,
+    0
+  )
+  return selectedTotal - droppedTotal
+}
+
+export const getLeagueTeamsWithPlacements = (
+  teams: LeagueStandingTeam[],
+  cutCount: LeagueCutCount,
+  selectedRoundCount: number
+): LeagueStandingDisplayTeam[] => {
+  const teamsByPoints = [...teams].sort((a, b) => {
+    const compared =
+      getLeaguePoints(b, cutCount, selectedRoundCount) -
+      getLeaguePoints(a, cutCount, selectedRoundCount)
+
+    if (compared !== 0) {
+      return compared
+    }
+
+    return a.teamName.localeCompare(b.teamName, "cs")
+  })
+
+  const placements = new Map<string, number>()
+  let previousPoints: number | null = null
+  let previousPlacement = 0
+
+  teamsByPoints.forEach((team, index) => {
+    const points = getLeaguePoints(team, cutCount, selectedRoundCount)
+    const placement = previousPoints === points ? previousPlacement : index + 1
+    placements.set(team.teamName, placement)
+    previousPoints = points
+    previousPlacement = placement
+  })
+
+  return teams.map((team) => {
+    const selectedResults = getSelectedLeagueResults(team, selectedRoundCount)
+    const lastSelectedResult = selectedResults.at(-1)
+
+    return {
+      ...team,
+      placement: placements.get(team.teamName) ?? 0,
+      displayPoints: getLeaguePoints(team, cutCount, selectedRoundCount),
+      displayQuizCount: selectedResults.length,
+      displayLastQuizPoints: lastSelectedResult?.points ?? null,
+      displayLastQuizDate: lastSelectedResult?.date ?? null,
+      droppedPoints: getDroppedPoints(team, cutCount, selectedRoundCount)
+    }
+  })
+}
