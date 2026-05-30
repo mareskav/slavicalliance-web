@@ -26,7 +26,7 @@ const ResultsPage = async ({
   }>
 }) => {
   const params = await searchParams
-  const activeView: ResultView = params?.view === "league" ? "league" : "team"
+  const activeView: ResultView = params?.team && params?.view !== "league" ? "team" : "league"
   let teams
 
   try {
@@ -41,7 +41,7 @@ const ResultsPage = async ({
   const selectedTeam =
     params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
 
-  if (activeView === "league" && params?.team) {
+  if (params?.view === "league" && params?.team) {
     const canonicalParams = new URLSearchParams({ view: "league" })
 
     if (params.page) {
