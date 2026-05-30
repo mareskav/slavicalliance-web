@@ -269,9 +269,10 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
   const [pubsResult, lastResultResult] = await Promise.all([
     getPool().query<{ total_pubs: number }>(
       `
-        select count(distinct nullif(trim(pub), ''))::int as total_pubs
+        select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
         from public.quiz_results
         where quiz_date between $1 and $2
+          and nullif(trim(league_name), '') is null
       `,
       [league.period_start, league.period_stop]
     ),
