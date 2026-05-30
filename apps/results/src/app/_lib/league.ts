@@ -2,23 +2,25 @@ import type { LeagueStandingTeam } from "@/lib/quiz-results"
 import type { LeagueCutCount } from "./constants"
 import type { LeagueStandingDisplayTeam } from "./types"
 
+const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
+  return team.leagueResults.slice(0, selectedRoundCount)
+}
+
 const getDroppedPoints = (
   team: LeagueStandingTeam,
   cutCount: LeagueCutCount,
   selectedRoundCount: number
 ) => {
-  if (cutCount === 0) {
-    return []
-  }
-  return team.leagueResults
-    .filter((result) => result.round <= selectedRoundCount)
-    .map((result) => result.points)
+  if (cutCount === 0) return []
+  const selectedResults = getSelectedLeagueResults(team, selectedRoundCount)
+  const missingRounds = Math.max(0, selectedRoundCount - selectedResults.length)
+  const allPoints = [
+    ...selectedResults.map((r) => r.points),
+    ...Array<number>(missingRounds).fill(0)
+  ]
+  return allPoints
     .sort((a, b) => a - b)
     .slice(0, cutCount)
-}
-
-const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
-  return team.leagueResults.filter((result) => result.round <= selectedRoundCount)
 }
 
 const getLeaguePoints = (
