@@ -101,6 +101,7 @@ const PAUSE_AFTER_INTERACT_MS = 18000
 const AUTO_BASE_MS = 5200
 const AUTO_PER_CHAR_MS = 16
 const AUTO_MAX_MS = 11500
+const ACTIVE_MARKER_ANIMATION_MS = 6000
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
@@ -113,11 +114,15 @@ const getCurrentIndex = (el: HTMLDivElement): number => {
   const children = Array.from(el.children) as HTMLElement[]
   if (children.length === 0) return 0
 
+  const viewport = el.getBoundingClientRect()
+  const viewportCenter = viewport.left + viewport.width / 2
   let closestIndex = 0
   let closestDistance = Number.POSITIVE_INFINITY
 
   children.forEach((child, index) => {
-    const distance = Math.abs(child.offsetLeft - el.scrollLeft)
+    const rect = child.getBoundingClientRect()
+    const childCenter = rect.left + rect.width / 2
+    const distance = Math.abs(childCenter - viewportCenter)
     if (distance < closestDistance) {
       closestDistance = distance
       closestIndex = index
@@ -125,6 +130,13 @@ const getCurrentIndex = (el: HTMLDivElement): number => {
   })
 
   return closestIndex
+}
+
+const getCardStep = (el: HTMLDivElement): number => {
+  const firstCard = el.children.item(0) as HTMLElement | null
+  if (!firstCard) return CARD_WIDTH
+  const width = firstCard.getBoundingClientRect().width
+  return Number.isFinite(width) && width > 0 ? width : CARD_WIDTH
 }
 
 const ChevronLeft = () => (
@@ -138,6 +150,90 @@ const ChevronRight = () => (
     <path d="m9 18 6-6-6-6" />
   </svg>
 )
+
+const timelineMarkerStyles = `
+  .timeline-marker-ring {
+    animation: timeline-marker-ring var(--active-marker-animation-ms) cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  .timeline-marker-halo {
+    animation: timeline-marker-halo var(--active-marker-animation-ms) cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    animation-delay: calc(var(--active-marker-animation-ms) * -0.28);
+  }
+
+  .timeline-marker-core {
+    animation: timeline-marker-core var(--active-marker-animation-ms) cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  }
+
+  @keyframes timeline-marker-ring {
+    0% {
+      opacity: 0;
+      transform: scale(0.72);
+      border-color: rgba(186, 230, 253, 0);
+    }
+    14% {
+      opacity: 0.86;
+      transform: scale(0.88);
+      border-color: rgba(186, 230, 253, 0.72);
+    }
+    58% {
+      opacity: 0.3;
+      transform: scale(1.22);
+      border-color: rgba(125, 211, 252, 0.34);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.46);
+      border-color: rgba(125, 211, 252, 0);
+    }
+  }
+
+  @keyframes timeline-marker-halo {
+    0% {
+      opacity: 0;
+      transform: scale(0.78);
+    }
+    16% {
+      opacity: 0.42;
+      transform: scale(0.92);
+    }
+    62% {
+      opacity: 0.2;
+      transform: scale(1.18);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.36);
+    }
+  }
+
+  @keyframes timeline-marker-core {
+    0%,
+    100% {
+      transform: scale(1);
+      background-color: rgba(125, 211, 252, 0.78);
+      box-shadow: 0 0 14px 5px rgba(125, 211, 252, 0.48);
+    }
+    46% {
+      transform: scale(1.1);
+      background-color: rgba(186, 230, 253, 0.92);
+      box-shadow: 0 0 18px 7px rgba(125, 211, 252, 0.64);
+    }
+    72% {
+      transform: scale(0.98);
+      background-color: rgba(125, 211, 252, 0.84);
+      box-shadow: 0 0 15px 5px rgba(125, 211, 252, 0.52);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .timeline-marker-ring,
+    .timeline-marker-halo,
+    .timeline-marker-core {
+      animation: none;
+    }
+  }
+`
 
 export const TeamTimeline = ({
   events: initialEvents,
@@ -195,7 +291,8 @@ export const TeamTimeline = ({
   const scroll = (dir: "left" | "right") => {
     const el = scrollRef.current
     if (!el) return
-    el.scrollBy({ left: dir === "right" ? CARD_WIDTH : -CARD_WIDTH, behavior: "smooth" })
+    const step = getCardStep(el)
+    el.scrollBy({ left: dir === "right" ? step : -step, behavior: "smooth" })
     pausedUntilRef.current = Date.now() + PAUSE_AFTER_INTERACT_MS
   }
 
@@ -230,11 +327,12 @@ export const TeamTimeline = ({
       }
 
       const currentIndex = getCurrentIndex(el)
+      const step = getCardStep(el)
 
       if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 4) {
         el.scrollTo({ left: 0, behavior: "smooth" })
       } else {
-        el.scrollBy({ left: CARD_WIDTH, behavior: "smooth" })
+        el.scrollBy({ left: step, behavior: "smooth" })
       }
 
       const nextIndex = (currentIndex + 1) % events.length
@@ -255,6 +353,7 @@ export const TeamTimeline = ({
 
   return (
     <section className="mx-auto max-w-6xl">
+      <style>{timelineMarkerStyles}</style>
       <h2 className="mb-5 text-center text-2xl font-bold text-white">🏆 Naše cesta</h2>
 
       {/* Outer container: border + background + shadow, bez overflow-hidden aby šipky nebyly ořezané */}
@@ -267,7 +366,7 @@ export const TeamTimeline = ({
           onClick={() => scroll("left")}
           disabled={!canLeft}
           aria-label="Předchozí"
-          className="absolute left-3 top-12 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
+          className="absolute left-3 top-15 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b]/95 text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0 sm:top-16"
         >
           <ChevronLeft />
         </button>
@@ -275,13 +374,13 @@ export const TeamTimeline = ({
           onClick={() => scroll("right")}
           disabled={!canRight}
           aria-label="Další"
-          className="absolute right-3 top-12 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
+          className="absolute right-3 top-15 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b]/95 text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0 sm:top-16"
         >
           <ChevronRight />
         </button>
 
         {/* Inner wrapper: overflow-hidden ořezává scroll content na zaoblené rohy */}
-        <div className="relative overflow-hidden rounded-3xl pt-14 pb-5 sm:pt-16 sm:pb-6">
+        <div className="relative overflow-hidden rounded-3xl pt-9 pb-5 sm:pt-10 sm:pb-6">
           {/* Fades */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#05070c]/60 to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#05070c]/60 to-transparent" />
@@ -289,31 +388,41 @@ export const TeamTimeline = ({
           {/* Scroll track */}
           <div
             ref={scrollRef}
-            className="flex overflow-x-auto [scrollbar-width:none] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden"
+            className="-my-5 flex overflow-x-auto py-5 [scrollbar-width:none] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden"
           >
             {events.map((event, i) => (
               <div
-                key={event.year}
+                key={`${event.year}-${i}`}
                 className="flex shrink-0 flex-col items-center [scroll-snap-align:start]"
                 style={{ width: `min(${CARD_WIDTH}px, calc(100vw - 2rem))` }}
               >
                 {/* Timeline line + dot */}
                 <div className="relative flex h-12 w-full items-center">
-                  <div className={`h-px flex-1 ${i === 0 ? "bg-transparent" : "bg-gradient-to-r from-sky-400/10 to-sky-400/25"}`} />
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible">
+                  <div className="h-px flex-1 bg-gradient-to-r from-sky-400/10 to-sky-400/25" />
+                  <div
+                    className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible"
+                    style={{ "--active-marker-animation-ms": `${ACTIVE_MARKER_ANIMATION_MS}ms` } as React.CSSProperties}
+                  >
                     {i === activeIndex && (
-                      <div className="pointer-events-none absolute inset-0 m-auto hidden h-8 w-8 rounded-full border border-sky-200/55 md:block md:h-9 md:w-9 md:animate-pulse" />
+                      <>
+                        <div
+                          className="timeline-marker-ring pointer-events-none absolute inset-0 m-auto h-8 w-8 rounded-full border md:h-10 md:w-10"
+                        />
+                        <div
+                          className="timeline-marker-halo pointer-events-none absolute inset-0 m-auto h-9 w-9 rounded-full bg-sky-300/20 blur-sm md:h-11 md:w-11"
+                        />
+                      </>
                     )}
                     <div
                       className={`absolute inset-0 m-auto rounded-full ${i === activeIndex ? "h-7 w-7 bg-sky-300/20 blur-md md:h-8 md:w-8" : "h-6 w-6 bg-sky-400/10 blur-sm"}`}
                     />
                     <div
                       className={`relative rounded-full transition-all duration-300 ${i === activeIndex
-                        ? "h-3.5 w-3.5 border border-sky-100/90 bg-sky-300/80 shadow-[0_0_12px_4px_rgba(125,211,252,0.45)] md:h-4 md:w-4 md:shadow-[0_0_14px_5px_rgba(125,211,252,0.48)]"
+                        ? "timeline-marker-core h-3.5 w-3.5 border border-sky-100/90 bg-sky-300/85 shadow-[0_0_14px_5px_rgba(125,211,252,0.52)] md:h-4 md:w-4 md:shadow-[0_0_16px_6px_rgba(125,211,252,0.56)]"
                         : "h-3 w-3 border border-sky-400/70 bg-sky-400/30 shadow-[0_0_10px_3px_rgba(56,189,248,0.25)]"}`}
                     />
                   </div>
-                  <div className={`h-px flex-1 ${i === events.length - 1 ? "bg-transparent" : "bg-linear-to-l from-sky-400/10 to-sky-400/25"}`} />
+                  <div className="h-px flex-1 bg-linear-to-l from-sky-400/10 to-sky-400/25" />
                 </div>
 
                 {/* Content */}
