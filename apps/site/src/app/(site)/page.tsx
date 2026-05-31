@@ -2,56 +2,14 @@ import { getLandingPage, getTimelineEvents } from "@/lib/landing"
 import { LandingStory } from "./LandingStory"
 import { TeamTimeline } from "./TeamTimeline"
 
-const Home = () => {
-  const landing = getLandingPage()
-  const timelineEvents = getTimelineEvents()
+const Home = async () => {
+  const landing = await getLandingPage()
+  const timelineEvents = await getTimelineEvents()
 
   return (
     <div className="space-y-16 font-sans">
       <LandingStory initialContent={landing.content} />
       <TeamTimeline events={timelineEvents} />
-
-      {/*<section>*/}
-      {/*  <h2 className="mb-8 text-2xl font-bold text-white">📰 Nejnovější články</h2>*/}
-
-      {/*  {posts.length === 0 ? (*/}
-      {/*    <p className="text-white/70">Zatím nejsou k dispozici žádné články.</p>*/}
-      {/*  ) : (*/}
-      {/*    <div className="grid max-w-4xl gap-8">*/}
-      {/*      {posts.map((post) => (*/}
-      {/*        <article key={post.slug} className="text-white/82">*/}
-      {/*          <div className="mb-3 flex flex-wrap gap-2">*/}
-      {/*            {post.tags.map((tag) => (*/}
-      {/*              <span*/}
-      {/*                key={tag}*/}
-      {/*                className="rounded-full bg-sky-100/10 px-3 py-1 text-xs font-medium text-sky-100/80"*/}
-      {/*              >*/}
-      {/*                {tag}*/}
-      {/*              </span>*/}
-      {/*            ))}*/}
-      {/*          </div>*/}
-
-      {/*          <h3 className="text-xl font-semibold text-white">*/}
-      {/*            <a href={`/posts/${post.slug}`} className="hover:text-sky-100">*/}
-      {/*              {post.title}*/}
-      {/*            </a>*/}
-      {/*          </h3>*/}
-
-      {/*          <p className="mt-2 text-white/68">{post.excerpt}</p>*/}
-
-      {/*          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-white/55">*/}
-      {/*            <time dateTime={post.date}>*/}
-      {/*              {format(new Date(post.date), "d. MMMM yyyy", { locale: cs })}*/}
-      {/*            </time>*/}
-      {/*            <a href={`/posts/${post.slug}`} className="font-medium text-sky-100/75 hover:text-white">*/}
-      {/*              Číst více →*/}
-      {/*            </a>*/}
-      {/*          </div>*/}
-      {/*        </article>*/}
-      {/*      ))}*/}
-      {/*    </div>*/}
-      {/*  )}*/}
-      {/*</section>*/}
     </div>
   )
 }

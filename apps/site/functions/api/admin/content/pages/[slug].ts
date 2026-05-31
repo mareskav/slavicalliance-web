@@ -21,5 +21,9 @@ export const onRequestPut = async ({ env, request, params }: PagesContext) => {
     httpMetadata: { contentType: "text/markdown; charset=utf-8" }
   })
 
+  if (env.DEPLOY_HOOK_URL) {
+    fetch(env.DEPLOY_HOOK_URL, { method: "POST" }).catch(() => {})
+  }
+
   return json(pageFromMarkdown(params.slug, body.raw))
 }

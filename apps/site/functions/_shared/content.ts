@@ -21,6 +21,7 @@ export interface R2Object {
 
 export interface Env {
   CONTENT_BUCKET: R2Bucket
+  DEPLOY_HOOK_URL?: string
 }
 
 export interface Post {
