@@ -90,10 +90,7 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
 
     fetch("/api/content/pages/landing", { signal: controller.signal })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Landing content returned HTTP ${response.status}`)
-        }
-
+        if (!response.ok) throw new Error()
         return response.json() as Promise<{ content?: string }>
       })
       .then((payload) => {
@@ -101,9 +98,7 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
           setContent(extractLandingIntro(payload.content))
         }
       })
-      .catch(() => {
-        // Keep the build-time local Markdown fallback if R2 is unavailable.
-      })
+      .catch(() => {})
 
     return () => controller.abort()
   }, [])
