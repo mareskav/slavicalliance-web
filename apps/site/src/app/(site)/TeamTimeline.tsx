@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { Placement } from "@repo/ui/components/Placement"
-import { parseTimelineEvents, type TimelineEvent } from "@/lib/landing"
+import { parseTimelineEvents, type TimelineEvent } from "@/lib/landing-parser"
 
 const isSafeLink = (href: string) =>
   href.startsWith("https://") ||
