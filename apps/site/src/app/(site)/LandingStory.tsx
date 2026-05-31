@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react"
 
 const isSafeLink = (href: string) =>
-  href.startsWith("https://") || href.startsWith("http://") || href.startsWith("mailto:")
+  href.startsWith("https://") ||
+  href.startsWith("http://") ||
+  href.startsWith("mailto:") ||
+  href.startsWith("/") ||
+  href.startsWith("./") ||
+  href.startsWith("../") ||
+  href.startsWith("#")
 
 const renderInlineMarkdown = (text: string) => {
   return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|_[^_]+_)/g).map((part, index) => {

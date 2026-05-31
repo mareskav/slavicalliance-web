@@ -19,6 +19,7 @@ const sessionMaxAgeSeconds = 60 * 60 * 8
 const npmExecPath = process.env.npm_execpath
 const npmCommand = npmExecPath ? process.execPath : process.platform === "win32" ? "npm.cmd" : "npm"
 const npmArgs = (args) => (npmExecPath ? [npmExecPath, ...args] : args)
+const nextProxyRetryDelaysMs = [150, 350]
 
 const parseEnvFile = (filePath) => {
   if (!existsSync(filePath)) {
@@ -66,6 +67,30 @@ const json = (response, payload, init = {}) => {
     ...init.headers,
   })
   response.end(body)
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const isNextProxyConnectionError = (error) => {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  if (error.message === "fetch failed") {
+    return true
+  }
+
+  const causeCode = error.cause && typeof error.cause === "object" ? error.cause.code : undefined
+  return causeCode === "ECONNREFUSED" || causeCode === "ECONNRESET" || causeCode === "EPIPE"
+}
+
+const toNextUnavailableError = (error) => {
+  const unavailableError = new Error(
+    `Next dev server on http://${host}:${nextPort} is starting or restarting. Retry in a moment.`,
+    { cause: error }
+  )
+  unavailableError.name = "NextDevServerUnavailableError"
+  return unavailableError
 }
 
 const readRequestBody = async (request) => {
@@ -393,12 +418,37 @@ const proxyToNext = async (request, response) => {
   headers.set("x-forwarded-host", `${host}:${publicPort}`)
   headers.set("x-forwarded-proto", "http")
 
-  const nextResponse = await fetch(target, {
-    body,
-    headers,
-    method: request.method,
-    redirect: "manual",
-  })
+  let nextResponse
+  let lastError = null
+
+  for (let attempt = 0; attempt <= nextProxyRetryDelaysMs.length; attempt += 1) {
+    try {
+      nextResponse = await fetch(target, {
+        body,
+        headers,
+        method: request.method,
+        redirect: "manual",
+      })
+      break
+    } catch (error) {
+      lastError = error
+
+      if (!isNextProxyConnectionError(error)) {
+        throw error
+      }
+
+      if (attempt === nextProxyRetryDelaysMs.length) {
+        throw toNextUnavailableError(error)
+      }
+
+      await wait(nextProxyRetryDelaysMs[attempt])
+    }
+  }
+
+  if (!nextResponse) {
+    throw toNextUnavailableError(lastError)
+  }
+
   const responseHeaders = Object.fromEntries(nextResponse.headers)
   delete responseHeaders["content-encoding"]
   delete responseHeaders["content-length"]
@@ -472,6 +522,11 @@ const server = createServer(async (request, response) => {
 
     await proxyToNext(request, response)
   } catch (error) {
+    if (error instanceof Error && error.name === "NextDevServerUnavailableError") {
+      json(response, { error: error.message }, { status: 503, headers: { "Retry-After": "1" } })
+      return
+    }
+
     json(
       response,
       { error: error instanceof Error ? error.message : "Local dev server failed." },

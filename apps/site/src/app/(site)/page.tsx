@@ -1,12 +1,15 @@
-import { getLandingPage } from "@/lib/landing"
+import { getLandingPage, getTimelineEvents } from "@/lib/landing"
 import { LandingStory } from "./LandingStory"
+import { TeamTimeline } from "./TeamTimeline"
 
 const Home = () => {
   const landing = getLandingPage()
+  const timelineEvents = getTimelineEvents()
 
   return (
-    <div className="font-sans">
+    <div className="space-y-16 font-sans">
       <LandingStory initialContent={landing.content} />
+      <TeamTimeline events={timelineEvents} />
 
       {/*<section>*/}
       {/*  <h2 className="mb-8 text-2xl font-bold text-white">📰 Nejnovější články</h2>*/}

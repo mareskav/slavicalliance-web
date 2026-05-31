@@ -54,7 +54,7 @@ const AdminEditor = () => {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => null)
-      throw new Error(payload?.error || "Soubor se nepodarilo nacist.")
+      throw new Error(payload?.error || "Soubor se nepodařilo načíst.")
     }
 
     const payload = await response.json()
@@ -65,7 +65,7 @@ const AdminEditor = () => {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       loadFile().catch((loadError: unknown) => {
-        setError(loadError instanceof Error ? loadError.message : "Soubor se nepodarilo nacist.")
+        setError(loadError instanceof Error ? loadError.message : "Soubor se nepodařilo načíst.")
         setLoadState("login")
       })
     }, 0)
@@ -90,7 +90,7 @@ const AdminEditor = () => {
       }
 
       const payload = await response.json().catch(() => null)
-      setError(payload?.error || `Login endpoint vratil HTTP ${response.status}.`)
+      setError(payload?.error || `Login endpoint vrátil HTTP ${response.status}.`)
       return
     }
 
@@ -110,7 +110,7 @@ const AdminEditor = () => {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => null)
-      setError(payload?.error || "Ulozeni se nezdarilo.")
+      setError(payload?.error || "Uložení se nezdařilo.")
       setSaveState("error")
       return
     }
@@ -227,7 +227,7 @@ const AdminEditor = () => {
     const response = await fetch("/api/admin/logout", { method: "POST" })
 
     if (!response.ok) {
-      setError("Odhlaseni se nezdarilo.")
+      setError("Odhlášení se nezdařilo.")
       return
     }
 
@@ -237,7 +237,7 @@ const AdminEditor = () => {
   if (loadState === "checking") {
     return (
       <main className="grid min-h-screen place-items-center bg-[#0d1218] text-white">
-        Nacitani...
+        Načítání...
       </main>
     )
   }
@@ -267,7 +267,7 @@ const AdminEditor = () => {
             type="submit"
             className="mt-6 h-11 w-full rounded-md bg-sky-200 font-semibold text-slate-950 hover:bg-white"
           >
-            Prihlasit
+            Přihlásit
           </button>
         </form>
       </main>
@@ -279,7 +279,7 @@ const AdminEditor = () => {
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/12 pb-4">
           <div>
-            <h1 className="text-xl font-semibold">Domácí stránka</h1>
+            <h1 className="text-xl font-semibold">Domovská stránka</h1>
             <p className="mt-1 text-sm text-white/58">contents/pages/landing.md</p>
           </div>
           <div className="flex items-center gap-2">
@@ -309,6 +309,21 @@ const AdminEditor = () => {
             Soubor uložen a aktualizován.
           </p>
         ) : null}
+
+        <section className="mt-4 rounded-md border border-sky-200/20 bg-sky-300/5 p-4 text-sm leading-6 text-white/85">
+          <h2 className="text-base font-semibold text-white">Jak upravovat obsah</h2>
+          <ul className="mt-2 space-y-1.5 text-white/78">
+            <li>Text nad prvním nadpisem <code className="rounded bg-black/30 px-1 py-0.5">## Rok</code> se zobrazí jako úvodní příběh na homepage.</li>
+            <li>Timeline se skládá z odrážek pod nadpisy <code className="rounded bg-black/30 px-1 py-0.5">## 2025</code> nebo <code className="rounded bg-black/30 px-1 py-0.5">## 2024/25</code>.</li>
+            <li>Umístění zapisuj jednotně jako <code className="rounded bg-black/30 px-1 py-0.5">1. - Název soutěže 2025</code>, <code className="rounded bg-black/30 px-1 py-0.5">2. - ...</code>, <code className="rounded bg-black/30 px-1 py-0.5">3. - ...</code>.</li>
+            <li>Stejný formát platí i pro další pořadí, např. <code className="rounded bg-black/30 px-1 py-0.5">4. - Název soutěže 2025</code> (v timeline se automaticky vykreslí kolečko s pořadím).</li>
+            <li>Každá položka timeline musí mít rok v textu nebo být pod správným ročním nadpisem.</li>
+          </ul>
+          <pre className="mt-3 overflow-x-auto rounded border border-white/12 bg-[#05070c] p-3 text-xs leading-5 text-white/78">{`## 2025
+- 3. - Mistrovství České republiky v Hospodském kvízu 2025
+- 3. - Pražské finále – únor 2025
+- 4. - Kvízový maraton 2025`}</pre>
+        </section>
 
         <div className="mt-5 overflow-hidden rounded-md border border-white/12 bg-[#05070c]">
           <div className="flex flex-wrap items-center gap-1 border-b border-white/12 bg-white/[0.04] p-2">

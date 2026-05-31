@@ -35,12 +35,14 @@ const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
         <main className="mx-auto w-full max-w-7xl grow px-4 py-8 sm:px-6 lg:px-8">{children}</main>
 
         <SlavicAllianceFooter siteHref={getSiteHref()} resultsHref="/vysledky?team=Slavic%20Alliance" />
-        <Script
-          defer
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon='{"token": "612819a09d8543f4b7d7336c0f84e53c"}'
-          strategy="afterInteractive"
-        />
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token": "612819a09d8543f4b7d7336c0f84e53c"}'
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   )

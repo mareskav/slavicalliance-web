@@ -4,24 +4,39 @@ title: "Slavic Alliance"
 
 # Slavic Alliance
 
-**Slavic Alliance** začala jako parta lidí, kterou baví kvízy, hospodská atmosféra a zdravě nezdravá chuť vyhrávat. Tým vznikl **25. srpna 2021**. První Hospodský kvíz jsme odehráli o necelé dva týdny později, **7. září 2021**. Název Slavic Alliance pro nás znamená slovanskou alianci - tým různých hlav, znalostí a povah, které u stolu táhnou za jeden provaz.
+**Slavic Alliance** vznikla jako parta lidí, které baví kvízy, hospodská atmosféra a zdravě soutěživá chuť vyhrávat. Název Slavic Alliance pro nás znamená alianci různých slovanských hlav, znalostí a povah, které u stolu táhnou za jeden provaz.
 
-Od pravidelných hospodských večerů jsme se dostali k medailím v pražských ligách, finálovým pódiím i výsledkům na celorepublikové úrovni.
+Od pravidelných hospodských večerů jsme se postupně dostali k medailím v pražských ligách, finálovým pódiím i výsledkům na celorepublikové úrovni.
 
-## 🏆 Naše největší úspěchy
+## 2021
 
-- 🥉 Mistrovství České republiky v Hospodském kvízu 2025
-- 🥇 Pražské finále - leden 2024
-- 🥇 Podzimní liga Prahy a středních Čech 2023
-- 🥇 (Pod)zimní liga Prahy a středních Čech 2024/25
-- 🥈 Jarní liga Prahy a středních Čech 2024
-- 🥈 Pražské finále - červen 2024
-- 🥉 Pražské finále - leden 2023
-- 🥉 Pražské finále - únor 2025
-- 🥉 Filmově-seriálová liga Na Kvíz 2024/25
+- Tým jsme oficiálně založili 25. srpna 2021
+- První Hospodský kvíz jsme odehráli 7. září 2021
 
-## 📌 Další výsledky, které stojí za zmínku
+## 2023
 
-- 4. místo na Kvízovém maratonu 2025
-- 5. místo na Mistrovství České republiky v Hospodském kvízu 2023
-- 5. místo na Mistrovství České republiky v Hospodském kvízu 2024
+- 1. - Podzimní liga Prahy a středních Čech 2023
+- 3. - Pražské finále – leden 2023
+- 5. - Mistrovství České republiky v Hospodském kvízu 2023
+
+## 2024
+
+- 1. - Pražské finále – leden 2024
+- 2. - Jarní liga Prahy a středních Čech 2024
+- 2. - Pražské finále – červen 2024
+- 5. - Mistrovství České republiky v Hospodském kvízu 2024
+
+## 2024/25
+
+- 1. - Podzimní liga Prahy a středních Čech 2024/25
+- 3. - Filmově-seriálová liga Na Kvíz 2024/25
+
+## 2025
+
+- 3. - Mistrovství České republiky v Hospodském kvízu 2025
+- 3. - Pražské finále – únor 2025
+- 4. - Kvízový maraton 2025
+
+## 2026
+
+- Jedeme dál! Aktuální výsledky najdeš na stránce [Výsledky](/vysledky?team=Slavic%20Alliance) a průběžné pořadí v [Dlouhodobé soutěži 2026](/vysledky?view=league).
