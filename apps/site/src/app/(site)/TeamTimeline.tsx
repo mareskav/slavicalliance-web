@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { Placement } from "@repo/ui/components/Placement"
-import type { TimelineEvent } from "@/lib/landing"
+import { parseTimelineEvents, type TimelineEvent } from "@/lib/landing"
 
 const isSafeLink = (href: string) =>
   href.startsWith("https://") ||
@@ -138,12 +138,29 @@ const ChevronRight = () => (
   </svg>
 )
 
-export const TeamTimeline = ({ events }: { events: TimelineEvent[] }) => {
+export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[] }) => {
+  const [events, setEvents] = useState(initialEvents)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
   const pausedUntilRef = useRef(0)
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return
+
+    const controller = new AbortController()
+    fetch("/api/content/pages/landing", { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((payload: { raw?: string }) => {
+        if (typeof payload.raw === "string") {
+          const parsed = parseTimelineEvents(payload.raw)
+          if (parsed.length > 0) setEvents(parsed)
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [])
 
   const sync = useCallback(() => {
     const el = scrollRef.current

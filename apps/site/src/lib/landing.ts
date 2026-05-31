@@ -58,25 +58,21 @@ const highlightPriority = (item: string): number => {
   return 4;
 };
 
-export const getTimelineEvents = (): TimelineEvent[] => {
-  const { content } = readLandingRaw();
+const parseTimelineFromContent = (content: string): TimelineEvent[] => {
   const byYear = new Map<string, string[]>();
   const noYearItems: string[] = [];
   let currentSectionYear: string | null = null;
 
   for (const line of content.split(/\r?\n/)) {
-    // Track active section year from ## headings (e.g. "## 2024/25", "## 🚀 Sezóna 2026")
     if (line.startsWith("##")) {
       currentSectionYear = extractYearKey(line);
       continue;
     }
 
-    // Accepts -, * and + as bullet markers
     const match = line.match(/^[-*+]\s+(.+)$/);
     if (!match) continue;
 
     const item = match[1].trim();
-    // Year from item text takes priority; fall back to current section year
     const year = extractYearKey(item) ?? currentSectionYear;
 
     if (!year) {
@@ -96,7 +92,6 @@ export const getTimelineEvents = (): TimelineEvent[] => {
     );
   }
 
-  // Merge entries that share the same displayYear (e.g. "2024/25" + "2025" → "2025")
   const byDisplayYear = new Map<string, { year: string; highlights: string[] }>();
 
   for (const [year, highlights] of [...byYear.entries()].sort(([a], [b]) => yearSortValue(a) - yearSortValue(b))) {
@@ -112,4 +107,15 @@ export const getTimelineEvents = (): TimelineEvent[] => {
     displayYear,
     highlights: [...highlights].sort((a, b) => highlightPriority(a) - highlightPriority(b)),
   }));
+};
+
+export const getTimelineEvents = (): TimelineEvent[] => {
+  const { content } = readLandingRaw();
+  return parseTimelineFromContent(content);
+};
+
+export const parseTimelineEvents = (raw: string): TimelineEvent[] => {
+  const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  const content = frontmatterMatch ? raw.slice(frontmatterMatch[0].length) : raw;
+  return parseTimelineFromContent(content);
 };
