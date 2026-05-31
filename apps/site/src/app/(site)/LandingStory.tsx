@@ -53,8 +53,10 @@ const renderInlineMarkdown = (text: string) => {
   })
 }
 
+const extractLandingIntro = (content: string) => content.replace(/\n##[\s\S]*$/, "").trim()
+
 export const LandingStory = ({ initialContent }: { initialContent: string }) => {
-  const [content, setContent] = useState(initialContent)
+  const [content, setContent] = useState(extractLandingIntro(initialContent))
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") {
@@ -73,7 +75,7 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
       })
       .then((payload) => {
         if (typeof payload.content === "string") {
-          setContent(payload.content)
+          setContent(extractLandingIntro(payload.content))
         }
       })
       .catch(() => {

@@ -19,7 +19,7 @@ Od pravidelných hospodských večerů jsme se postupně dostali k medailím v p
 - 3. - Pražské finále – leden 2023
 - 5. - Mistrovství České republiky v Hospodském kvízu 2023
 
-## 2024
+## 20
 
 - 1. - Pražské finále – leden 2024
 - 2. - Jarní liga Prahy a středních Čech 2024

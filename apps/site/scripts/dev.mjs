@@ -203,11 +203,13 @@ const slugPath = (slug) => {
 
 const pageFromMarkdown = (slug, raw) => {
   const { data, content } = parseMarkdown(raw)
+  const normalisedContent =
+    slug === "landing" ? content.replace(/\n##[\s\S]*$/, "").trim() : content
 
   return {
     slug,
     title: String(data.title || "Slavic Alliance"),
-    content,
+    content: normalisedContent,
     raw,
   }
 }

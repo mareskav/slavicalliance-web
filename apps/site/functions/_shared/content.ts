@@ -127,13 +127,16 @@ export const parseMarkdown = (raw: string) => {
   return { data, content }
 }
 
+const extractLandingIntro = (content: string) => content.replace(/\n##[\s\S]*$/, "").trim()
+
 export const pageFromMarkdown = (slug: string, raw: string): PageContent => {
   const { data, content } = parseMarkdown(raw)
+  const normalisedContent = slug === "landing" ? extractLandingIntro(content) : content
 
   return {
     slug,
     title: String(data.title || "Slavic Alliance"),
-    content,
+    content: normalisedContent,
     raw
   }
 }
