@@ -324,7 +324,7 @@ export const TeamTimeline = ({
     sync()
     el.addEventListener("scroll", sync, { passive: true })
     return () => el.removeEventListener("scroll", sync)
-  }, [sync])
+  }, [events.length, sync])
 
   useEffect(() => {
     if (events.length === 0) return
