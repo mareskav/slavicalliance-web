@@ -64,7 +64,7 @@ export const SlavicAllianceFooter = ({
             © {new Date().getFullYear()} Slavic Alliance. Všechna práva vyhrazena.
           </p>
           <p className="flex items-center gap-1.5 text-xs text-white/28">
-            Vyrobeno s <Heart className="h-3 w-3 fill-red-400/60 text-red-400/60" /> pro náš tým
+            Vyrobil Vašek M. s <Heart className="h-3 w-3 fill-red-400/60 text-red-400/60" /> pro náš tým
           </p>
         </div>
       </div>
