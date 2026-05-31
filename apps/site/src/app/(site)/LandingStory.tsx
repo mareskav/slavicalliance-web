@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 
+import type { LandingContentSource } from "@/lib/landing"
+
 const isSafeLink = (href: string) =>
   href.startsWith("https://") ||
   href.startsWith("http://") ||
@@ -78,8 +80,18 @@ const renderInlineMarkdown = (text: string) => {
 
 const extractLandingIntro = (content: string) => content.replace(/\n##[\s\S]*$/, "").trim()
 
-export const LandingStory = ({ initialContent }: { initialContent: string }) => {
-  const [content, setContent] = useState(extractLandingIntro(initialContent))
+export const LandingStory = ({
+  initialContent,
+  contentSource
+}: {
+  initialContent: string
+  contentSource: LandingContentSource
+}) => {
+  const fallbackContent = extractLandingIntro(initialContent)
+  // Static export may only have the repository Markdown at build time. In production, avoid
+  // showing that stale fallback before the R2-backed content API responds.
+  const deferInitialContent = process.env.NODE_ENV === "production" && contentSource !== "remote"
+  const [content, setContent] = useState<string | null>(deferInitialContent ? null : fallbackContent)
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") {
@@ -96,12 +108,22 @@ export const LandingStory = ({ initialContent }: { initialContent: string }) => 
       .then((payload) => {
         if (typeof payload.content === "string") {
           setContent(extractLandingIntro(payload.content))
+        } else if (deferInitialContent) {
+          setContent(fallbackContent)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (deferInitialContent) {
+          setContent(fallbackContent)
+        }
+      })
 
     return () => controller.abort()
-  }, [])
+  }, [deferInitialContent, fallbackContent])
+
+  if (content === null) {
+    return <section className="mb-14 min-h-[220px]" aria-busy="true" />
+  }
 
   return (
     <section className="mb-14">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { Placement } from "@repo/ui/components/Placement"
+import type { LandingContentSource } from "@/lib/landing"
 import { parseTimelineEvents, type TimelineEvent } from "@/lib/landing-parser"
 
 const isSafeLink = (href: string) =>
@@ -138,8 +139,17 @@ const ChevronRight = () => (
   </svg>
 )
 
-export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[] }) => {
-  const [events, setEvents] = useState(initialEvents)
+export const TeamTimeline = ({
+  events: initialEvents,
+  contentSource
+}: {
+  events: TimelineEvent[]
+  contentSource: LandingContentSource
+}) => {
+  // Static export may only have the repository Markdown at build time. In production, avoid
+  // showing that stale fallback before the R2-backed content API responds.
+  const deferInitialEvents = process.env.NODE_ENV === "production" && contentSource !== "remote"
+  const [events, setEvents] = useState<TimelineEvent[]>(deferInitialEvents ? [] : initialEvents)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(true)
@@ -155,12 +165,23 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
       .then((payload: { raw?: string }) => {
         if (typeof payload.raw === "string") {
           const parsed = parseTimelineEvents(payload.raw)
-          if (parsed.length > 0) setEvents(parsed)
+          if (parsed.length > 0) {
+            setEvents(parsed)
+            return
+          }
+        }
+
+        if (deferInitialEvents) {
+          setEvents(initialEvents)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (deferInitialEvents) {
+          setEvents(initialEvents)
+        }
+      })
     return () => controller.abort()
-  }, [])
+  }, [deferInitialEvents, initialEvents])
 
   const sync = useCallback(() => {
     const el = scrollRef.current
@@ -187,6 +208,8 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
   }, [sync])
 
   useEffect(() => {
+    if (events.length === 0) return
+
     let timer: ReturnType<typeof setTimeout> | null = null
     let cancelled = false
 
@@ -226,7 +249,9 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
     }
   }, [events])
 
-  if (events.length === 0) return null
+  if (events.length === 0) {
+    return <section className="mx-auto min-h-[520px] max-w-6xl" aria-busy="true" />
+  }
 
   return (
     <section className="mx-auto max-w-6xl">
@@ -242,7 +267,7 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
           onClick={() => scroll("left")}
           disabled={!canLeft}
           aria-label="Předchozí"
-          className="absolute left-3 top-8 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
+          className="absolute left-3 top-12 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
         >
           <ChevronLeft />
         </button>
@@ -250,13 +275,13 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
           onClick={() => scroll("right")}
           disabled={!canRight}
           aria-label="Další"
-          className="absolute right-3 top-8 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
+          className="absolute right-3 top-12 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-[#08111b] text-white/60 transition hover:border-sky-400/40 hover:text-white disabled:pointer-events-none disabled:opacity-0"
         >
           <ChevronRight />
         </button>
 
         {/* Inner wrapper: overflow-hidden ořezává scroll content na zaoblené rohy */}
-        <div className="relative overflow-hidden rounded-3xl pt-10 pb-5 sm:pt-12 sm:pb-6">
+        <div className="relative overflow-hidden rounded-3xl pt-14 pb-5 sm:pt-16 sm:pb-6">
           {/* Fades */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#05070c]/60 to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#05070c]/60 to-transparent" />
@@ -273,9 +298,9 @@ export const TeamTimeline = ({ events: initialEvents }: { events: TimelineEvent[
                 style={{ width: `min(${CARD_WIDTH}px, calc(100vw - 2rem))` }}
               >
                 {/* Timeline line + dot */}
-                <div className="relative flex w-full items-center">
+                <div className="relative flex h-12 w-full items-center">
                   <div className={`h-px flex-1 ${i === 0 ? "bg-transparent" : "bg-gradient-to-r from-sky-400/10 to-sky-400/25"}`} />
-                  <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-visible">
+                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible">
                     {i === activeIndex && (
                       <div className="pointer-events-none absolute inset-0 m-auto hidden h-8 w-8 rounded-full border border-sky-200/55 md:block md:h-9 md:w-9 md:animate-pulse" />
                     )}
