@@ -102,6 +102,7 @@ const AUTO_BASE_MS = 5200
 const AUTO_PER_CHAR_MS = 16
 const AUTO_MAX_MS = 11500
 const ACTIVE_MARKER_ANIMATION_MS = 6000
+const DESKTOP_ACTIVE_MARKER_QUERY = "(min-width: 768px)"
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
@@ -110,7 +111,15 @@ const getAutoDelayMs = (event: TimelineEvent): number => {
   return clamp(AUTO_BASE_MS + textLength * AUTO_PER_CHAR_MS, AUTO_BASE_MS, AUTO_MAX_MS)
 }
 
-const getCurrentIndex = (el: HTMLDivElement): number => {
+const getStartAlignedIndex = (el: HTMLDivElement): number => {
+  const childCount = el.children.length
+  if (childCount === 0) return 0
+
+  const step = getCardStep(el)
+  return clamp(Math.round(el.scrollLeft / step), 0, childCount - 1)
+}
+
+const getCenterAlignedIndex = (el: HTMLDivElement): number => {
   const children = Array.from(el.children) as HTMLElement[]
   if (children.length === 0) return 0
 
@@ -131,6 +140,9 @@ const getCurrentIndex = (el: HTMLDivElement): number => {
 
   return closestIndex
 }
+
+const getCurrentIndex = (el: HTMLDivElement, alignToCenter: boolean): number =>
+  alignToCenter ? getCenterAlignedIndex(el) : getStartAlignedIndex(el)
 
 const getCardStep = (el: HTMLDivElement): number => {
   const firstCard = el.children.item(0) as HTMLElement | null
@@ -250,6 +262,7 @@ export const TeamTimeline = ({
   const [canLeft, setCanLeft] = useState(false)
   const [canRight, setCanRight] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [centerActiveMarker, setCenterActiveMarker] = useState(false)
   const pausedUntilRef = useRef(0)
 
   useEffect(() => {
@@ -279,14 +292,23 @@ export const TeamTimeline = ({
     return () => controller.abort()
   }, [deferInitialEvents, initialEvents])
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(DESKTOP_ACTIVE_MARKER_QUERY)
+    const syncMarkerMode = () => setCenterActiveMarker(mediaQuery.matches)
+
+    syncMarkerMode()
+    mediaQuery.addEventListener("change", syncMarkerMode)
+    return () => mediaQuery.removeEventListener("change", syncMarkerMode)
+  }, [])
+
   const sync = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
     setCanLeft(el.scrollLeft > 4)
     setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
-    const nextIndex = getCurrentIndex(el)
+    const nextIndex = getCurrentIndex(el, centerActiveMarker)
     setActiveIndex((prev) => (prev === nextIndex ? prev : nextIndex))
-  }, [])
+  }, [centerActiveMarker])
 
   const scroll = (dir: "left" | "right") => {
     const el = scrollRef.current
@@ -326,7 +348,7 @@ export const TeamTimeline = ({
         return
       }
 
-      const currentIndex = getCurrentIndex(el)
+      const currentIndex = getCurrentIndex(el, centerActiveMarker)
       const step = getCardStep(el)
 
       if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 4) {
@@ -345,7 +367,7 @@ export const TeamTimeline = ({
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [events])
+  }, [centerActiveMarker, events])
 
   if (events.length === 0) {
     return <section className="mx-auto min-h-[520px] max-w-6xl" aria-busy="true" />
