@@ -11,21 +11,44 @@ const isSafeLink = (href: string) =>
   href.startsWith("../") ||
   href.startsWith("#")
 
+const normaliseHref = (href: string) => {
+  if (href.startsWith("/vysledky")) {
+    const resultsHref =
+      process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() ||
+      (process.env.NODE_ENV === "development" ? "http://localhost:3001/vysledky" : "/vysledky")
+
+    try {
+      const base = new URL(resultsHref, "http://localhost")
+      const target = new URL(href, "http://localhost")
+      base.search = target.search
+      if (resultsHref.startsWith("http://") || resultsHref.startsWith("https://")) {
+        return `${base.origin}${base.pathname}${base.search}`
+      }
+      return `${base.pathname}${base.search}`
+    } catch {
+      return href
+    }
+  }
+
+  return href
+}
+
 const renderInlineMarkdown = (text: string) => {
   return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|_[^_]+_)/g).map((part, index) => {
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
 
     if (link) {
       const [, label, href] = link
+      const normalisedHref = normaliseHref(href)
 
-      if (!isSafeLink(href)) {
+      if (!isSafeLink(normalisedHref)) {
         return label
       }
 
       return (
         <a
           key={index}
-          href={href}
+          href={normalisedHref}
           className="font-semibold text-sky-200 underline decoration-sky-200/40 underline-offset-4 hover:text-white"
         >
           {label}
