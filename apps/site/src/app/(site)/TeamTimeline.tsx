@@ -255,7 +255,7 @@ export const TeamTimeline = ({
 
   return (
     <section className="mx-auto max-w-6xl">
-      <h2 className="mb-10 text-center text-2xl font-bold text-white">🏆 Naše cesta</h2>
+      <h2 className="mb-5 text-center text-2xl font-bold text-white">🏆 Naše cesta</h2>
 
       {/* Outer container: border + background + shadow, bez overflow-hidden aby šipky nebyly ořezané */}
       <div className="relative rounded-3xl border border-white/6 bg-white/2 shadow-xl shadow-black/30">

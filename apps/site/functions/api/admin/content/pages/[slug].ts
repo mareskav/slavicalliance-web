@@ -1,5 +1,6 @@
 import { isAuthenticated } from "../../../../_lib/admin.js"
 import { Env, json, pageFromMarkdown, pageKey } from "../../../../_shared/content"
+import { deletePageContentCache } from "../../../../_shared/content-cache"
 
 interface PagesContext {
   env: Env
@@ -20,6 +21,10 @@ export const onRequestPut = async ({ env, request, params }: PagesContext) => {
   await env.CONTENT_BUCKET.put(pageKey(params.slug), body.raw, {
     httpMetadata: { contentType: "text/markdown; charset=utf-8" }
   })
+
+  if (params.slug === "landing") {
+    await deletePageContentCache(request, params.slug)
+  }
 
   if (env.DEPLOY_HOOK_URL) {
     fetch(env.DEPLOY_HOOK_URL, { method: "POST" }).catch(() => {})
