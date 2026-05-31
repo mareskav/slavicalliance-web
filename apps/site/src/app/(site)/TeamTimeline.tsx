@@ -436,11 +436,11 @@ export const TeamTimeline = ({
                         const { place, label } = parsePlacement(item)
                         return (
                           <li key={`${event.year}-${index}-${item}`} className="flex items-start gap-3 text-base leading-7 text-white/75">
-                            <span className="mt-0.5 shrink-0">
+                            <span className={`${place !== null ? "mt-0.5" : ""} shrink-0`}>
                               {place !== null ? (
                                 <Placement place={place} size="md" />
                               ) : (
-                                <span className="flex h-9 w-9 items-center justify-center">
+                                <span className="flex h-7 w-9 items-center justify-center">
                                   <span className="h-1.5 w-1.5 rounded-full bg-sky-400/60" />
                                 </span>
                               )}
