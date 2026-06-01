@@ -109,30 +109,33 @@ export const TopTeamsList = ({ teams }: Props) => {
           </span>
         </div>
 
-        <div
-          className="inline-flex h-10 shrink-0 self-start rounded-lg border border-white/10 bg-white/5 p-1 sm:self-auto"
-          role="tablist"
-          aria-label="Řazení Top 10"
-        >
-          {sortOptions.map((option) => {
-            const isActive = option.key === sortKey
-            return (
-              <button
-                key={option.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setSortKey(option.key)}
-                className={`inline-flex items-center justify-center rounded-md px-3 text-sm font-semibold transition ${
-                  isActive
-                    ? "bg-sky-300/28 text-white shadow-sm shadow-sky-950/30 ring-1 ring-sky-100/38"
-                    : "text-white/58 hover:bg-white/7 hover:text-white"
-                }`}
-              >
-                {option.label}
-              </button>
-            )
-          })}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <span className="text-sm font-semibold text-white/58">Řadit dle</span>
+          <div
+            className="inline-flex h-10 shrink-0 rounded-lg border border-white/10 bg-white/5 p-1"
+            role="tablist"
+            aria-label="Řazení Top 10"
+          >
+            {sortOptions.map((option) => {
+              const isActive = option.key === sortKey
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setSortKey(option.key)}
+                  className={`inline-flex items-center justify-center rounded-md px-3 text-sm font-semibold transition ${
+                    isActive
+                      ? "bg-sky-300/28 text-white shadow-sm shadow-sky-950/30 ring-1 ring-sky-100/38"
+                      : "text-white/58 hover:bg-white/7 hover:text-white"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
