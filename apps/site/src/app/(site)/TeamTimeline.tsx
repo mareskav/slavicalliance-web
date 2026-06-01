@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Placement } from "@repo/ui/components/Placement"
 import type { LandingContentSource } from "@/lib/landing"
 import { parseTimelineEvents, type TimelineEvent } from "@/lib/landing-parser"
+import { LandingTimelineLoadingState } from "./LandingLoadingState"
 
 const isSafeLink = (href: string) =>
   href.startsWith("https://") ||
@@ -152,13 +153,33 @@ const getCardStep = (el: HTMLDivElement): number => {
 }
 
 const ChevronLeft = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="m15 18-6-6 6-6" />
   </svg>
 )
 
 const ChevronRight = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="m9 18 6-6-6-6" />
   </svg>
 )
@@ -370,16 +391,24 @@ export const TeamTimeline = ({
   }, [centerActiveMarker, events])
 
   if (events.length === 0) {
-    return <section className="mx-auto min-h-[520px] max-w-6xl" aria-busy="true" />
+    return <LandingTimelineLoadingState />
   }
 
   return (
-    <section className="mx-auto max-w-6xl">
+    <section className="landing-section-reveal mx-auto max-w-6xl">
       <style>{timelineMarkerStyles}</style>
-      <h2 className="mb-5 text-center text-2xl font-bold text-white">🏆 Naše cesta</h2>
+      <h2
+        className="landing-reveal-item mb-5 text-center text-2xl font-bold text-white"
+        style={{ "--landing-reveal-delay": "80ms" } as React.CSSProperties}
+      >
+        🏆 Naše cesta
+      </h2>
 
       {/* Outer container: border + background + shadow, bez overflow-hidden aby šipky nebyly ořezané */}
-      <div className="relative rounded-3xl border border-white/6 bg-white/2 shadow-xl shadow-black/30">
+      <div
+        className="landing-reveal-item relative rounded-3xl border border-white/6 bg-white/2 shadow-xl shadow-black/30"
+        style={{ "--landing-reveal-delay": "180ms" } as React.CSSProperties}
+      >
         {/* Top glow */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/30 to-transparent" />
 
@@ -415,33 +444,40 @@ export const TeamTimeline = ({
             {events.map((event, i) => (
               <div
                 key={`${event.year}-${i}`}
-                className="flex shrink-0 flex-col items-center [scroll-snap-align:start]"
-                style={{ width: `min(${CARD_WIDTH}px, calc(100vw - 2rem))` }}
+                className="landing-reveal-item flex shrink-0 flex-col items-center [scroll-snap-align:start]"
+                style={
+                  {
+                    "--landing-reveal-delay": `${Math.min(280 + i * 80, 920)}ms`,
+                    width: `min(${CARD_WIDTH}px, calc(100vw - 2rem))`
+                  } as React.CSSProperties
+                }
               >
                 {/* Timeline line + dot */}
                 <div className="relative flex h-12 w-full items-center">
                   <div className="h-px flex-1 bg-gradient-to-r from-sky-400/10 to-sky-400/25" />
                   <div
                     className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-visible"
-                    style={{ "--active-marker-animation-ms": `${ACTIVE_MARKER_ANIMATION_MS}ms` } as React.CSSProperties}
+                    style={
+                      {
+                        "--active-marker-animation-ms": `${ACTIVE_MARKER_ANIMATION_MS}ms`
+                      } as React.CSSProperties
+                    }
                   >
                     {i === activeIndex && (
                       <>
-                        <div
-                          className="timeline-marker-ring pointer-events-none absolute inset-0 m-auto h-8 w-8 rounded-full border md:h-10 md:w-10"
-                        />
-                        <div
-                          className="timeline-marker-halo pointer-events-none absolute inset-0 m-auto h-9 w-9 rounded-full bg-sky-300/20 blur-sm md:h-11 md:w-11"
-                        />
+                        <div className="timeline-marker-ring pointer-events-none absolute inset-0 m-auto h-8 w-8 rounded-full border md:h-10 md:w-10" />
+                        <div className="timeline-marker-halo pointer-events-none absolute inset-0 m-auto h-9 w-9 rounded-full bg-sky-300/20 blur-sm md:h-11 md:w-11" />
                       </>
                     )}
                     <div
                       className={`absolute inset-0 m-auto rounded-full ${i === activeIndex ? "h-7 w-7 bg-sky-300/20 blur-md md:h-8 md:w-8" : "h-6 w-6 bg-sky-400/10 blur-sm"}`}
                     />
                     <div
-                      className={`relative rounded-full transition-all duration-300 ${i === activeIndex
-                        ? "timeline-marker-core h-3.5 w-3.5 border border-sky-100/90 bg-sky-300/85 shadow-[0_0_14px_5px_rgba(125,211,252,0.52)] md:h-4 md:w-4 md:shadow-[0_0_16px_6px_rgba(125,211,252,0.56)]"
-                        : "h-3 w-3 border border-sky-400/70 bg-sky-400/30 shadow-[0_0_10px_3px_rgba(56,189,248,0.25)]"}`}
+                      className={`relative rounded-full transition-all duration-300 ${
+                        i === activeIndex
+                          ? "timeline-marker-core h-3.5 w-3.5 border border-sky-100/90 bg-sky-300/85 shadow-[0_0_14px_5px_rgba(125,211,252,0.52)] md:h-4 md:w-4 md:shadow-[0_0_16px_6px_rgba(125,211,252,0.56)]"
+                          : "h-3 w-3 border border-sky-400/70 bg-sky-400/30 shadow-[0_0_10px_3px_rgba(56,189,248,0.25)]"
+                      }`}
                     />
                   </div>
                   <div className="h-px flex-1 bg-linear-to-l from-sky-400/10 to-sky-400/25" />
@@ -457,7 +493,10 @@ export const TeamTimeline = ({
                       {event.highlights.map((item, index) => {
                         const { place, label } = parsePlacement(item)
                         return (
-                          <li key={`${event.year}-${index}-${item}`} className="flex items-start gap-3 text-base leading-7 text-white/75">
+                          <li
+                            key={`${event.year}-${index}-${item}`}
+                            className="flex items-start gap-3 text-base leading-7 text-white/75"
+                          >
                             <span className={`${place !== null ? "mt-0.5" : ""} shrink-0`}>
                               {place !== null ? (
                                 <Placement place={place} size="md" />
