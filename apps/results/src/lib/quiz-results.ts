@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache"
 import { Pool } from "pg"
+import { cache } from "react"
 
 export type TeamSummary = {
   teamName: string
@@ -51,7 +52,7 @@ export type LeagueStandingTeam = {
 }
 
 let pool: Pool | null = null
-const quizResultsCacheSeconds = 300
+const quizResultsCacheSeconds = 7 * 24 * 60 * 60
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
 
@@ -75,6 +76,27 @@ const getPool = () => {
   })
   return pool
 }
+
+const getQuizResultsCacheVersion = cache(async () => {
+  const result = await getPool().query<{ cache_version: string }>(
+    `
+      select concat_ws(
+        ':',
+        (select count(*)::text from public.quiz_results),
+        (select coalesce(max(updated_at)::text, 'none') from public.quiz_results),
+        (select count(*)::text from public.quiz_leagues where league_name = $1),
+        (
+          select coalesce(max(updated_at)::text, 'none')
+          from public.quiz_leagues
+          where league_name = $1
+        )
+      ) as cache_version
+    `,
+    [longTermLeagueName]
+  )
+
+  return result.rows[0]?.cache_version ?? "empty"
+})
 
 const getQuizDetailsUrl = (quizDetailsId: string | null) => {
   if (!quizDetailsId) {
@@ -152,7 +174,7 @@ const mapQuizResultRow = (row: {
   specialName: row.league_name
 })
 
-const loadAllTeamResults = async (): Promise<QuizResult[]> => {
+const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
   const result = await getPool().query<{
     id: string
     team_name: string
@@ -184,8 +206,10 @@ const loadAllTeamResults = async (): Promise<QuizResult[]> => {
         max_body_v_kole,
         nullif(trim(league_name), '') as league_name
       from public.quiz_results
-      order by team_name, quiz_date desc, id desc
-    `
+      where team_name = $1
+      order by quiz_date desc, id desc
+    `,
+    [teamName]
   )
 
   return result.rows.map(mapQuizResultRow)
@@ -313,8 +337,11 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
   }
 }
 
-export const getTeamSummaries = unstable_cache(
-  loadTeamSummaries,
+const getCachedTeamSummaries = unstable_cache(
+  async (cacheVersion: string) => {
+    void cacheVersion
+    return loadTeamSummaries()
+  },
   ["quiz-results", "team-summaries"],
   {
     revalidate: quizResultsCacheSeconds,
@@ -322,21 +349,38 @@ export const getTeamSummaries = unstable_cache(
   }
 )
 
-const getAllTeamResults = unstable_cache(loadAllTeamResults, ["quiz-results", "all-team-results"], {
-  revalidate: quizResultsCacheSeconds,
-  tags: ["quiz-results"]
-})
-
-export const getTeamResults = async (teamName: string) => {
-  const results = await getAllTeamResults()
-  return results.filter((result) => result.teamName === teamName)
+export const getTeamSummaries = async () => {
+  const cacheVersion = await getQuizResultsCacheVersion()
+  return getCachedTeamSummaries(cacheVersion)
 }
 
-export const getLongTermLeagueStandings = unstable_cache(
-  loadLongTermLeagueStandings,
+const getCachedTeamResults = unstable_cache(
+  async (_cacheVersion: string, teamName: string) => loadTeamResults(teamName),
+  ["quiz-results", "team-results"],
+  {
+    revalidate: quizResultsCacheSeconds,
+    tags: ["quiz-results"]
+  }
+)
+
+export const getTeamResults = async (teamName: string) => {
+  const cacheVersion = await getQuizResultsCacheVersion()
+  return getCachedTeamResults(cacheVersion, teamName)
+}
+
+const getCachedLongTermLeagueStandings = unstable_cache(
+  async (cacheVersion: string) => {
+    void cacheVersion
+    return loadLongTermLeagueStandings()
+  },
   ["quiz-results", "long-term-league-standings"],
   {
     revalidate: quizResultsCacheSeconds,
     tags: ["quiz-results"]
   }
 )
+
+export const getLongTermLeagueStandings = async () => {
+  const cacheVersion = await getQuizResultsCacheVersion()
+  return getCachedLongTermLeagueStandings(cacheVersion)
+}

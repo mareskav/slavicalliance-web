@@ -17,7 +17,8 @@ const formatScrapedAt = (value: string) =>
     month: "numeric",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    timeZone: "Europe/Prague"
   }).format(new Date(value))
 
 const countTeamsInRange = (reservations: QuizPubReservation[], startIso: string, endIso: string) =>
@@ -131,7 +132,7 @@ export const QuizReservationsClient = () => {
       <div className="grid grid-cols-2 gap-3">
         {latestScrape ? (
           <p className="col-span-2 text-sm text-white/40">
-            Data aktualizována {formatScrapedAt(latestScrape)}
+            Data aktualizována <time dateTime={latestScrape}>{formatScrapedAt(latestScrape)}</time>
           </p>
         ) : null}
         <Stat label="Týmů tento týden" value={String(thisWeekTeamCount)} />
