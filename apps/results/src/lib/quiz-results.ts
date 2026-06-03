@@ -51,9 +51,9 @@ export type LeagueStandingTeam = {
 }
 
 let pool: Pool | null = null
-const quizResultsCacheSeconds = 5 * 60
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
+const leagueStandingsCacheSeconds = 24 * 60 * 60
 
 const getDatabaseUrl = () => {
   return process.env.DATABASE_URL?.trim()
@@ -243,7 +243,19 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
   return result.rows.map(mapQuizResultRow)
 }
 
-const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> => {
+const loadLatestQuizResultsUpdate = async () => {
+  const result = await queryDatabase<{ last_result_date: Date | null }>(
+    `select max(updated_at) as last_result_date from public.quiz_results`
+  )
+
+  return result.rows[0]?.last_result_date
+    ? result.rows[0].last_result_date.toISOString()
+    : null
+}
+
+const loadLongTermLeagueStandings = async (
+  lastResultDate: string | null
+): Promise<LeagueStandings | null> => {
   const leagueResult = await queryDatabase<{
     league_name: string
     period_start: Date
@@ -318,20 +330,15 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
     [league.period_start, league.period_stop]
   )
 
-  const [pubsResult, lastResultResult] = await Promise.all([
-    queryDatabase<{ total_pubs: number }>(
-      `
-        select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
-        from public.quiz_results
-        where quiz_date between $1 and $2
-          and nullif(trim(league_name), '') is null
-      `,
-      [league.period_start, league.period_stop]
-    ),
-    queryDatabase<{ last_result_date: Date | null }>(
-      `select max(updated_at) as last_result_date from public.quiz_results`
-    )
-  ])
+  const pubsResult = await queryDatabase<{ total_pubs: number }>(
+    `
+      select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
+      from public.quiz_results
+      where quiz_date between $1 and $2
+        and nullif(trim(league_name), '') is null
+    `,
+    [league.period_start, league.period_stop]
+  )
 
   const teams = standingsResult.rows.map((row) => ({
     teamName: row.team_name,
@@ -341,10 +348,6 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       date: new Date(result.date).toISOString()
     }))
   }))
-
-  const lastResultDate = lastResultResult.rows[0]?.last_result_date
-    ? lastResultResult.rows[0].last_result_date.toISOString()
-    : null
 
   return {
     leagueName: league.league_name,
@@ -365,41 +368,25 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
   }
 }
 
-const getCachedTeamSummaries = unstable_cache(
-  async () => loadTeamSummaries(),
-  ["quiz-results", "team-summaries"],
+const getCachedLongTermLeagueStandings = unstable_cache(
+  async (lastResultDate: string | null) => loadLongTermLeagueStandings(lastResultDate),
+  ["quiz-results", "long-term-league-standings-by-update"],
   {
-    revalidate: quizResultsCacheSeconds,
+    revalidate: leagueStandingsCacheSeconds,
     tags: ["quiz-results"]
   }
 )
 
 export const getTeamSummaries = async () => {
-  return getCachedTeamSummaries()
+  return loadTeamSummaries()
 }
-
-const getCachedTeamResults = unstable_cache(
-  async (teamName: string) => loadTeamResults(teamName),
-  ["quiz-results", "team-results"],
-  {
-    revalidate: quizResultsCacheSeconds,
-    tags: ["quiz-results"]
-  }
-)
 
 export const getTeamResults = async (teamName: string) => {
-  return getCachedTeamResults(teamName)
+  return loadTeamResults(teamName)
 }
 
-const getCachedLongTermLeagueStandings = unstable_cache(
-  async () => loadLongTermLeagueStandings(),
-  ["quiz-results", "long-term-league-standings"],
-  {
-    revalidate: quizResultsCacheSeconds,
-    tags: ["quiz-results"]
-  }
-)
-
 export const getLongTermLeagueStandings = async () => {
-  return getCachedLongTermLeagueStandings()
+  const lastResultDate = await loadLatestQuizResultsUpdate()
+
+  return getCachedLongTermLeagueStandings(lastResultDate)
 }
