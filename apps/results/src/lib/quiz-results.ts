@@ -1,6 +1,5 @@
 import { unstable_cache } from "next/cache"
-import { Pool } from "pg"
-import { cache } from "react"
+import { Pool, type QueryResult, type QueryResultRow } from "pg"
 
 export type TeamSummary = {
   teamName: string
@@ -52,7 +51,7 @@ export type LeagueStandingTeam = {
 }
 
 let pool: Pool | null = null
-const quizResultsCacheSeconds = 7 * 24 * 60 * 60
+const quizResultsCacheSeconds = 5 * 60
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
 
@@ -69,34 +68,63 @@ const getPool = () => {
 
   pool ??= new Pool({
     connectionString,
-    connectionTimeoutMillis: 3000,
-    idleTimeoutMillis: 30000,
-    query_timeout: 10000,
-    statement_timeout: 10000
+    connectionTimeoutMillis: 2000,
+    idleTimeoutMillis: 5000,
+    max: 2,
+    maxLifetimeSeconds: 60,
+    query_timeout: 4000,
+    statement_timeout: 4000
   })
   return pool
 }
 
-const getQuizResultsCacheVersion = cache(async () => {
-  const result = await getPool().query<{ cache_version: string }>(
-    `
-      select concat_ws(
-        ':',
-        (select count(*)::text from public.quiz_results),
-        (select coalesce(max(updated_at)::text, 'none') from public.quiz_results),
-        (select count(*)::text from public.quiz_leagues where league_name = $1),
-        (
-          select coalesce(max(updated_at)::text, 'none')
-          from public.quiz_leagues
-          where league_name = $1
-        )
-      ) as cache_version
-    `,
-    [longTermLeagueName]
-  )
+const resetPool = async () => {
+  const poolToReset = pool
+  pool = null
 
-  return result.rows[0]?.cache_version ?? "empty"
-})
+  if (!poolToReset) {
+    return
+  }
+
+  try {
+    await poolToReset.end()
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const isRetriableDatabaseError = (error: unknown) => {
+  const code =
+    typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : ""
+  const message = error instanceof Error ? error.message.toLowerCase() : ""
+
+  return (
+    code === "57014" ||
+    code.startsWith("08") ||
+    message.includes("timeout") ||
+    message.includes("connection terminated") ||
+    message.includes("connection ended") ||
+    message.includes("socket closed")
+  )
+}
+
+const queryDatabase = async <Row extends QueryResultRow>(
+  text: string,
+  values?: unknown[]
+): Promise<QueryResult<Row>> => {
+  try {
+    return await getPool().query<Row>(text, values)
+  } catch (error) {
+    if (!isRetriableDatabaseError(error)) {
+      throw error
+    }
+
+    await resetPool()
+    return getPool().query<Row>(text, values)
+  }
+}
 
 const getQuizDetailsUrl = (quizDetailsId: string | null) => {
   if (!quizDetailsId) {
@@ -111,7 +139,7 @@ const getQuizDetailsUrl = (quizDetailsId: string | null) => {
 }
 
 const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
-  const result = await getPool().query<{
+  const result = await queryDatabase<{
     team_name: string
     quiz_count: number
     first_date: Date
@@ -175,7 +203,7 @@ const mapQuizResultRow = (row: {
 })
 
 const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
-  const result = await getPool().query<{
+  const result = await queryDatabase<{
     id: string
     team_name: string
     order_in_quiz: number | null
@@ -216,7 +244,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
 }
 
 const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> => {
-  const leagueResult = await getPool().query<{
+  const leagueResult = await queryDatabase<{
     league_name: string
     period_start: Date
     period_stop: Date
@@ -242,7 +270,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
     return null
   }
 
-  const standingsResult = await getPool().query<{
+  const standingsResult = await queryDatabase<{
     team_name: string
     league_results: LeagueResultPoints[]
   }>(
@@ -291,7 +319,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
   )
 
   const [pubsResult, lastResultResult] = await Promise.all([
-    getPool().query<{ total_pubs: number }>(
+    queryDatabase<{ total_pubs: number }>(
       `
         select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
         from public.quiz_results
@@ -300,7 +328,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
       `,
       [league.period_start, league.period_stop]
     ),
-    getPool().query<{ last_result_date: Date | null }>(
+    queryDatabase<{ last_result_date: Date | null }>(
       `select max(updated_at) as last_result_date from public.quiz_results`
     )
   ])
@@ -338,10 +366,7 @@ const loadLongTermLeagueStandings = async (): Promise<LeagueStandings | null> =>
 }
 
 const getCachedTeamSummaries = unstable_cache(
-  async (cacheVersion: string) => {
-    void cacheVersion
-    return loadTeamSummaries()
-  },
+  async () => loadTeamSummaries(),
   ["quiz-results", "team-summaries"],
   {
     revalidate: quizResultsCacheSeconds,
@@ -350,12 +375,11 @@ const getCachedTeamSummaries = unstable_cache(
 )
 
 export const getTeamSummaries = async () => {
-  const cacheVersion = await getQuizResultsCacheVersion()
-  return getCachedTeamSummaries(cacheVersion)
+  return getCachedTeamSummaries()
 }
 
 const getCachedTeamResults = unstable_cache(
-  async (_cacheVersion: string, teamName: string) => loadTeamResults(teamName),
+  async (teamName: string) => loadTeamResults(teamName),
   ["quiz-results", "team-results"],
   {
     revalidate: quizResultsCacheSeconds,
@@ -364,15 +388,11 @@ const getCachedTeamResults = unstable_cache(
 )
 
 export const getTeamResults = async (teamName: string) => {
-  const cacheVersion = await getQuizResultsCacheVersion()
-  return getCachedTeamResults(cacheVersion, teamName)
+  return getCachedTeamResults(teamName)
 }
 
 const getCachedLongTermLeagueStandings = unstable_cache(
-  async (cacheVersion: string) => {
-    void cacheVersion
-    return loadLongTermLeagueStandings()
-  },
+  async () => loadLongTermLeagueStandings(),
   ["quiz-results", "long-term-league-standings"],
   {
     revalidate: quizResultsCacheSeconds,
@@ -381,6 +401,5 @@ const getCachedLongTermLeagueStandings = unstable_cache(
 )
 
 export const getLongTermLeagueStandings = async () => {
-  const cacheVersion = await getQuizResultsCacheVersion()
-  return getCachedLongTermLeagueStandings(cacheVersion)
+  return getCachedLongTermLeagueStandings()
 }

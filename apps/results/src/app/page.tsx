@@ -27,19 +27,6 @@ const ResultsPage = async ({
 }) => {
   const params = await searchParams
   const activeView: ResultView = params?.team && params?.view !== "league" ? "team" : "league"
-  let teams
-
-  try {
-    teams = await getTeamSummaries()
-  } catch (error) {
-    console.error(error)
-    return <ResultsUnavailable />
-  }
-
-  const fallbackTeam =
-    teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
-  const selectedTeam =
-    params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
 
   if (params?.view === "league" && params?.team) {
     const canonicalParams = new URLSearchParams({ view: "league" })
@@ -74,7 +61,7 @@ const ResultsPage = async ({
   if (activeView === "league") {
     return (
       <LeagueStandingsPage
-        teamName={selectedTeam}
+        teamName={params?.team ?? defaultTeamName}
         page={params?.page}
         pageSize={params?.pageSize}
         sort={getLeagueSortKey(params?.sort)}
@@ -85,6 +72,19 @@ const ResultsPage = async ({
     )
   }
 
+  let teams
+
+  try {
+    teams = await getTeamSummaries()
+  } catch (error) {
+    console.error(error)
+    return <ResultsUnavailable />
+  }
+
+  const fallbackTeam =
+    teams.find((team) => team.teamName === defaultTeamName)?.teamName ?? teams[0]?.teamName
+  const selectedTeam =
+    params?.team && teams.some((team) => team.teamName === params.team) ? params.team : fallbackTeam
   const selectedSummary = teams.find((team) => team.teamName === selectedTeam)
   let results
 
