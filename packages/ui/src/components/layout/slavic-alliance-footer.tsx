@@ -37,11 +37,12 @@ export const SlavicAllianceFooter = ({
               Slavic Alliance
             </a>
             <p className="text-xs text-white/44">
-              Oficiální týmový web Slavic Alliance. Výsledky a statistiky sbíráme z veřejných
-              kvízových dat a vlastních záznamů.
+              Oficiální web týmu Slavic Alliance. Statistiky vychází z veřejně dostupných kvízových
+              výsledků, vlastních týmových záznamů a ručně doplněných údajů. Web není oficiálním
+              zdrojem výsledků žádné kvízové soutěže ani není provozován jejím pořadatelem.
             </p>
           </div>
-
+          X
           <nav className="flex items-center gap-4" aria-label="Patičková navigace">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -64,7 +65,8 @@ export const SlavicAllianceFooter = ({
             © {new Date().getFullYear()} Slavic Alliance. Všechna práva vyhrazena.
           </p>
           <p className="flex items-center gap-1.5 text-xs text-white/28">
-            Vyrobil Vašek M. s <Heart className="h-3 w-3 fill-red-400/60 text-red-400/60" /> pro náš tým
+            Vyrobil Vašek M. s <Heart className="h-3 w-3 fill-red-400/60 text-red-400/60" /> pro náš
+            tým
           </p>
         </div>
       </div>
