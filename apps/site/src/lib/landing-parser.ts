@@ -10,6 +10,39 @@ export interface CurrentHighlightsSection {
   endDate: string | null;
 }
 
+export const celebratedHighlight = "3. Jarní liga Prahy 2026";
+
+const normaliseCurrentHighlight = (value: string): string => value.trim().toLocaleLowerCase("cs-CZ");
+
+const parseCurrentEndOfDay = (value: string | null): Date | null => {
+  if (!value) return null;
+
+  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!match) return null;
+
+  const [, day, month, year] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+};
+
+export const getActiveCelebratedHighlight = (
+  section: CurrentHighlightsSection,
+  now: Date = new Date()
+): string | null => {
+  const label = section.items.find(
+    (item) => normaliseCurrentHighlight(item) === normaliseCurrentHighlight(celebratedHighlight)
+  );
+
+  if (!label) return null;
+
+  const endDate = parseCurrentEndOfDay(section.endDate);
+  return endDate && now.getTime() > endDate.getTime() ? null : label;
+};
+
+export const shouldShowCelebratedHighlight = (
+  section: CurrentHighlightsSection,
+  now: Date = new Date()
+): boolean => getActiveCelebratedHighlight(section, now) !== null;
+
 const stripFrontmatter = (raw: string): string => {
   const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
   return frontmatterMatch ? raw.slice(frontmatterMatch[0].length) : raw;

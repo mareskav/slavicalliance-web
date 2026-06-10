@@ -42,7 +42,6 @@ export const SlavicAllianceFooter = ({
               zdrojem výsledků žádné kvízové soutěže ani není provozován jejím pořadatelem.
             </p>
           </div>
-          X
           <nav className="flex items-center gap-4" aria-label="Patičková navigace">
             {navItems.map((item) => {
               const Icon = item.icon

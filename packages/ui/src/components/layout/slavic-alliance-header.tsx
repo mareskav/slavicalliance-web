@@ -12,13 +12,12 @@ type NavItem = {
   icon: LucideIcon
 }
 
-const achievementLabel = "3. Jarní liga Prahy 2026"
-
 export type SlavicAllianceHeaderProps = {
   siteHref?: string
   resultsHref?: string
   logoSrc?: string
   activeItem?: NavItem["id"]
+  achievementLabel?: string | null
 }
 
 const joinUrl = (base: string, pathname: string) => {
@@ -33,7 +32,8 @@ export const SlavicAllianceHeader = ({
   siteHref = "/",
   resultsHref = "/vysledky",
   logoSrc,
-  activeItem
+  activeItem,
+  achievementLabel
 }: SlavicAllianceHeaderProps) => {
   const navItems: NavItem[] = [
     { id: "home", href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
@@ -81,9 +81,11 @@ export const SlavicAllianceHeader = ({
           })}
         </nav>
 
-        <div className="relative w-fit max-w-full self-center md:ml-auto md:self-auto">
-          <AchievementBadge label={achievementLabel} />
-        </div>
+        {achievementLabel ? (
+          <div className="relative w-fit max-w-full self-center md:ml-auto md:self-auto">
+            <AchievementBadge label={achievementLabel} />
+          </div>
+        ) : null}
 
         <nav className="flex w-fit justify-center gap-0.5 md:hidden" aria-label="Hlavní navigace">
           {navItems.map((item) => {
