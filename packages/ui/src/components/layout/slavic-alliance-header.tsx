@@ -45,7 +45,7 @@ export const SlavicAllianceHeader = ({
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#05070c]/82 backdrop-blur-xl supports-backdrop-filter:bg-[#05070c]/72">
       <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-sky-200/20 to-transparent" />
 
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:px-6 md:h-18 md:flex-row md:items-center md:py-0 lg:px-8">
+      <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-3 sm:px-6 md:h-18 md:flex-row md:py-0 lg:px-8">
         <a
           href={joinUrl(siteHref, "/")}
           className="w-fit min-w-0 transition-transform hover:scale-[1.01]"
@@ -81,7 +81,11 @@ export const SlavicAllianceHeader = ({
           })}
         </nav>
 
-        <nav className="flex w-fit gap-0.5 md:hidden" aria-label="Hlavní navigace">
+        <div className="relative w-fit max-w-full self-center md:ml-auto md:self-auto">
+          <AchievementBadge label={achievementLabel} />
+        </div>
+
+        <nav className="flex w-fit justify-center gap-0.5 md:hidden" aria-label="Hlavní navigace">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = item.id === activeItem
@@ -108,10 +112,6 @@ export const SlavicAllianceHeader = ({
             )
           })}
         </nav>
-
-        <div className="relative w-fit max-w-full self-center md:ml-auto md:self-auto">
-          <AchievementBadge label={achievementLabel} />
-        </div>
       </div>
     </header>
   )
