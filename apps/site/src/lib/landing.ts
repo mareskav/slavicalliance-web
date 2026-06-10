@@ -1,7 +1,11 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { parseTimelineFromContent, parseTimelineEvents } from "./landing-parser";
+import {
+  parseCurrentHighlightsFromContent,
+  parseTimelineFromContent,
+  parseTimelineEvents
+} from "./landing-parser";
 
 export type { TimelineEvent } from "./landing-parser";
 export { parseTimelineEvents };
@@ -20,6 +24,7 @@ export interface LandingPage {
 export interface LandingData {
   page: LandingPage;
   timelineEvents: ReturnType<typeof parseTimelineFromContent>;
+  currentHighlights: ReturnType<typeof parseCurrentHighlightsFromContent>;
   source: LandingContentSource;
 }
 
@@ -79,6 +84,7 @@ export const getLandingData = async (): Promise<LandingData> => {
   return {
     page: { title, content: introOnly, source },
     timelineEvents: parseTimelineFromContent(content),
+    currentHighlights: parseCurrentHighlightsFromContent(content),
     source
   };
 };

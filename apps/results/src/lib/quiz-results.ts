@@ -53,6 +53,7 @@ export type LeagueStandingTeam = {
 let pool: Pool | null = null
 const longTermLeagueName = "Finále Praha"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
+const latestQuizResultsUpdateCacheSeconds = 60
 const leagueStandingsCacheSeconds = 24 * 60 * 60
 
 const getDatabaseUrl = () => {
@@ -377,6 +378,15 @@ const getCachedLongTermLeagueStandings = unstable_cache(
   }
 )
 
+const getCachedLatestQuizResultsUpdate = unstable_cache(
+  loadLatestQuizResultsUpdate,
+  ["quiz-results", "latest-update"],
+  {
+    revalidate: latestQuizResultsUpdateCacheSeconds,
+    tags: ["quiz-results"]
+  }
+)
+
 export const getTeamSummaries = async () => {
   return loadTeamSummaries()
 }
@@ -386,7 +396,7 @@ export const getTeamResults = async (teamName: string) => {
 }
 
 export const getLongTermLeagueStandings = async () => {
-  const lastResultDate = await loadLatestQuizResultsUpdate()
+  const lastResultDate = await getCachedLatestQuizResultsUpdate()
 
   return getCachedLongTermLeagueStandings(lastResultDate)
 }

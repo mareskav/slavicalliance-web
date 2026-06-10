@@ -315,14 +315,18 @@ const AdminEditor = () => {
           <ul className="mt-2 space-y-1.5 text-white/78">
             <li>Text nad prvním nadpisem <code className="rounded bg-black/30 px-1 py-0.5">## Rok</code> se zobrazí jako úvodní příběh na homepage.</li>
             <li>Timeline se skládá z odrážek pod nadpisy <code className="rounded bg-black/30 px-1 py-0.5">## 2025</code> nebo <code className="rounded bg-black/30 px-1 py-0.5">## 2024/25</code>.</li>
-            <li>Umístění zapisuj jednotně jako <code className="rounded bg-black/30 px-1 py-0.5">1. - Název soutěže 2025</code>, <code className="rounded bg-black/30 px-1 py-0.5">2. - ...</code>, <code className="rounded bg-black/30 px-1 py-0.5">3. - ...</code>.</li>
-            <li>Stejný formát platí i pro další pořadí, např. <code className="rounded bg-black/30 px-1 py-0.5">4. - Název soutěže 2025</code> (v timeline se automaticky vykreslí kolečko s pořadím).</li>
+            <li>Umístění zapisuj jednotně jako <code className="rounded bg-black/30 px-1 py-0.5">1. Název soutěže 2025</code>, <code className="rounded bg-black/30 px-1 py-0.5">2. ...</code>, <code className="rounded bg-black/30 px-1 py-0.5">3. ...</code>.</li>
+            <li>Stejný formát platí i pro další pořadí, např. <code className="rounded bg-black/30 px-1 py-0.5">4. Název soutěže 2025</code> (v timeline se automaticky vykreslí kolečko s pořadím).</li>
             <li>Každá položka timeline musí mít rok v textu nebo být pod správným ročním nadpisem.</li>
+            <li>Blok <code className="rounded bg-black/30 px-1 py-0.5">## Aktuálně</code> dávej na konec souboru. Řádek <code className="rounded bg-black/30 px-1 py-0.5">Konec</code> určuje, do kdy se má zobrazovat aktuální oslava a ohňostroj.</li>
           </ul>
           <pre className="mt-3 overflow-x-auto rounded border border-white/12 bg-[#05070c] p-3 text-xs leading-5 text-white/78">{`## 2025
-- 3. - Mistrovství České republiky v Hospodském kvízu 2025
-- 3. - Pražské finále – únor 2025
-- 4. - Kvízový maraton 2025`}</pre>
+- 3. Mistrovství České republiky v Hospodském kvízu 2025
+- 3. Pražské finále – únor 2025
+- 4. Kvízový maraton 2025`}</pre>
+          <pre className="mt-3 overflow-x-auto rounded border border-white/12 bg-[#05070c] p-3 text-xs leading-5 text-white/78">{`## Aktuálně
+- Konec: 23.06.2026
+- 3. Jarní liga Prahy 2026`}</pre>
         </section>
 
         <div className="mt-5 overflow-hidden rounded-md border border-white/12 bg-[#05070c]">

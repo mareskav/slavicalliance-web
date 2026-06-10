@@ -4,6 +4,26 @@ export interface TimelineEvent {
   highlights: string[];
 }
 
+export interface CurrentHighlightsSection {
+  heading: string;
+  items: string[];
+  endDate: string | null;
+}
+
+const stripFrontmatter = (raw: string): string => {
+  const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  return frontmatterMatch ? raw.slice(frontmatterMatch[0].length) : raw;
+};
+
+const currentSectionHeadings = new Set(["aktuální banner", "aktuální úspěch", "aktuální úspěchy", "aktuálně"]);
+
+const getCurrentSectionHeading = (text: string): string | null => {
+  const heading = text.replace(/^#+\s*/, "").trim();
+  return currentSectionHeadings.has(heading.toLocaleLowerCase("cs-CZ")) ? heading : null;
+};
+
+const isCurrentSectionHeading = (text: string): boolean => getCurrentSectionHeading(text) !== null;
+
 const extractYearKey = (text: string): string | null => {
   const seasonMatch = text.match(/\b(20\d{2})[\/\-](?:20)?(\d{2})\b/);
   if (seasonMatch) return `${seasonMatch[1]}/${seasonMatch[2].slice(-2)}`;
@@ -33,12 +53,16 @@ export const parseTimelineFromContent = (content: string): TimelineEvent[] => {
   const byYear = new Map<string, string[]>();
   const noYearItems: string[] = [];
   let currentSectionYear: string | null = null;
+  let isCurrentSection = false;
 
   for (const line of content.split(/\r?\n/)) {
     if (line.startsWith("##")) {
-      currentSectionYear = extractYearKey(line);
+      isCurrentSection = isCurrentSectionHeading(line);
+      currentSectionYear = isCurrentSection ? null : extractYearKey(line);
       continue;
     }
+
+    if (isCurrentSection) continue;
 
     const match = line.match(/^[-*+]\s+(.+)$/);
     if (!match) continue;
@@ -80,8 +104,44 @@ export const parseTimelineFromContent = (content: string): TimelineEvent[] => {
   }));
 };
 
+export const parseCurrentHighlightsFromContent = (content: string): CurrentHighlightsSection => {
+  const section: CurrentHighlightsSection = {
+    heading: "Aktuálně",
+    items: [],
+    endDate: null
+  };
+  let isCurrentSection = false;
+
+  for (const line of content.split(/\r?\n/)) {
+    if (line.startsWith("##")) {
+      const heading = getCurrentSectionHeading(line);
+      isCurrentSection = heading !== null;
+      if (heading) section.heading = heading;
+      continue;
+    }
+
+    if (!isCurrentSection) continue;
+
+    const match = line.match(/^[-*+]\s+(.+)$/);
+    if (!match) continue;
+
+    const item = match[1].trim();
+    const endDateMatch = item.match(/^Konec:\s*(.+)$/i);
+    if (endDateMatch) {
+      section.endDate = endDateMatch[1].trim();
+      continue;
+    }
+
+    section.items.push(item);
+  }
+
+  return section;
+};
+
 export const parseTimelineEvents = (raw: string): TimelineEvent[] => {
-  const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-  const content = frontmatterMatch ? raw.slice(frontmatterMatch[0].length) : raw;
-  return parseTimelineFromContent(content);
+  return parseTimelineFromContent(stripFrontmatter(raw));
+};
+
+export const parseCurrentHighlights = (raw: string): CurrentHighlightsSection => {
+  return parseCurrentHighlightsFromContent(stripFrontmatter(raw));
 };

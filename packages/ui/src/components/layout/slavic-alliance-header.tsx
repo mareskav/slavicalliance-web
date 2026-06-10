@@ -2,6 +2,7 @@ import { BarChart3, CalendarDays, Trophy, type LucideIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
+import { AchievementBadge } from "./achievement-badge"
 import { TeamMark } from "./team-mark"
 
 type NavItem = {
@@ -10,6 +11,8 @@ type NavItem = {
   label: string
   icon: LucideIcon
 }
+
+const achievementLabel = "3. Jarní liga Prahy 2026"
 
 export type SlavicAllianceHeaderProps = {
   siteHref?: string
@@ -105,6 +108,10 @@ export const SlavicAllianceHeader = ({
             )
           })}
         </nav>
+
+        <div className="relative w-fit max-w-full self-center md:ml-auto md:self-auto">
+          <AchievementBadge label={achievementLabel} />
+        </div>
       </div>
     </header>
   )
