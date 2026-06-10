@@ -37,7 +37,7 @@ export const TimelineEventCard = ({
         {event.displayYear}
       </span>
       <div className="rounded-2xl border border-white/8 bg-linear-to-br from-white/5 to-white/2 px-5 py-5 shadow-lg shadow-black/20">
-        <ul className="space-y-2.5">
+        <ul className="space-y-3.5">
           {event.highlights.map((item, highlightIndex) => {
             const { place, label } = parsePlacement(item)
 
