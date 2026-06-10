@@ -7,7 +7,7 @@ const getAchievementParts = (label: string) => {
   }
 }
 
-export const AchievementBadge = ({ label }: { label: string }) => {
+export const AchievementBadge = ({ label, prefix }: { label: string; prefix?: string }) => {
   const { place, text } = getAchievementParts(label)
 
   return (
@@ -51,8 +51,13 @@ export const AchievementBadge = ({ label }: { label: string }) => {
         <span className="relative" aria-hidden="true">
           <Placement place={place} />
         </span>
-        <span className="relative min-w-0 truncate text-xs font-semibold tracking-normal text-amber-50/90 sm:text-sm">
-          {text}
+        <span className="relative flex min-w-0 items-center gap-1.5 text-xs font-semibold tracking-normal text-amber-50/90 sm:text-sm">
+          {prefix ? (
+            <span className="shrink-0 rounded-md border border-amber-100/10 bg-amber-100/8 px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none tracking-[0.08em] text-amber-100/72">
+              {prefix}
+            </span>
+          ) : null}
+          <span className="min-w-0 truncate">{text}</span>
         </span>
       </div>
     </div>

@@ -1,47 +1,24 @@
+import {
+  getActiveCelebratedHighlight,
+  parseCurrentHighlights,
+  parseCurrentHighlightsFromContent,
+  shouldShowCelebratedHighlight,
+  type CurrentHighlightsSection
+} from "@repo/ui/lib/celebration";
+
+export {
+  getActiveCelebratedHighlight,
+  parseCurrentHighlights,
+  parseCurrentHighlightsFromContent,
+  shouldShowCelebratedHighlight
+};
+export type { CurrentHighlightsSection };
+
 export interface TimelineEvent {
   year: string;
   displayYear: string;
   highlights: string[];
 }
-
-export interface CurrentHighlightsSection {
-  heading: string;
-  items: string[];
-  endDate: string | null;
-}
-
-export const celebratedHighlight = "3. Jarní liga Prahy 2026";
-
-const normaliseCurrentHighlight = (value: string): string => value.trim().toLocaleLowerCase("cs-CZ");
-
-const parseCurrentEndOfDay = (value: string | null): Date | null => {
-  if (!value) return null;
-
-  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (!match) return null;
-
-  const [, day, month, year] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
-};
-
-export const getActiveCelebratedHighlight = (
-  section: CurrentHighlightsSection,
-  now: Date = new Date()
-): string | null => {
-  const label = section.items.find(
-    (item) => normaliseCurrentHighlight(item) === normaliseCurrentHighlight(celebratedHighlight)
-  );
-
-  if (!label) return null;
-
-  const endDate = parseCurrentEndOfDay(section.endDate);
-  return endDate && now.getTime() > endDate.getTime() ? null : label;
-};
-
-export const shouldShowCelebratedHighlight = (
-  section: CurrentHighlightsSection,
-  now: Date = new Date()
-): boolean => getActiveCelebratedHighlight(section, now) !== null;
 
 const stripFrontmatter = (raw: string): string => {
   const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
@@ -137,44 +114,6 @@ export const parseTimelineFromContent = (content: string): TimelineEvent[] => {
   }));
 };
 
-export const parseCurrentHighlightsFromContent = (content: string): CurrentHighlightsSection => {
-  const section: CurrentHighlightsSection = {
-    heading: "Aktuálně",
-    items: [],
-    endDate: null
-  };
-  let isCurrentSection = false;
-
-  for (const line of content.split(/\r?\n/)) {
-    if (line.startsWith("##")) {
-      const heading = getCurrentSectionHeading(line);
-      isCurrentSection = heading !== null;
-      if (heading) section.heading = heading;
-      continue;
-    }
-
-    if (!isCurrentSection) continue;
-
-    const match = line.match(/^[-*+]\s+(.+)$/);
-    if (!match) continue;
-
-    const item = match[1].trim();
-    const endDateMatch = item.match(/^Konec:\s*(.+)$/i);
-    if (endDateMatch) {
-      section.endDate = endDateMatch[1].trim();
-      continue;
-    }
-
-    section.items.push(item);
-  }
-
-  return section;
-};
-
 export const parseTimelineEvents = (raw: string): TimelineEvent[] => {
   return parseTimelineFromContent(stripFrontmatter(raw));
-};
-
-export const parseCurrentHighlights = (raw: string): CurrentHighlightsSection => {
-  return parseCurrentHighlightsFromContent(stripFrontmatter(raw));
 };

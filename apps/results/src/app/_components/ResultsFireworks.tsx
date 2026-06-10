@@ -3,27 +3,20 @@
 import { useEffect, useState } from "react"
 
 import { FireworksCanvas } from "@repo/ui/components/effects/fireworks-canvas"
+import {
+  shouldShowCelebratedHighlight,
+  type CurrentHighlightsSection
+} from "@repo/ui/lib/celebration"
 
-const celebrationEndDate = "23.06.2026"
-
-const parseLocalEndOfDay = (value: string) => {
-  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/)
-  if (!match) return null
-
-  const [, day, month, year] = match
-  return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999)
-}
-
-export const ResultsFireworks = () => {
+export const ResultsFireworks = ({ highlights }: { highlights: CurrentHighlightsSection }) => {
   const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
     const readyTimer = window.setTimeout(() => {
-      const endDate = parseLocalEndOfDay(celebrationEndDate)
-      setEnabled(endDate ? Date.now() <= endDate.getTime() : true)
+      setEnabled(shouldShowCelebratedHighlight(highlights))
     }, 0)
     return () => window.clearTimeout(readyTimer)
-  }, [])
+  }, [highlights])
 
   return <FireworksCanvas enabled={enabled} />
 }
