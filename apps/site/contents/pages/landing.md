@@ -40,8 +40,9 @@ Od pravidelných hospodských večerů jsme se postupně dostali k medailím v p
 ## 2026
 
 - 3. Jarní liga Prahy 2026
-- Jedeme dál! Aktuální výsledky najdeš v [Výsledky](/vysledky?team=Slavic%20Alliance)
-- Průběžné pořadí najdeš v [Dlouhodobé soutěži 2026](/vysledky?view=league).
+- Jedeme dál!
+- Aktuální výsledky najdeš na [Výsledky](/vysledky?team=Slavic%20Alliance)
+- Průběžné pořadí najdeš v [Dlouhodobé soutěži 2026](/vysledky?view=league)
 
 ## Aktuálně
 
