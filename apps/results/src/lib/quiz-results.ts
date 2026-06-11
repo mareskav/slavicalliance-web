@@ -2,17 +2,22 @@ import { unstable_cache } from "next/cache"
 import { Pool, type QueryResult, type QueryResultRow } from "pg"
 
 export type TeamSummary = {
+  teamId: number | null
+  teamKey: string
   teamName: string
+  teamPub: string | null
   quizCount: number
   firstDate: string
   lastDate: string
   averagePoints: number
   bestPoints: number
   bestPlace: number
+  duplicateNameCount: number
 }
 
 export type QuizResult = {
   id: string
+  teamId: number | null
   teamName: string
   orderInQuiz: number | null
   points: number | null
@@ -46,7 +51,11 @@ export type LeagueResultPoints = {
 }
 
 export type LeagueStandingTeam = {
+  teamId: number | null
+  teamKey: string
   teamName: string
+  teamPub: string | null
+  duplicateNameCount: number
   leagueResults: LeagueResultPoints[]
 }
 
@@ -139,42 +148,73 @@ const getQuizDetailsUrl = (quizDetailsId: string | null) => {
   return `https://www.hospodskykviz.cz/tymy/odehrane-kvizy/${quizDetailsId}`
 }
 
+export const getTeamKey = (teamId: number | null, teamName: string) => {
+  return teamId === null ? `name:${teamName}` : `id:${teamId}`
+}
+
 const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
   const result = await queryDatabase<{
+    team_id: number | null
     team_name: string
+    team_pub: string | null
     quiz_count: number
     first_date: Date
     last_date: Date
     average_points: string
     best_points: number
     best_place: number
+    duplicate_name_count: number
   }>(`
+    with team_summaries as (
+      select
+        team_id,
+        team_name,
+        (array_agg(
+          nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '')
+          order by quiz_date desc, id desc
+        ))[1] as team_pub,
+        count(*)::int as quiz_count,
+        min(quiz_date) as first_date,
+        max(quiz_date) as last_date,
+        round(avg(points)::numeric, 2) as average_points,
+        max(points) as best_points,
+        min(order_in_quiz) as best_place
+      from public.quiz_results
+      group by team_id, team_name
+    )
     select
+      team_id,
       team_name,
-      count(*)::int as quiz_count,
-      min(quiz_date) as first_date,
-      max(quiz_date) as last_date,
-      round(avg(points)::numeric, 2) as average_points,
-      max(points) as best_points,
-      min(order_in_quiz) as best_place
-    from public.quiz_results
-    group by team_name
-    order by team_name
+      team_pub,
+      quiz_count,
+      first_date,
+      last_date,
+      average_points,
+      best_points,
+      best_place,
+      count(*) over (partition by team_name)::int as duplicate_name_count
+    from team_summaries
+    order by team_name, team_id nulls last
   `)
 
   return result.rows.map((row) => ({
+    teamId: row.team_id,
+    teamKey: getTeamKey(row.team_id, row.team_name),
     teamName: row.team_name,
+    teamPub: row.team_pub,
     quizCount: row.quiz_count,
     firstDate: row.first_date.toISOString(),
     lastDate: row.last_date.toISOString(),
     averagePoints: Number(row.average_points),
     bestPoints: Number(row.best_points),
-    bestPlace: row.best_place
+    bestPlace: row.best_place,
+    duplicateNameCount: row.duplicate_name_count
   }))
 }
 
 const mapQuizResultRow = (row: {
   id: string
+  team_id: number | null
   team_name: string
   order_in_quiz: number | null
   points: number | null
@@ -189,6 +229,7 @@ const mapQuizResultRow = (row: {
   league_name: string | null
 }): QuizResult => ({
   id: row.id,
+  teamId: row.team_id,
   teamName: row.team_name,
   orderInQuiz: row.order_in_quiz,
   points: row.points === null ? null : Number(row.points),
@@ -203,9 +244,10 @@ const mapQuizResultRow = (row: {
   specialName: row.league_name
 })
 
-const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
+const loadTeamResults = async (teamId: number | null, teamName: string): Promise<QuizResult[]> => {
   const result = await queryDatabase<{
     id: string
+    team_id: number | null
     team_name: string
     order_in_quiz: number | null
     points: number | null
@@ -222,6 +264,7 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
     `
       select
         id::text,
+        team_id,
         team_name,
         order_in_quiz,
         points,
@@ -235,10 +278,17 @@ const loadTeamResults = async (teamName: string): Promise<QuizResult[]> => {
         max_body_v_kole,
         nullif(trim(league_name), '') as league_name
       from public.quiz_results
-      where team_name = $1
+      where (
+        $1::integer is not null
+        and team_id = $1::integer
+      ) or (
+        $1::integer is null
+        and team_id is null
+        and team_name = $2
+      )
       order by quiz_date desc, id desc
     `,
-    [teamName]
+    [teamId, teamName]
   )
 
   return result.rows.map(mapQuizResultRow)
@@ -284,13 +334,18 @@ const loadLongTermLeagueStandings = async (
   }
 
   const standingsResult = await queryDatabase<{
+    team_id: number | null
     team_name: string
+    team_pub: string | null
+    duplicate_name_count: number
     league_results: LeagueResultPoints[]
   }>(
     `
       with results_in_league as (
         select
+          team_id,
           team_name,
+          nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
           (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
           quiz_date,
           id,
@@ -300,18 +355,22 @@ const loadLongTermLeagueStandings = async (
           and nullif(trim(league_name), '') is null
       ),
       picked_results as (
-        select distinct on (team_name, league_week)
+        select distinct on (team_id, team_name, league_week)
+          team_id,
           team_name,
+          team_pub,
           league_points,
           quiz_date,
           id,
           league_week + 1 as league_round
         from results_in_league
-        order by team_name, league_week, quiz_date desc, id desc
+        order by team_id, team_name, league_week, quiz_date desc, id desc
       ),
       team_totals as (
         select
+          team_id,
           team_name,
+          (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
           coalesce(
             json_agg(
               json_build_object('round', league_round, 'points', league_points, 'date', quiz_date)
@@ -320,13 +379,16 @@ const loadLongTermLeagueStandings = async (
             '[]'::json
           ) as league_results
         from picked_results
-        group by team_name
+        group by team_id, team_name
       )
       select
+        team_totals.team_id,
         team_totals.team_name,
+        team_totals.team_pub,
+        count(*) over (partition by team_totals.team_name)::int as duplicate_name_count,
         team_totals.league_results
       from team_totals
-      order by team_name
+      order by team_name, team_id nulls last
     `,
     [league.period_start, league.period_stop]
   )
@@ -342,7 +404,11 @@ const loadLongTermLeagueStandings = async (
   )
 
   const teams = standingsResult.rows.map((row) => ({
+    teamId: row.team_id,
+    teamKey: getTeamKey(row.team_id, row.team_name),
     teamName: row.team_name,
+    teamPub: row.team_pub,
+    duplicateNameCount: row.duplicate_name_count,
     leagueResults: row.league_results.map((result) => ({
       round: Number(result.round),
       points: Number(result.points),
@@ -391,8 +457,8 @@ export const getTeamSummaries = async () => {
   return loadTeamSummaries()
 }
 
-export const getTeamResults = async (teamName: string) => {
-  return loadTeamResults(teamName)
+export const getTeamResults = async (teamId: number | null, teamName: string) => {
+  return loadTeamResults(teamId, teamName)
 }
 
 export const getLongTermLeagueStandings = async () => {

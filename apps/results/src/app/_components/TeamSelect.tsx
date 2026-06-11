@@ -5,16 +5,21 @@ import { Check, ChevronDown, Loader2, Search, Users, X } from "lucide-react"
 import { KeyboardEvent, useEffect, useMemo, useRef, useState, useTransition } from "react"
 
 type TeamSelectOption = {
+  teamId: number | null
+  teamKey: string
   teamName: string
+  teamPub: string | null
   quizCount: number
+  duplicateNameCount: number
 }
 
 type TeamSelectProps = {
   teams: TeamSelectOption[]
+  selectedTeamId: number | null
   selectedTeamName: string
 }
 
-export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
+export const TeamSelect = ({ teams, selectedTeamId, selectedTeamName }: TeamSelectProps) => {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [query, setQuery] = useState(selectedTeamName)
@@ -56,16 +61,26 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
     }
   }, [selectedTeamName])
 
-  const selectTeam = (nextTeamName: string) => {
-    setQuery(nextTeamName)
+  const selectedTeamKey = getTeamKey(selectedTeamId, selectedTeamName)
+
+  const selectTeam = (nextTeam: TeamSelectOption) => {
+    setQuery(nextTeam.teamName)
     setIsOpen(false)
 
-    if (nextTeamName === selectedTeamName) {
+    if (nextTeam.teamKey === selectedTeamKey) {
       return
     }
 
     startTransition(() => {
-      router.push(`/?team=${encodeURIComponent(nextTeamName)}`)
+      const params = new URLSearchParams({ team: nextTeam.teamName })
+
+      if (nextTeam.teamId !== null) {
+        params.set("teamId", String(nextTeam.teamId))
+      } else if (nextTeam.duplicateNameCount > 1) {
+        params.set("teamId", "none")
+      }
+
+      router.push(`/?${params.toString()}`)
     })
   }
 
@@ -90,7 +105,7 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
       const activeTeam = filteredTeams[activeIndex]
 
       if (activeTeam) {
-        selectTeam(activeTeam.teamName)
+        selectTeam(activeTeam)
       }
 
       return
@@ -172,12 +187,12 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
           >
             {filteredTeams.length > 0 ? (
               filteredTeams.map((team, index) => {
-                const isSelected = team.teamName === selectedTeamName
+                const isSelected = team.teamKey === selectedTeamKey
                 const isActive = index === activeIndex
 
                 return (
                   <button
-                    key={team.teamName}
+                    key={team.teamKey}
                     id={`team-select-option-${index}`}
                     type="button"
                     role="option"
@@ -187,7 +202,7 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
                     }}
                     onMouseDown={(event) => {
                       event.preventDefault()
-                      selectTeam(team.teamName)
+                      selectTeam(team)
                     }}
                     className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition ${
                       isActive ? "bg-sky-100/14 text-white" : "text-white/76 hover:bg-white/7 hover:text-white"
@@ -195,7 +210,12 @@ export const TeamSelect = ({ teams, selectedTeamName }: TeamSelectProps) => {
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{team.teamName}</span>
-                      <span className="block text-xs font-medium text-white/42">{team.quizCount} kvízů</span>
+                      <span className="block text-xs font-medium text-white/42">
+                        {team.quizCount} kvízů
+                        {team.duplicateNameCount > 1
+                          ? ` - ${team.teamPub ?? "hospoda neuvedena"}`
+                          : ""}
+                      </span>
                     </span>
                     {isSelected ? <Check className="h-4 w-4 shrink-0 text-sky-100/82" /> : null}
                   </button>
@@ -216,3 +236,6 @@ const normalizeSearchValue = (value: string) =>
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLocaleLowerCase("cs-CZ")
+
+const getTeamKey = (teamId: number | null, teamName: string) =>
+  teamId === null ? `name:${teamName}` : `id:${teamId}`

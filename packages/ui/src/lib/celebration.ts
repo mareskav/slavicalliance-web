@@ -4,10 +4,6 @@ export interface CurrentHighlightsSection {
   endDate: string | null
 }
 
-export const celebratedHighlight = "3. Jarní liga Prahy 2026"
-
-const normaliseCurrentHighlight = (value: string): string => value.trim().toLocaleLowerCase("cs-CZ")
-
 const stripFrontmatter = (raw: string): string => {
   const frontmatterMatch = raw.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/)
   return frontmatterMatch ? raw.slice(frontmatterMatch[0].length) : raw
@@ -68,9 +64,7 @@ export const getActiveCelebratedHighlight = (
   section: CurrentHighlightsSection,
   now: Date = new Date()
 ): string | null => {
-  const label = section.items.find(
-    (item) => normaliseCurrentHighlight(item) === normaliseCurrentHighlight(celebratedHighlight)
-  )
+  const label = section.items.find((item) => item.trim().length > 0)
 
   if (!label) return null
 

@@ -53,7 +53,7 @@ export const getLeagueTeamsWithPlacements = (
       return compared
     }
 
-    return a.teamName.localeCompare(b.teamName, "cs")
+    return a.teamName.localeCompare(b.teamName, "cs") || a.teamKey.localeCompare(b.teamKey, "cs")
   })
 
   const placements = new Map<string, number>()
@@ -63,7 +63,7 @@ export const getLeagueTeamsWithPlacements = (
   teamsByPoints.forEach((team, index) => {
     const points = getLeaguePoints(team, cutCount, selectedRoundCount)
     const placement = previousPoints === points ? previousPlacement : index + 1
-    placements.set(team.teamName, placement)
+    placements.set(team.teamKey, placement)
     previousPoints = points
     previousPlacement = placement
   })
@@ -74,7 +74,7 @@ export const getLeagueTeamsWithPlacements = (
 
     return {
       ...team,
-      placement: placements.get(team.teamName) ?? 0,
+      placement: placements.get(team.teamKey) ?? 0,
       displayPoints: getLeaguePoints(team, cutCount, selectedRoundCount),
       displayQuizCount: selectedResults.length,
       displayLastQuizPoints: lastSelectedResult?.points ?? null,

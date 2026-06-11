@@ -11,12 +11,14 @@ const hasTip56Question = (value: string | null) => value === "1"
 
 export const TeamTable = ({
   results,
+  teamIdQuery,
   teamName,
   sort,
   direction,
   pageSize
 }: {
   results: QuizResult[]
+  teamIdQuery: string | null
   teamName: string
   sort: TeamSortKey
   direction: SortDirection
@@ -30,8 +32,8 @@ export const TeamTable = ({
             className="w-18 px-1.5 py-3 font-semibold sm:px-2 md:w-18 md:px-2"
             aria-sort={sort === "place" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "place", sort, direction, pageSize, "asc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "place", sort, direction, pageSize, "asc")}
               label={<><span className="md:hidden">Místo</span><span className="hidden md:inline">Pořadí</span></>}
               isActive={sort === "place"}
               direction={direction}
@@ -41,8 +43,8 @@ export const TeamTable = ({
             className="w-20 px-1 py-3 font-semibold sm:px-1.5 md:w-36 md:px-4"
             aria-sort={sort === "date" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "date", sort, direction, pageSize, "desc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "date", sort, direction, pageSize, "desc")}
               label="Datum"
               isActive={sort === "date"}
               direction={direction}
@@ -52,8 +54,8 @@ export const TeamTable = ({
             className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-20 md:px-3"
             aria-sort={sort === "points" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "points", sort, direction, pageSize, "desc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "points", sort, direction, pageSize, "desc")}
               label="Body"
               align="right"
               isActive={sort === "points"}
@@ -64,8 +66,8 @@ export const TeamTable = ({
             className="w-12 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-14 md:px-2"
             aria-sort={sort === "doplnovacek" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "doplnovacek", sort, direction, pageSize, "desc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "doplnovacek", sort, direction, pageSize, "desc")}
               label="Dopl."
               title="Doplňovačky"
               align="right"
@@ -77,8 +79,8 @@ export const TeamTable = ({
             className="w-14 px-1 py-3 text-right font-semibold sm:px-1.5 md:w-16 md:px-2"
             aria-sort={sort === "tip56" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "tip56", sort, direction, pageSize, "asc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "tip56", sort, direction, pageSize, "asc")}
               label="56. otázka"
               title="56. otázka"
               align="right"
@@ -90,8 +92,8 @@ export const TeamTable = ({
             className="w-57.5 px-1.5 py-3 font-semibold sm:w-65 sm:px-2 md:w-auto md:px-3"
             aria-sort={sort === "pub" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "pub", sort, direction, pageSize, "asc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "pub", sort, direction, pageSize, "asc")}
               label="Hospoda"
               isActive={sort === "pub"}
               direction={direction}
@@ -101,8 +103,8 @@ export const TeamTable = ({
             className="w-14 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-16 md:px-2"
             aria-sort={sort === "maxPoints" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "maxPoints", sort, direction, pageSize, "desc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "maxPoints", sort, direction, pageSize, "desc")}
               label="MAX"
               title="MAX bodů v kole"
               align="right"
@@ -114,8 +116,8 @@ export const TeamTable = ({
             className="w-16 px-1.5 py-3 text-right font-semibold sm:px-2 md:w-18 md:px-2"
             aria-sort={sort === "members" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
-            <SortHeader
-              href={getTeamSortHref(teamName, "members", sort, direction, pageSize, "desc")}
+              <SortHeader
+                href={getTeamSortHref(teamName, teamIdQuery, "members", sort, direction, pageSize, "desc")}
               label="Členové"
               align="right"
               isActive={sort === "members"}

@@ -54,7 +54,7 @@ export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(
       sort === "placement"
         ? a.placement - b.placement
         : sort === "team"
-          ? a.teamName.localeCompare(b.teamName, "cs")
+          ? a.teamName.localeCompare(b.teamName, "cs") || a.teamKey.localeCompare(b.teamKey, "cs")
           : sort === "rounds"
             ? a.displayQuizCount - b.displayQuizCount
             : a.displayPoints - b.displayPoints
@@ -63,6 +63,6 @@ export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(
       return applyDirection(compared, direction)
     }
 
-    return a.teamName.localeCompare(b.teamName, "cs")
+    return a.teamName.localeCompare(b.teamName, "cs") || a.teamKey.localeCompare(b.teamKey, "cs")
   })
 }

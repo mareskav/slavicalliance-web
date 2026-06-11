@@ -6,17 +6,19 @@ import { getViewHref } from "../_lib/navigation"
 
 export const ViewSwitch = ({
   activeView,
-  teamName
+  teamName,
+  teamIdQuery
 }: {
   activeView: ResultView
   teamName?: string
+  teamIdQuery?: string | null
 }) => (
   <nav
     className="inline-flex rounded-lg border border-white/10 bg-white/4 p-1"
     aria-label="Přepnutí výsledků"
   >
     <Link
-      href={getViewHref("team", teamName)}
+      href={getViewHref("team", teamName, teamIdQuery)}
       className={`inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
         activeView === "team"
           ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18"

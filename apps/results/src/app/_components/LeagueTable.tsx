@@ -101,14 +101,19 @@ export const LeagueTable = ({
         </thead>
         <tbody className="divide-y divide-white/8">
           {teams.map((team) => (
-            <tr key={team.teamName} className="transition hover:bg-white/4">
+            <tr key={team.teamKey} className="transition hover:bg-white/4">
               <td className="px-1 py-2.5 sm:px-2 md:px-5 md:py-3">
                 <div className="flex justify-center md:justify-start">
                   <Placement place={team.placement} />
                 </div>
               </td>
-              <td className="min-w-0 truncate px-1.5 py-2.5 font-semibold text-white sm:px-2 md:px-5 md:py-3">
-                {team.teamName}
+              <td className="min-w-0 px-1.5 py-2.5 sm:px-2 md:px-5 md:py-3">
+                <span className="block truncate font-semibold text-white">{team.teamName}</span>
+                {team.duplicateNameCount > 1 ? (
+                  <span className="block truncate text-xs font-medium text-white/42">
+                    {team.teamPub ?? "hospoda neuvedena"}
+                  </span>
+                ) : null}
               </td>
               <td className="px-1.5 py-2.5 text-right text-base font-bold text-white sm:px-2 md:px-5 md:py-3 md:text-lg">
                 {formatNumber(team.displayPoints)}

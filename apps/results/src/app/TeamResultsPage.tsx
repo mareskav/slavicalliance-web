@@ -41,6 +41,12 @@ export const TeamResultsPage = ({
   const paginatedResults = sortedResults.slice(pageStartIndex, pageStartIndex + pageSize)
   const resultRangeStart = totalResults === 0 ? 0 : pageStartIndex + 1
   const resultRangeEnd = Math.min(pageStartIndex + pageSize, totalResults)
+  const selectedTeamIdQuery =
+    selectedSummary?.teamId !== null && selectedSummary?.teamId !== undefined
+      ? String(selectedSummary.teamId)
+      : selectedSummary?.duplicateNameCount && selectedSummary.duplicateNameCount > 1
+        ? "none"
+        : null
   const sortDescription =
     sort === "place"
       ? `Seřazeno podle umístění ${direction === "asc" ? "vzestupně" : "sestupně"}.`
@@ -76,7 +82,11 @@ export const TeamResultsPage = ({
     <div className="space-y-10 font-sans">
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-8 xl:grid-cols-[minmax(0,1fr)_480px]">
         <div className="order-2 lg:order-1">
-          <ViewSwitch activeView="team" teamName={selectedSummary.teamName} />
+          <ViewSwitch
+            activeView="team"
+            teamName={selectedSummary.teamName}
+            teamIdQuery={selectedTeamIdQuery}
+          />
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
             {selectedSummary.teamName}
           </h1>
@@ -85,7 +95,11 @@ export const TeamResultsPage = ({
           </p>
         </div>
         <div className="order-1 lg:order-2">
-          <TeamSelect teams={teams} selectedTeamName={selectedSummary.teamName} />
+          <TeamSelect
+            teams={teams}
+            selectedTeamId={selectedSummary.teamId}
+            selectedTeamName={selectedSummary.teamName}
+          />
         </div>
       </section>
 
@@ -115,6 +129,7 @@ export const TeamResultsPage = ({
           </div>
           <TeamTable
             results={paginatedResults}
+            teamIdQuery={selectedTeamIdQuery}
             teamName={selectedSummary.teamName}
             sort={sort}
             direction={direction}
@@ -129,7 +144,14 @@ export const TeamResultsPage = ({
             totalPages={totalPages}
             visiblePages={visiblePages}
             getPageHref={(p) =>
-              getPaginationHref(selectedSummary.teamName, p, pageSize, sort, direction)
+              getPaginationHref(
+                selectedSummary.teamName,
+                selectedTeamIdQuery,
+                p,
+                pageSize,
+                sort,
+                direction
+              )
             }
           />
         </div>

@@ -16,6 +16,7 @@ const getNextSortDirection = (
 
 export const getPaginationHref = (
   teamName: string,
+  teamIdQuery: string | null,
   page: number,
   pageSize: number,
   sort?: TeamSortKey,
@@ -26,6 +27,7 @@ export const getPaginationHref = (
     page: String(page),
     pageSize: String(pageSize)
   })
+  if (teamIdQuery !== null) params.set("teamId", teamIdQuery)
   if (sort) params.set("sort", sort)
   if (direction) params.set("dir", direction)
   return `/?${params.toString()}`
@@ -73,16 +75,20 @@ export const getLeagueCutsHref = (
   return `/?${params.toString()}`
 }
 
-export const getViewHref = (view: ResultView, teamName?: string) => {
+export const getViewHref = (view: ResultView, teamName?: string, teamIdQuery?: string | null) => {
   const params = new URLSearchParams()
   if (view === "league") params.set("view", view)
-  if (view === "team" && teamName) params.set("team", teamName)
+  if (view === "team" && teamName) {
+    params.set("team", teamName)
+    if (teamIdQuery !== undefined && teamIdQuery !== null) params.set("teamId", teamIdQuery)
+  }
   const query = params.toString()
   return query ? `/?${query}` : "/"
 }
 
 export const getTeamSortHref = (
   teamName: string,
+  teamIdQuery: string | null,
   sort: TeamSortKey,
   activeSort: TeamSortKey,
   direction: SortDirection,
@@ -96,6 +102,7 @@ export const getTeamSortHref = (
     sort,
     dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
+  if (teamIdQuery !== null) params.set("teamId", teamIdQuery)
   return `/?${params.toString()}`
 }
 
