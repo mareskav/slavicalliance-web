@@ -149,7 +149,7 @@ const getQuizDetailsUrl = (quizDetailsId: string | null) => {
 }
 
 export const getTeamKey = (teamId: number | null, teamName: string) => {
-  return teamId === null ? `name:${teamName}` : `id:${teamId}`
+  return teamId === null ? `name:${teamName}` : `id:${teamId}:name:${teamName}`
 }
 
 const loadTeamSummaries = async (): Promise<TeamSummary[]> => {

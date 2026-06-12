@@ -136,7 +136,9 @@ const ResultsPage = async ({
     (params?.teamId === "none" && params.team
       ? teams.find((team) => team.teamId === null && team.teamName === params.team)
       : undefined) ??
-    (requestedTeamId !== null ? teams.find((team) => team.teamId === requestedTeamId) : undefined) ??
+    (requestedTeamId !== null && params?.team
+      ? teams.find((team) => team.teamId === requestedTeamId && team.teamName === params.team)
+      : undefined) ??
     (params?.team ? teams.find((team) => team.teamName === params.team) : undefined) ??
     fallbackTeam
 

@@ -238,4 +238,4 @@ const normalizeSearchValue = (value: string) =>
     .toLocaleLowerCase("cs-CZ")
 
 const getTeamKey = (teamId: number | null, teamName: string) =>
-  teamId === null ? `name:${teamName}` : `id:${teamId}`
+  teamId === null ? `name:${teamName}` : `id:${teamId}:name:${teamName}`
