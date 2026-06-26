@@ -47,16 +47,13 @@ jobs:
         working-directory: apps/site
         run: npx wrangler pages deploy out --project-name slavicalliance-site --branch main
 
-      - name: Build results app
-        run: npm run build:results
-
       - name: Validate results R2 cache bucket
         working-directory: apps/results
         run: npx wrangler r2 bucket info slavicalliance-results-next-cache
 
       - name: Build OpenNext results Worker
         working-directory: apps/results
-        run: npx opennextjs-cloudflare build --skipNextBuild
+        run: npx opennextjs-cloudflare build
 
       - name: Deploy results Worker
         working-directory: apps/results
