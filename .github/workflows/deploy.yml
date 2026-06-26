@@ -51,12 +51,17 @@ jobs:
         working-directory: apps/results
         run: npx wrangler r2 bucket info slavicalliance-results-next-cache
 
+      - name: Patch OpenNext R2 provisioning check
+        run: node scripts/patch-opennext-r2-provisioning.mjs
+
       - name: Build OpenNext results Worker
         working-directory: apps/results
         run: npx opennextjs-cloudflare build
 
       - name: Deploy results Worker
         working-directory: apps/results
+        env:
+          OPEN_NEXT_SKIP_R2_BUCKET_PROVISION: "true"
         run: |
           for attempt in 1 2 3; do
             if npx opennextjs-cloudflare deploy --cacheChunkSize 5; then
