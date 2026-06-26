@@ -38,7 +38,7 @@ export const ViewSwitch = ({
       }`}
     >
       <Trophy className="h-4 w-4 shrink-0" />
-      Soutěže
+      Dlouhodobé soutěže
     </Link>
   </nav>
 )

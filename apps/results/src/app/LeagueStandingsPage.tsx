@@ -42,18 +42,20 @@ export const LeagueStandingsPage = async ({
   let leagues: Awaited<ReturnType<typeof getPrahaLeagueSummaries>>
 
   try {
-    const result = await Promise.all([
-      getLongTermLeagueStandings(leagueId),
-      getPrahaLeagueSummaries()
-    ])
-    standings = result[0]
-    leagues = result[1]
+    leagues = await getPrahaLeagueSummaries()
+    const selectedLeagueId = leagueId ? Number(leagueId) : null
+    const effectiveLeagueId =
+      selectedLeagueId && leagues.some((league) => league.leagueId === selectedLeagueId)
+        ? leagueId
+        : undefined
+
+    standings = await getLongTermLeagueStandings(effectiveLeagueId)
   } catch (error) {
     console.error(error)
     return <ResultsUnavailable />
   }
 
-  const defaultLeague = leagues.find((league) => league.leagueName === "Finále Praha")
+  const defaultLeague = leagues[0]
   const defaultLeagueId = defaultLeague?.leagueId
   const defaultLeagueDisplayName = defaultLeague
     ? formatLeagueName(defaultLeague.leagueName, defaultLeague.periodStart)

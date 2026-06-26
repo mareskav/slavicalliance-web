@@ -68,9 +68,22 @@ export type LeagueStandingTeam = {
   leagueResults: LeagueResultPoints[]
 }
 
+type LeagueRow = {
+  id: number
+  league_name: string
+  period_start: Date
+  period_stop: Date
+  league_url: string | null
+}
+
 let pool: Pool | null = null
-const longTermLeagueName = "Finále Praha"
-const finaleJaro2026Url = "https://www.hospodskykviz.cz/vysledky/492"
+const pragueSpring2026LeagueUrl = "https://www.hospodskykviz.cz/vysledky/470"
+const ignoredFinalePrahaLeagueUrl = "https://www.hospodskykviz.cz/vysledky/461"
+const ignoredFinaleJaro2026Url = "https://www.hospodskykviz.cz/vysledky/492"
+const ignoredLeagueUrls = [ignoredFinalePrahaLeagueUrl, ignoredFinaleJaro2026Url]
+const ignoredLeagueNames = ["Finále Praha", "Finále jaro 2026"]
+const primaryLeagueUrls = [pragueSpring2026LeagueUrl]
+const pragueLeagueNamePatterns = ["%praha%", "%prahy%", "%praze%", "%praž%"]
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
 const latestQuizResultsUpdateCacheSeconds = 60
 const leagueStandingsCacheSeconds = 24 * 60 * 60
@@ -353,50 +366,70 @@ const loadPrahaLeagueSummaries = async (): Promise<LeagueSummary[]> => {
         period_stop,
         league_url
       from public.quiz_leagues
-      where league_name ilike '%Praha%'
-        or league_url = $1
-      order by period_start desc, id desc
+      where (
+          league_url = any($1::text[])
+          or (
+            (league_url is null or not (league_url = any($2::text[])))
+            and not (league_name = any($3::text[]))
+            and exists (
+              select 1
+              from unnest($4::text[]) as pattern
+              where lower(league_name) like pattern
+            )
+          )
+        )
+      order by
+        case
+          when league_url = $5 then 0
+          else 2
+        end,
+        period_stop desc,
+        period_start desc,
+        id desc
     `,
-    [finaleJaro2026Url]
+    [
+      primaryLeagueUrls,
+      ignoredLeagueUrls,
+      ignoredLeagueNames,
+      pragueLeagueNamePatterns,
+      pragueSpring2026LeagueUrl
+    ]
   )
 
   return result.rows.map(mapLeagueSummaryRow)
 }
 
-const loadLongTermLeagueStandings = async (
-  lastResultDate: string | null,
-  leagueId: string | undefined
-): Promise<LeagueStandings | null> => {
-  const selectedLeagueId = parseLeagueId(leagueId)
-  const leagueResult = await queryDatabase<{
-    id: number
-    league_name: string
-    period_start: Date
-    period_stop: Date
-    league_url: string | null
-  }>(
-    `
-      select
-        id::int,
-        league_name,
-        period_start,
-        period_stop,
-        league_url
-      from public.quiz_leagues
-      where ${selectedLeagueId === null ? "league_name = $1" : "id = $1::int"}
-      order by period_start desc, id desc
-      limit 1
-    `,
-    [selectedLeagueId ?? longTermLeagueName]
-  )
+const mapLeagueStandingRows = (
+  rows: {
+    team_id: number | null
+    team_name: string
+    team_pub: string | null
+    duplicate_name_count: number
+    league_results: LeagueResultPoints[]
+  }[]
+) =>
+  rows.map((row) => ({
+    teamId: row.team_id,
+    teamKey: getTeamKey(row.team_id, row.team_name),
+    teamName: row.team_name,
+    teamPub: row.team_pub,
+    duplicateNameCount: row.duplicate_name_count,
+    leagueResults: row.league_results.map((result) => ({
+      round: Number(result.round),
+      points: Number(result.points),
+      date: new Date(result.date).toISOString()
+    }))
+  }))
 
-  const league = leagueResult.rows[0]
+const getPlayedRounds = (teams: LeagueStandingTeam[]) =>
+  Math.max(0, ...teams.flatMap((team) => team.leagueResults.map((result) => result.round)))
 
-  if (!league) {
-    return null
-  }
+const getTotalRegularLeagueRounds = (league: LeagueRow) =>
+  Math.floor((league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek) +
+  1
 
-  const standingsResult = await queryDatabase<{
+const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
+  const result = await queryDatabase<{
     team_id: number | null
     team_name: string
     team_pub: string | null
@@ -406,7 +439,7 @@ const loadLongTermLeagueStandings = async (
     `
       with results_in_league as (
         select
-          team_id,
+          null::integer as team_id,
           team_name,
           nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
           (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
@@ -418,7 +451,7 @@ const loadLongTermLeagueStandings = async (
           and nullif(trim(league_name), '') is null
       ),
       picked_results as (
-        select distinct on (team_id, team_name, league_week)
+        select distinct on (team_name, league_week)
           team_id,
           team_name,
           team_pub,
@@ -427,11 +460,11 @@ const loadLongTermLeagueStandings = async (
           id,
           league_week + 1 as league_round
         from results_in_league
-        order by team_id, team_name, league_week, quiz_date desc, id desc
+        order by team_name, league_week, quiz_date desc, id desc
       ),
       team_totals as (
         select
-          team_id,
+          null::integer as team_id,
           team_name,
           (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
           coalesce(
@@ -442,7 +475,7 @@ const loadLongTermLeagueStandings = async (
             '[]'::json
           ) as league_results
         from picked_results
-        group by team_id, team_name
+        group by team_name
       )
       select
         team_totals.team_id,
@@ -456,7 +489,15 @@ const loadLongTermLeagueStandings = async (
     [league.period_start, league.period_stop]
   )
 
-  const pubsResult = await queryDatabase<{ total_pubs: number }>(
+  return result.rows
+}
+
+const loadLeagueStandingRows = async (league: LeagueRow) => {
+  return loadRegularLeagueStandingRows(league)
+}
+
+const loadLeagueTotalPubs = async (league: LeagueRow) => {
+  const result = await queryDatabase<{ total_pubs: number }>(
     `
       select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
       from public.quiz_results
@@ -466,33 +507,95 @@ const loadLongTermLeagueStandings = async (
     [league.period_start, league.period_stop]
   )
 
-  const teams = standingsResult.rows.map((row) => ({
-    teamId: row.team_id,
-    teamKey: getTeamKey(row.team_id, row.team_name),
-    teamName: row.team_name,
-    teamPub: row.team_pub,
-    duplicateNameCount: row.duplicate_name_count,
-    leagueResults: row.league_results.map((result) => ({
-      round: Number(result.round),
-      points: Number(result.points),
-      date: new Date(result.date).toISOString()
-    }))
-  }))
+  return result.rows[0]?.total_pubs ?? 0
+}
+
+const loadLongTermLeagueStandings = async (
+  lastResultDate: string | null,
+  leagueId: string | undefined
+): Promise<LeagueStandings | null> => {
+  const selectedLeagueId = parseLeagueId(leagueId)
+  const leagueQuery =
+    selectedLeagueId === null
+      ? {
+          text: `
+            select
+              id::int,
+              league_name,
+              period_start,
+              period_stop,
+              league_url
+            from public.quiz_leagues
+            where (
+                league_url = any($1::text[])
+                or (
+                  (league_url is null or not (league_url = any($2::text[])))
+                  and not (league_name = any($3::text[]))
+                  and exists (
+                    select 1
+                    from unnest($4::text[]) as pattern
+                    where lower(league_name) like pattern
+                  )
+                )
+              )
+            order by
+              case
+                when league_url = $5 then 0
+                else 2
+              end,
+              period_stop desc,
+              period_start desc,
+              id desc
+            limit 1
+          `,
+          values: [
+            primaryLeagueUrls,
+            ignoredLeagueUrls,
+            ignoredLeagueNames,
+            pragueLeagueNamePatterns,
+            pragueSpring2026LeagueUrl
+          ]
+        }
+      : {
+          text: `
+            select
+              id::int,
+              league_name,
+              period_start,
+              period_stop,
+              league_url
+            from public.quiz_leagues
+            where id = $1::int
+            order by period_stop desc, period_start desc, id desc
+            limit 1
+          `,
+          values: [selectedLeagueId]
+        }
+  const leagueResult = await queryDatabase<{
+    id: number
+    league_name: string
+    period_start: Date
+    period_stop: Date
+    league_url: string | null
+  }>(leagueQuery.text, leagueQuery.values)
+
+  const league = leagueResult.rows[0]
+
+  if (!league) {
+    return null
+  }
+
+  const teams = mapLeagueStandingRows(await loadLeagueStandingRows(league))
+  const totalPubs = await loadLeagueTotalPubs(league)
 
   return {
     leagueId: league.id,
     leagueName: league.league_name,
     periodStart: league.period_start.toISOString(),
     periodStop: league.period_stop.toISOString(),
-    totalRounds:
-      Math.floor(
-        (league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek
-      ) + 1,
-    playedRounds: Math.max(
-      0,
-      ...teams.flatMap((team) => team.leagueResults.map((result) => result.round))
-    ),
-    totalPubs: pubsResult.rows[0]?.total_pubs ?? 0,
+    totalRounds: getTotalRegularLeagueRounds(league),
+    playedRounds: getPlayedRounds(teams),
+    totalPubs,
     leagueUrl: league.league_url,
     lastResultDate,
     teams
@@ -502,7 +605,7 @@ const loadLongTermLeagueStandings = async (
 const getCachedLongTermLeagueStandings = unstable_cache(
   async (lastResultDate: string | null, leagueId: string | undefined) =>
     loadLongTermLeagueStandings(lastResultDate, leagueId),
-  ["quiz-results", "long-term-league-standings-by-update-and-league"],
+  ["quiz-results", "long-term-league-standings-by-update-and-league-v7"],
   {
     revalidate: leagueStandingsCacheSeconds,
     tags: ["quiz-results"]
