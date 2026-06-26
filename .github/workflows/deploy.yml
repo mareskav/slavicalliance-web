@@ -50,6 +50,24 @@ jobs:
       - name: Build results app
         run: npm run build:results
 
+      - name: Validate results R2 cache bucket
+        working-directory: apps/results
+        run: npx wrangler r2 bucket info slavicalliance-results-next-cache
+
+      - name: Build OpenNext results Worker
+        working-directory: apps/results
+        run: npx opennextjs-cloudflare build --skipNextBuild
+
       - name: Deploy results Worker
         working-directory: apps/results
-        run: npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy
+        run: |
+          for attempt in 1 2 3; do
+            if npx opennextjs-cloudflare deploy --cacheChunkSize 5; then
+              exit 0
+            fi
+
+            echo "OpenNext deploy attempt $attempt failed"
+            sleep $((attempt * 20))
+          done
+
+          exit 1
