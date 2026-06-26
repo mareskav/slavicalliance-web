@@ -14,6 +14,12 @@ const getNextSortDirection = (
   return direction === "asc" ? "desc" : "asc"
 }
 
+const setLeagueIdParam = (params: URLSearchParams, leagueId: string | undefined) => {
+  if (leagueId) {
+    params.set("leagueId", leagueId)
+  }
+}
+
 export const getPaginationHref = (
   teamName: string,
   teamIdQuery: string | null,
@@ -40,13 +46,15 @@ export const getLeaguePaginationHref = (
   cutCount: LeagueCutCount,
   selectedRoundCount: number,
   sort?: LeagueSortKey,
-  direction?: SortDirection
+  direction?: SortDirection,
+  leagueId?: string
 ) => {
   const params = new URLSearchParams({
     view: "league",
     page: String(page),
     pageSize: String(pageSize)
   })
+  setLeagueIdParam(params, leagueId)
   if (cutCount !== defaultLeagueCutCount) params.set("cuts", String(cutCount))
   params.set("rounds", String(selectedRoundCount))
   if (sort) params.set("sort", sort)
@@ -61,7 +69,8 @@ export const getLeagueCutsHref = (
   direction: SortDirection,
   cutCount: LeagueCutCount,
   selectedRoundCount: number,
-  page: number
+  page: number,
+  leagueId?: string
 ) => {
   const params = new URLSearchParams({
     view: "league",
@@ -70,6 +79,7 @@ export const getLeagueCutsHref = (
     sort,
     dir: direction
   })
+  setLeagueIdParam(params, leagueId)
   if (cutCount !== defaultLeagueCutCount) params.set("cuts", String(cutCount))
   params.set("rounds", String(selectedRoundCount))
   return `/?${params.toString()}`
@@ -114,7 +124,8 @@ export const getLeagueSortHref = (
   pageSize: number,
   cutCount: LeagueCutCount,
   selectedRoundCount: number,
-  defaultDirection: SortDirection
+  defaultDirection: SortDirection,
+  leagueId?: string
 ) => {
   const params = new URLSearchParams({
     view: "league",
@@ -123,6 +134,7 @@ export const getLeagueSortHref = (
     sort,
     dir: getNextSortDirection(activeSort, sort, direction, defaultDirection)
   })
+  setLeagueIdParam(params, leagueId)
   if (cutCount !== defaultLeagueCutCount) params.set("cuts", String(cutCount))
   params.set("rounds", String(selectedRoundCount))
   return `/?${params.toString()}`

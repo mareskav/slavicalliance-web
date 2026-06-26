@@ -1,12 +1,17 @@
 import { ArrowUpRight, ListChecks } from "lucide-react"
 
-import { getLongTermLeagueStandings } from "@/lib/quiz-results"
+import { getLongTermLeagueStandings, getPrahaLeagueSummaries } from "@/lib/quiz-results"
 import { pageSizeOptions, type LeagueCutCount } from "./_lib/constants"
-import { formatNumber, parsePositiveInt } from "./_lib/formatters"
+import { formatLeagueName, formatNumber, parsePositiveInt } from "./_lib/formatters"
 import { getLeagueTeamsWithPlacements } from "./_lib/league"
-import { getLeaguePaginationHref, getLeagueSelectedRoundCount, getVisiblePages } from "./_lib/navigation"
+import {
+  getLeaguePaginationHref,
+  getLeagueSelectedRoundCount,
+  getVisiblePages
+} from "./_lib/navigation"
 import { sortLeagueTeams } from "./_lib/sort"
 import type { LeagueSortKey, SortDirection } from "./_lib/types"
+import { LeagueSelect } from "./_components/LeagueSelect"
 import { LeagueTable } from "./_components/LeagueTable"
 import { LeagueTableControls } from "./_components/LeagueTableControls"
 import { ResultsUnavailable } from "./_components/ResultsUnavailable"
@@ -21,7 +26,8 @@ export const LeagueStandingsPage = async ({
   sort,
   direction,
   cutCount,
-  selectedRound
+  selectedRound,
+  leagueId
 }: {
   teamName?: string
   page?: string
@@ -30,24 +36,50 @@ export const LeagueStandingsPage = async ({
   direction: SortDirection
   cutCount: LeagueCutCount
   selectedRound?: string
+  leagueId?: string
 }) => {
-  let standings
+  let standings: Awaited<ReturnType<typeof getLongTermLeagueStandings>>
+  let leagues: Awaited<ReturnType<typeof getPrahaLeagueSummaries>>
 
   try {
-    standings = await getLongTermLeagueStandings()
+    const result = await Promise.all([
+      getLongTermLeagueStandings(leagueId),
+      getPrahaLeagueSummaries()
+    ])
+    standings = result[0]
+    leagues = result[1]
   } catch (error) {
     console.error(error)
     return <ResultsUnavailable />
   }
 
+  const defaultLeague = leagues.find((league) => league.leagueName === "Finále Praha")
+  const defaultLeagueId = defaultLeague?.leagueId
+  const defaultLeagueDisplayName = defaultLeague
+    ? formatLeagueName(defaultLeague.leagueName, defaultLeague.periodStart)
+    : undefined
+  const selectedLeagueIdParam =
+    standings?.leagueId === defaultLeagueId ? undefined : String(standings?.leagueId ?? "")
+
   if (!standings) {
     return (
       <div className="space-y-8 font-sans">
         <ViewSwitch activeView="league" teamName={teamName} />
+        {leagues.length > 0 && defaultLeagueId ? (
+          <div className="max-w-2xl">
+            <LeagueSelect
+              leagues={leagues}
+              selectedLeagueId={defaultLeagueId}
+              defaultLeagueId={defaultLeagueId}
+            />
+          </div>
+        ) : null}
         <section className="rounded-lg border border-white/10 bg-white/4.5 p-8">
-          <h1 className="text-3xl font-bold text-white">Dlouhodobá soutěž</h1>
+          <h1 className="text-3xl font-bold text-white">
+            {defaultLeagueDisplayName ?? "Vybraná liga"}
+          </h1>
           <p className="mt-3 text-white/65">
-            V tabulce public.quiz_leagues není záznam Finále Praha.
+            V tabulce public.quiz_leagues není záznam vybrané ligy.
           </p>
         </section>
       </div>
@@ -56,10 +88,16 @@ export const LeagueStandingsPage = async ({
 
   const selectedRoundCount = getLeagueSelectedRoundCount(selectedRound, standings.playedRounds)
   const useCuts = cutCount > 0
-  const teamsWithPlacements = getLeagueTeamsWithPlacements(standings.teams, cutCount, selectedRoundCount)
+  const teamsWithPlacements = getLeagueTeamsWithPlacements(
+    standings.teams,
+    cutCount,
+    selectedRoundCount
+  )
   const sortedTeams = sortLeagueTeams(teamsWithPlacements, sort, direction)
   const requestedPageSize = parsePositiveInt(requestedPageSizeValue, pageSizeOptions[0])
-  const pageSize = pageSizeOptions.includes(requestedPageSize) ? requestedPageSize : pageSizeOptions[0]
+  const pageSize = pageSizeOptions.includes(requestedPageSize)
+    ? requestedPageSize
+    : pageSizeOptions[0]
   const totalResults = standings.teams.length
   const totalPages = Math.max(1, Math.ceil(totalResults / pageSize))
   const currentPage = Math.min(parsePositiveInt(page, 1), totalPages)
@@ -68,9 +106,15 @@ export const LeagueStandingsPage = async ({
   const paginatedTeams = sortedTeams.slice(pageStartIndex, pageStartIndex + pageSize)
   const resultRangeStart = totalResults === 0 ? 0 : pageStartIndex + 1
   const resultRangeEnd = Math.min(pageStartIndex + pageSize, totalResults)
-  const leagueYear = new Date(standings.periodStart).getFullYear()
-  const leaguePeriodStart = new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long" }).format(new Date(standings.periodStart))
-  const leaguePeriodStop = new Intl.DateTimeFormat("cs-CZ", { day: "numeric", month: "long" }).format(new Date(standings.periodStop))
+  const leagueDisplayName = formatLeagueName(standings.leagueName, standings.periodStart)
+  const leaguePeriodStart = new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "long"
+  }).format(new Date(standings.periodStart))
+  const leaguePeriodStop = new Intl.DateTimeFormat("cs-CZ", {
+    day: "numeric",
+    month: "long"
+  }).format(new Date(standings.periodStop))
   const sortDescription =
     sort === "placement"
       ? `Seřazeno podle pořadí ${direction === "asc" ? "vzestupně" : "sestupně"}.`
@@ -82,46 +126,57 @@ export const LeagueStandingsPage = async ({
 
   return (
     <div className="space-y-8 font-sans">
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
+      <section className="space-y-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <ViewSwitch activeView="league" teamName={teamName} />
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
-            Dlouhodobá soutěž
-          </h1>
-          <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
-            Jak si stojíme v dlouhodobce u Hospodského kvízu?
-          </p>
-          {standings.lastResultDate ? (
-            <p className="mt-1 text-sm text-white/40">
-              Data aktualizována{" "}
-              {new Intl.DateTimeFormat("cs-CZ", {
-                day: "numeric",
-                month: "numeric",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "Europe/Prague"
-              }).format(new Date(standings.lastResultDate))}
-            </p>
-          ) : null}
+          <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:min-w-40 lg:items-end">
+            {standings.leagueUrl ? (
+              <a
+                href={standings.leagueUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-sky-100/18 bg-sky-100/10 px-3 text-sm font-semibold text-sky-50/82 transition hover:bg-sky-100/15 hover:text-white"
+              >
+                Detail soutěže
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
+            ) : null}
+          </div>
         </div>
-        <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:min-w-40 lg:items-end">
-          {standings.leagueUrl ? (
-            <a
-              href={standings.leagueUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-sky-100/18 bg-sky-100/10 px-3 text-sm font-semibold text-sky-50/82 transition hover:bg-sky-100/15 hover:text-white"
-            >
-              Detail soutěže
-              <ArrowUpRight className="h-4 w-4" />
-            </a>
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_480px]">
+          <div className="order-2 min-w-0 lg:order-1">
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-4xl">
+              {leagueDisplayName}
+            </h1>
+            {standings.lastResultDate ? (
+              <p className="mt-3 text-sm text-white/40">
+                Data aktualizována{" "}
+                {new Intl.DateTimeFormat("cs-CZ", {
+                  day: "numeric",
+                  month: "numeric",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Europe/Prague"
+                }).format(new Date(standings.lastResultDate))}
+              </p>
+            ) : null}
+          </div>
+          {defaultLeagueId ? (
+            <div className="order-1 lg:order-2">
+              <LeagueSelect
+                leagues={leagues}
+                selectedLeagueId={standings.leagueId}
+                defaultLeagueId={defaultLeagueId}
+              />
+            </div>
           ) : null}
         </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label={`${standings.leagueName} ${leagueYear}`} value={`${leaguePeriodStart} - ${leaguePeriodStop}`} />
+        <StatCard label="Termín ligy" value={`${leaguePeriodStart} - ${leaguePeriodStop}`} />
         <StatCard label="Celkem kol" value={formatNumber(standings.totalRounds)} />
         <StatCard label="Týmů v soutěži" value={formatNumber(standings.teams.length)} />
         <StatCard label="Hospod" value={formatNumber(standings.totalPubs)} />
@@ -146,6 +201,7 @@ export const LeagueStandingsPage = async ({
               selectedRoundCount={selectedRoundCount}
               playedRounds={standings.playedRounds}
               currentPage={currentPage}
+              leagueId={selectedLeagueIdParam}
             />
           </div>
           <LeagueTable
@@ -156,6 +212,7 @@ export const LeagueStandingsPage = async ({
             teamName={teamName}
             pageSize={pageSize}
             selectedRoundCount={selectedRoundCount}
+            leagueId={selectedLeagueIdParam}
           />
           <TableFooter
             rangeStart={resultRangeStart}
@@ -166,7 +223,16 @@ export const LeagueStandingsPage = async ({
             totalPages={totalPages}
             visiblePages={visiblePages}
             getPageHref={(p) =>
-              getLeaguePaginationHref(teamName, p, pageSize, cutCount, selectedRoundCount, sort, direction)
+              getLeaguePaginationHref(
+                teamName,
+                p,
+                pageSize,
+                cutCount,
+                selectedRoundCount,
+                sort,
+                direction,
+                selectedLeagueIdParam
+              )
             }
           />
         </div>

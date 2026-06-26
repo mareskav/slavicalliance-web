@@ -71,6 +71,7 @@ const ResultsPage = async ({
     dir?: string
     cuts?: string
     rounds?: string
+    leagueId?: string
   }>
 }) => {
   const params = await searchParams
@@ -103,6 +104,10 @@ const ResultsPage = async ({
       canonicalParams.set("rounds", params.rounds)
     }
 
+    if (params.leagueId) {
+      canonicalParams.set("leagueId", params.leagueId)
+    }
+
     redirect(`/?${canonicalParams.toString()}`)
   }
 
@@ -116,6 +121,7 @@ const ResultsPage = async ({
         direction={getSortDirection(params?.dir, "desc")}
         cutCount={getLeagueCutCount(params?.cuts)}
         selectedRound={params?.rounds}
+        leagueId={params?.leagueId}
       />
     )
   }

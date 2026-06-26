@@ -29,6 +29,11 @@ export const formatDroppedPoints = (values: number[]) => {
   return values.map(formatNumber).join(" + ")
 }
 
+export const formatLeagueName = (leagueName: string, periodStart: string) => {
+  const year = String(new Date(periodStart).getFullYear())
+  return leagueName.includes(year) ? leagueName : `${leagueName} ${year}`
+}
+
 export const parsePositiveInt = (value: string | undefined, fallback: number) => {
   const parsed = Number(value)
   if (!Number.isInteger(parsed) || parsed < 1) {

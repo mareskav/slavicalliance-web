@@ -17,7 +17,7 @@ const statCards = Array.from({ length: 4 }, (_, index) => index)
 export const ResultsLoadingSkeleton = ({
   activeView = "team",
   title = "Výsledky kvízů",
-  subtitle = "Výsledky týmu u Hospodského kvízu",
+  subtitle,
   teamName = "Slavic Alliance"
 }: {
   activeView?: ResultView
@@ -31,12 +31,12 @@ export const ResultsLoadingSkeleton = ({
     <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:gap-8 xl:grid-cols-[minmax(0,1fr)_480px]">
       <div className="order-2 lg:order-1">
         <ViewSwitch activeView={activeView} teamName={teamName} />
-        <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">
-          {title}
-        </h1>
-        <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
-          {subtitle}
-        </p>
+        <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
+        {subtitle ? (
+          <p className="mt-3 max-w-3xl text-base font-medium leading-6 text-white/58 sm:text-lg">
+            {subtitle}
+          </p>
+        ) : null}
       </div>
       <div className="order-1 lg:order-2">
         <SkeletonBlock className="h-14 w-full" />

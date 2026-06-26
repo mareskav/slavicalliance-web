@@ -12,7 +12,8 @@ export const LeagueTable = ({
   cutCount,
   teamName,
   pageSize,
-  selectedRoundCount
+  selectedRoundCount,
+  leagueId
 }: {
   teams: LeagueStandingDisplayTeam[]
   sort: LeagueSortKey
@@ -21,6 +22,7 @@ export const LeagueTable = ({
   teamName: string | undefined
   pageSize: number
   selectedRoundCount: number
+  leagueId?: string
 }) => {
   const useCuts = cutCount > 0
 
@@ -36,7 +38,7 @@ export const LeagueTable = ({
               aria-sort={sort === "placement" ? (direction === "asc" ? "ascending" : "descending") : undefined}
             >
               <SortHeader
-                href={getLeagueSortHref(teamName, "placement", sort, direction, pageSize, cutCount, selectedRoundCount, "asc")}
+                href={getLeagueSortHref(teamName, "placement", sort, direction, pageSize, cutCount, selectedRoundCount, "asc", leagueId)}
                 label="Pořadí"
                 isActive={sort === "placement"}
                 direction={direction}
@@ -47,7 +49,7 @@ export const LeagueTable = ({
               aria-sort={sort === "team" ? (direction === "asc" ? "ascending" : "descending") : undefined}
             >
               <SortHeader
-                href={getLeagueSortHref(teamName, "team", sort, direction, pageSize, cutCount, selectedRoundCount, "asc")}
+                href={getLeagueSortHref(teamName, "team", sort, direction, pageSize, cutCount, selectedRoundCount, "asc", leagueId)}
                 label="Tým"
                 isActive={sort === "team"}
                 direction={direction}
@@ -58,7 +60,7 @@ export const LeagueTable = ({
               aria-sort={sort === "points" ? (direction === "asc" ? "ascending" : "descending") : undefined}
             >
               <SortHeader
-                href={getLeagueSortHref(teamName, "points", sort, direction, pageSize, cutCount, selectedRoundCount, "desc")}
+                href={getLeagueSortHref(teamName, "points", sort, direction, pageSize, cutCount, selectedRoundCount, "desc", leagueId)}
                 label={
                   <>
                     <span className="md:hidden">Body</span>
@@ -85,7 +87,7 @@ export const LeagueTable = ({
               aria-sort={sort === "rounds" ? (direction === "asc" ? "ascending" : "descending") : undefined}
             >
               <SortHeader
-                href={getLeagueSortHref(teamName, "rounds", sort, direction, pageSize, cutCount, selectedRoundCount, "desc")}
+                href={getLeagueSortHref(teamName, "rounds", sort, direction, pageSize, cutCount, selectedRoundCount, "desc", leagueId)}
                 label={
                   <>
                     <span className="md:hidden">Kola</span>

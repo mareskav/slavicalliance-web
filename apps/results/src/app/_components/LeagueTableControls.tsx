@@ -13,7 +13,8 @@ export const LeagueTableControls = ({
   cutCount,
   selectedRoundCount,
   playedRounds,
-  currentPage
+  currentPage,
+  leagueId
 }: {
   teamName: string | undefined
   pageSize: number
@@ -23,6 +24,7 @@ export const LeagueTableControls = ({
   selectedRoundCount: number
   playedRounds: number
   currentPage: number
+  leagueId?: string
 }) => {
   const useCuts = cutCount > 0
 
@@ -49,7 +51,7 @@ export const LeagueTableControls = ({
           {leagueCutOptions.map((option) => (
             <Link
               key={option}
-              href={getLeagueCutsHref(teamName, pageSize, sort, direction, option, selectedRoundCount, currentPage)}
+              href={getLeagueCutsHref(teamName, pageSize, sort, direction, option, selectedRoundCount, currentPage, leagueId)}
               scroll={false}
               aria-current={option === cutCount ? "true" : undefined}
               className={`inline-flex min-w-9 items-center justify-center rounded-md px-2 text-sm font-semibold transition ${

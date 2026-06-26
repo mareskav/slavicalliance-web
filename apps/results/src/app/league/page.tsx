@@ -14,6 +14,7 @@ const LeaguePage = async ({
     dir?: string
     cuts?: string
     rounds?: string
+    leagueId?: string
   }>
 }) => {
   const params = await searchParams
@@ -27,6 +28,7 @@ const LeaguePage = async ({
       direction={getSortDirection(params?.dir, "desc")}
       cutCount={getLeagueCutCount(params?.cuts)}
       selectedRound={params?.rounds}
+      leagueId={params?.leagueId}
     />
   )
 }

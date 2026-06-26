@@ -33,6 +33,7 @@ export type QuizResult = {
 }
 
 export type LeagueStandings = {
+  leagueId: number
   leagueName: string
   periodStart: string
   periodStop: string
@@ -42,6 +43,14 @@ export type LeagueStandings = {
   leagueUrl: string | null
   lastResultDate: string | null
   teams: LeagueStandingTeam[]
+}
+
+export type LeagueSummary = {
+  leagueId: number
+  leagueName: string
+  periodStart: string
+  periodStop: string
+  leagueUrl: string | null
 }
 
 export type LeagueResultPoints = {
@@ -61,6 +70,7 @@ export type LeagueStandingTeam = {
 
 let pool: Pool | null = null
 const longTermLeagueName = "Finále Praha"
+const finaleJaro2026Url = "https://www.hospodskykviz.cz/vysledky/492"
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
 const latestQuizResultsUpdateCacheSeconds = 60
 const leagueStandingsCacheSeconds = 24 * 60 * 60
@@ -304,10 +314,32 @@ const loadLatestQuizResultsUpdate = async () => {
     : null
 }
 
-const loadLongTermLeagueStandings = async (
-  lastResultDate: string | null
-): Promise<LeagueStandings | null> => {
-  const leagueResult = await queryDatabase<{
+const parseLeagueId = (leagueId: string | undefined) => {
+  if (!leagueId) {
+    return null
+  }
+
+  const parsed = Number(leagueId)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
+const mapLeagueSummaryRow = (row: {
+  id: number
+  league_name: string
+  period_start: Date
+  period_stop: Date
+  league_url: string | null
+}): LeagueSummary => ({
+  leagueId: row.id,
+  leagueName: row.league_name,
+  periodStart: row.period_start.toISOString(),
+  periodStop: row.period_stop.toISOString(),
+  leagueUrl: row.league_url
+})
+
+const loadPrahaLeagueSummaries = async (): Promise<LeagueSummary[]> => {
+  const result = await queryDatabase<{
+    id: number
     league_name: string
     period_start: Date
     period_stop: Date
@@ -315,16 +347,47 @@ const loadLongTermLeagueStandings = async (
   }>(
     `
       select
+        id::int,
         league_name,
         period_start,
         period_stop,
         league_url
       from public.quiz_leagues
-      where league_name = $1
+      where league_name ilike '%Praha%'
+        or league_url = $1
+      order by period_start desc, id desc
+    `,
+    [finaleJaro2026Url]
+  )
+
+  return result.rows.map(mapLeagueSummaryRow)
+}
+
+const loadLongTermLeagueStandings = async (
+  lastResultDate: string | null,
+  leagueId: string | undefined
+): Promise<LeagueStandings | null> => {
+  const selectedLeagueId = parseLeagueId(leagueId)
+  const leagueResult = await queryDatabase<{
+    id: number
+    league_name: string
+    period_start: Date
+    period_stop: Date
+    league_url: string | null
+  }>(
+    `
+      select
+        id::int,
+        league_name,
+        period_start,
+        period_stop,
+        league_url
+      from public.quiz_leagues
+      where ${selectedLeagueId === null ? "league_name = $1" : "id = $1::int"}
       order by period_start desc, id desc
       limit 1
     `,
-    [longTermLeagueName]
+    [selectedLeagueId ?? longTermLeagueName]
   )
 
   const league = leagueResult.rows[0]
@@ -417,6 +480,7 @@ const loadLongTermLeagueStandings = async (
   }))
 
   return {
+    leagueId: league.id,
     leagueName: league.league_name,
     periodStart: league.period_start.toISOString(),
     periodStop: league.period_stop.toISOString(),
@@ -436,8 +500,9 @@ const loadLongTermLeagueStandings = async (
 }
 
 const getCachedLongTermLeagueStandings = unstable_cache(
-  async (lastResultDate: string | null) => loadLongTermLeagueStandings(lastResultDate),
-  ["quiz-results", "long-term-league-standings-by-update"],
+  async (lastResultDate: string | null, leagueId: string | undefined) =>
+    loadLongTermLeagueStandings(lastResultDate, leagueId),
+  ["quiz-results", "long-term-league-standings-by-update-and-league"],
   {
     revalidate: leagueStandingsCacheSeconds,
     tags: ["quiz-results"]
@@ -461,8 +526,12 @@ export const getTeamResults = async (teamId: number | null, teamName: string) =>
   return loadTeamResults(teamId, teamName)
 }
 
-export const getLongTermLeagueStandings = async () => {
+export const getPrahaLeagueSummaries = async () => {
+  return loadPrahaLeagueSummaries()
+}
+
+export const getLongTermLeagueStandings = async (leagueId?: string) => {
   const lastResultDate = await getCachedLatestQuizResultsUpdate()
 
-  return getCachedLongTermLeagueStandings(lastResultDate)
+  return getCachedLongTermLeagueStandings(lastResultDate, leagueId)
 }
