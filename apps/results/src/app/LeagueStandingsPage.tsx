@@ -12,6 +12,7 @@ import {
 import { sortLeagueTeams } from "./_lib/sort"
 import type { LeagueSortKey, SortDirection } from "./_lib/types"
 import { LeagueSelect } from "./_components/LeagueSelect"
+import { ResultsNavigationBoundary } from "./_components/ResultsNavigationBoundary"
 import { LeagueTable } from "./_components/LeagueTable"
 import { LeagueTableControls } from "./_components/LeagueTableControls"
 import { ResultsUnavailable } from "./_components/ResultsUnavailable"
@@ -64,27 +65,31 @@ export const LeagueStandingsPage = async ({
     standings?.leagueId === defaultLeagueId ? undefined : String(standings?.leagueId ?? "")
 
   if (!standings) {
+    const navigationKey = ["league", leagueId ?? defaultLeagueId ?? "none", "empty"].join(":")
+
     return (
-      <div className="space-y-8 font-sans">
-        <ViewSwitch activeView="league" teamName={teamName} />
-        {leagues.length > 0 && defaultLeagueId ? (
-          <div className="max-w-2xl">
-            <LeagueSelect
-              leagues={leagues}
-              selectedLeagueId={defaultLeagueId}
-              defaultLeagueId={defaultLeagueId}
-            />
-          </div>
-        ) : null}
-        <section className="rounded-lg border border-white/10 bg-white/4.5 p-8">
-          <h1 className="text-3xl font-bold text-white">
-            {defaultLeagueDisplayName ?? "Vybraná liga"}
-          </h1>
-          <p className="mt-3 text-white/65">
-            V tabulce public.quiz_leagues není záznam vybrané ligy.
-          </p>
-        </section>
-      </div>
+      <ResultsNavigationBoundary key={navigationKey}>
+        <div className="space-y-8 font-sans">
+          <ViewSwitch activeView="league" teamName={teamName} />
+          {leagues.length > 0 && defaultLeagueId ? (
+            <div className="max-w-2xl">
+              <LeagueSelect
+                leagues={leagues}
+                selectedLeagueId={defaultLeagueId}
+                defaultLeagueId={defaultLeagueId}
+              />
+            </div>
+          ) : null}
+          <section className="rounded-lg border border-white/10 bg-white/4.5 p-8">
+            <h1 className="text-3xl font-bold text-white">
+              {defaultLeagueDisplayName ?? "Vybraná liga"}
+            </h1>
+            <p className="mt-3 text-white/65">
+              V tabulce public.quiz_leagues není záznam vybrané ligy.
+            </p>
+          </section>
+        </div>
+      </ResultsNavigationBoundary>
     )
   }
 
@@ -124,10 +129,21 @@ export const LeagueStandingsPage = async ({
         ? `Seřazeno podle názvu týmu ${direction === "asc" ? "vzestupně" : "sestupně"}.`
         : sort === "rounds"
           ? `Seřazeno podle počtu odehraných kol ${direction === "asc" ? "vzestupně" : "sestupně"}.`
-          : `Seřazeno podle ${useCuts ? "součtu bodů po škrtech" : "součtu bodů"} ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+        : `Seřazeno podle ${useCuts ? "součtu bodů po škrtech" : "součtu bodů"} ${direction === "asc" ? "vzestupně" : "sestupně"}.`
+  const navigationKey = [
+    "league",
+    standings.leagueId,
+    page ?? "1",
+    requestedPageSizeValue ?? "default",
+    sort,
+    direction,
+    cutCount,
+    selectedRoundCount
+  ].join(":")
 
   return (
-    <div className="space-y-8 font-sans">
+    <ResultsNavigationBoundary key={navigationKey}>
+      <div className="space-y-8 font-sans">
       <section className="space-y-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <ViewSwitch activeView="league" teamName={teamName} />
@@ -239,6 +255,7 @@ export const LeagueStandingsPage = async ({
           />
         </div>
       </section>
-    </div>
+      </div>
+    </ResultsNavigationBoundary>
   )
 }

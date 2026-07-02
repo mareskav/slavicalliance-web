@@ -4,7 +4,6 @@ import { getTeamResults, getTeamSummaries } from "@/lib/quiz-results"
 import { getLeagueCutCount, getLeagueSortKey, getSortDirection, getTeamSortKey } from "./_lib/navigation"
 import type { ResultView } from "./_lib/types"
 import { ResultsUnavailable } from "./_components/ResultsUnavailable"
-import { ResultsNavigationBoundary } from "./_components/ResultsNavigationBoundary"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
 import { TeamResultsPage } from "./TeamResultsPage"
 
@@ -114,18 +113,16 @@ const ResultsPage = async ({
 
   if (activeView === "league") {
     return (
-      <ResultsNavigationBoundary>
-        <LeagueStandingsPage
-          teamName={params?.team ?? defaultTeamName}
-          page={params?.page}
-          pageSize={params?.pageSize}
-          sort={getLeagueSortKey(params?.sort)}
-          direction={getSortDirection(params?.dir, "desc")}
-          cutCount={getLeagueCutCount(params?.cuts)}
-          selectedRound={params?.rounds}
-          leagueId={params?.leagueId}
-        />
-      </ResultsNavigationBoundary>
+      <LeagueStandingsPage
+        teamName={params?.team ?? defaultTeamName}
+        page={params?.page}
+        pageSize={params?.pageSize}
+        sort={getLeagueSortKey(params?.sort)}
+        direction={getSortDirection(params?.dir, "desc")}
+        cutCount={getLeagueCutCount(params?.cuts)}
+        selectedRound={params?.rounds}
+        leagueId={params?.leagueId}
+      />
     )
   }
 
@@ -189,17 +186,15 @@ const ResultsPage = async ({
   }
 
   return (
-    <ResultsNavigationBoundary>
-      <TeamResultsPage
-        teams={teams}
-        selectedSummary={selectedSummary}
-        results={results}
-        page={params?.page}
-        pageSize={params?.pageSize}
-        sort={getTeamSortKey(params?.sort)}
-        direction={getSortDirection(params?.dir, "desc")}
-      />
-    </ResultsNavigationBoundary>
+    <TeamResultsPage
+      teams={teams}
+      selectedSummary={selectedSummary}
+      results={results}
+      page={params?.page}
+      pageSize={params?.pageSize}
+      sort={getTeamSortKey(params?.sort)}
+      direction={getSortDirection(params?.dir, "desc")}
+    />
   )
 }
 
