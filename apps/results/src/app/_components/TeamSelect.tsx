@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation"
 import { Check, ChevronDown, Loader2, Search, Users, X } from "lucide-react"
 import { KeyboardEvent, useEffect, useMemo, useRef, useState, useTransition } from "react"
 
+import { useResultsNavigation } from "./ResultsNavigationContext"
+
 type TeamSelectOption = {
   teamId: number | null
   teamKey: string
@@ -21,6 +23,7 @@ type TeamSelectProps = {
 
 export const TeamSelect = ({ teams, selectedTeamId, selectedTeamName }: TeamSelectProps) => {
   const router = useRouter()
+  const resultsNavigation = useResultsNavigation()
   const [isPending, startTransition] = useTransition()
   const [query, setQuery] = useState(selectedTeamName)
   const [isOpen, setIsOpen] = useState(false)
@@ -70,6 +73,13 @@ export const TeamSelect = ({ teams, selectedTeamId, selectedTeamName }: TeamSele
     if (nextTeam.teamKey === selectedTeamKey) {
       return
     }
+
+    resultsNavigation?.beginResultsNavigation({
+      activeView: "team",
+      title: nextTeam.teamName,
+      subtitle: "Výsledky týmu u Hospodského kvízu",
+      teamName: nextTeam.teamName
+    })
 
     startTransition(() => {
       const params = new URLSearchParams({ team: nextTeam.teamName })
