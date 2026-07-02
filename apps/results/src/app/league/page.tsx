@@ -3,6 +3,8 @@ import { getLeagueCutCount, getLeagueSortKey, getSortDirection } from "../_lib/n
 
 export const dynamic = "force-dynamic"
 
+const defaultTeamName = "Slavic Alliance"
+
 const LeaguePage = async ({
   searchParams
 }: {
@@ -21,7 +23,7 @@ const LeaguePage = async ({
 
   return (
     <LeagueStandingsPage
-      teamName={params?.team}
+      teamName={params?.team ?? defaultTeamName}
       page={params?.page}
       pageSize={params?.pageSize}
       sort={getLeagueSortKey(params?.sort)}
