@@ -20,6 +20,12 @@ const sitemap = (): MetadataRoute.Sitemap => {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    {
+      url: `${siteUrl}/napsali-o-nas`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
   ]
 
   const posts = getAllPosts().map((post) => ({

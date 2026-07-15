@@ -29,6 +29,16 @@ collections:
               - quote
               - bulleted-list
               - numbered-list
+      - name: "napsali-o-nas"
+        label: "Napsali o nás"
+        file: "apps/site/contents/pages/napsali-o-nas.md"
+        fields:
+          - { label: "Titulek", name: "title", widget: "string" }
+          - label: "Obsah"
+            name: "body"
+            widget: "markdown"
+            default_mode: "raw"
+            modes: ["raw"]
 
   - name: "posts"
     label: "Články"

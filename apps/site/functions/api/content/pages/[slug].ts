@@ -1,4 +1,4 @@
-import { Env, fallbackLanding, json, pageFromMarkdown, pageKey } from "../../../_shared/content"
+import { Env, fallbackPages, json, pageFromMarkdown, pageKey } from "../../../_shared/content"
 import {
   browserRevalidatedResponse,
   cachePageContentResponse,
@@ -24,7 +24,7 @@ export const onRequestGet = async ({ env, request, params, waitUntil }: PagesCon
   }
 
   const object = await env.CONTENT_BUCKET.get(pageKey(slug))
-  const raw = object ? await object.text() : slug === "landing" ? fallbackLanding : null
+  const raw = object ? await object.text() : (fallbackPages[slug] ?? null)
 
   if (!raw) {
     return json({ error: "Page not found." }, { status: 404 })

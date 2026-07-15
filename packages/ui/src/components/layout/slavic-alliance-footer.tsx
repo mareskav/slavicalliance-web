@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Heart, Trophy } from "lucide-react"
+import { BarChart3, CalendarDays, Heart, Newspaper, Trophy } from "lucide-react"
 
 export type SlavicAllianceFooterProps = {
   siteHref?: string
@@ -20,7 +20,8 @@ export const SlavicAllianceFooter = ({
   const navItems = [
     { href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
     { href: resultsHref, label: "Výsledky", icon: BarChart3 },
-    { href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays }
+    { href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays },
+    { href: joinUrl(siteHref, "/napsali-o-nas"), label: "Napsali o nás", icon: Newspaper }
   ]
 
   return (

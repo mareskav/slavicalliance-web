@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Trophy, type LucideIcon } from "lucide-react"
+import { BarChart3, CalendarDays, Newspaper, Trophy, type LucideIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -6,7 +6,7 @@ import { AchievementBadge } from "./achievement-badge"
 import { TeamMark } from "./team-mark"
 
 type NavItem = {
-  id: "home" | "quizzes" | "results"
+  id: "home" | "quizzes" | "results" | "press"
   href: string
   label: string
   icon: LucideIcon
@@ -38,7 +38,8 @@ export const SlavicAllianceHeader = ({
   const navItems: NavItem[] = [
     { id: "home", href: joinUrl(siteHref, "/"), label: "Domů", icon: Trophy },
     { id: "results", href: resultsHref, label: "Výsledky", icon: BarChart3 },
-    { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays }
+    { id: "quizzes", href: joinUrl(siteHref, "/kvizy"), label: "Kvízy", icon: CalendarDays },
+    { id: "press", href: joinUrl(siteHref, "/napsali-o-nas"), label: "Napsali o nás", icon: Newspaper }
   ]
 
   return (
