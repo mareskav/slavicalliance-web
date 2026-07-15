@@ -1,13 +1,33 @@
 import type { Metadata } from "next"
 import { ArrowUpRight, Facebook, Newspaper } from "lucide-react"
 
-import { getPressMentions } from "@/lib/press"
+import { getPressMentions, getShareImage } from "@/lib/press"
 
-export const metadata: Metadata = {
-  title: "Napsali o nás",
-  description: "Články, reportáže a příspěvky, ve kterých se psalo o týmu Slavic Alliance.",
-  alternates: {
-    canonical: "/napsali-o-nas"
+const pageDescription = "Články a příspěvky, ve kterých se psalo o týmu Slavic Alliance."
+const pageTitle = "Napsali o nás | Slavic Alliance"
+
+export const generateMetadata = async (): Promise<Metadata> => {
+  const latestImage = await getShareImage()
+
+  return {
+    title: "Napsali o nás",
+    description: pageDescription,
+    alternates: {
+      canonical: "/napsali-o-nas"
+    },
+    openGraph: {
+      type: "website",
+      url: "/napsali-o-nas",
+      title: pageTitle,
+      description: pageDescription,
+      images: latestImage ? [{ url: latestImage, alt: pageTitle }] : undefined
+    },
+    twitter: {
+      card: latestImage ? "summary_large_image" : "summary",
+      title: pageTitle,
+      description: pageDescription,
+      images: latestImage ? [latestImage] : undefined
+    }
   }
 }
 

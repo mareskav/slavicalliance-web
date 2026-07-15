@@ -20,6 +20,10 @@ pnpm-debug.log*
 # Testing
 coverage/
 
+# Generated OG share images (rebuilt on every build)
+apps/site/public/og/
+apps/site/.og-cache/
+
 # Env (never commit secrets)
 .env
 .env.local

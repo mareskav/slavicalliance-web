@@ -121,3 +121,31 @@ export const parsePressMentions = (raw: string): PressMention[] => {
 
 export const getPressMentions = async (): Promise<PressMention[]> =>
   parsePressMentions(await readPressRaw())
+
+const ogManifestPath = path.join(process.cwd(), ".og-cache/og-manifest.json")
+
+// If the prebuild step localized an external image (see scripts/prepare-og-image.mjs),
+// swap the original URL for the same-origin copy so social scrapers load it reliably.
+const resolveShareImage = (imageUrl?: string): string | undefined => {
+  if (!imageUrl) return undefined
+
+  try {
+    if (fs.existsSync(ogManifestPath)) {
+      const manifest = JSON.parse(fs.readFileSync(ogManifestPath, "utf8")) as {
+        "napsali-o-nas"?: { source?: string; local?: string }
+      }
+      const entry = manifest["napsali-o-nas"]
+      if (entry?.source === imageUrl && entry.local) return entry.local
+    }
+  } catch {
+    // fall back to the original image
+  }
+
+  return imageUrl
+}
+
+export const getShareImage = async (): Promise<string | undefined> => {
+  const mentions = await getPressMentions()
+  const latest = mentions.find((mention) => mention.imageUrl)?.imageUrl
+  return resolveShareImage(latest)
+}
