@@ -373,10 +373,10 @@ const AdminEditor = () => {
             <h2 className="text-base font-semibold text-white">Jak upravovat obsah</h2>
             <ul className="mt-2 space-y-1.5 text-white/78">
               <li>Každá zmínka začíná nadpisem <code className="rounded bg-black/30 px-1 py-0.5">## Titulek</code> – ten se zobrazí jako nadpis karty.</li>
-              <li>Pod nadpisem následují odrážky s údaji <code className="rounded bg-black/30 px-1 py-0.5">Zdroj</code>, <code className="rounded bg-black/30 px-1 py-0.5">Typ</code>, <code className="rounded bg-black/30 px-1 py-0.5">Datum</code>, <code className="rounded bg-black/30 px-1 py-0.5">Odkaz</code> a <code className="rounded bg-black/30 px-1 py-0.5">Obrázek</code>.</li>
+              <li>Pod nadpisem následují odrážky s údaji <code className="rounded bg-black/30 px-1 py-0.5">Zdroj</code>, <code className="rounded bg-black/30 px-1 py-0.5">Typ</code>, <code className="rounded bg-black/30 px-1 py-0.5">Datum</code>, <code className="rounded bg-black/30 px-1 py-0.5">Odkaz</code>, volitelně <code className="rounded bg-black/30 px-1 py-0.5">Abstract</code> a <code className="rounded bg-black/30 px-1 py-0.5">Obrázek</code>.</li>
               <li><code className="rounded bg-black/30 px-1 py-0.5">Typ</code> může být <code className="rounded bg-black/30 px-1 py-0.5">facebook</code> nebo <code className="rounded bg-black/30 px-1 py-0.5">article</code> (mění se ikona zdroje).</li>
-              <li><code className="rounded bg-black/30 px-1 py-0.5">Obrázek</code> je nepovinný – buď cesta k souboru v <code className="rounded bg-black/30 px-1 py-0.5">/uploads</code> / <code className="rounded bg-black/30 px-1 py-0.5">public</code>, nebo plná URL. Když chybí, zobrazí se ikona zdroje.</li>
-              <li>Poslední odstavec (bez odrážky) je perex zobrazený na kartě.</li>
+              <li><code className="rounded bg-black/30 px-1 py-0.5">Abstract</code> je perex zobrazený na kartě. Když chybí, použije se poslední odstavec bez odrážky.</li>
+              <li><code className="rounded bg-black/30 px-1 py-0.5">Obrázek</code> je nepovinný – buď cesta k souboru v <code className="rounded bg-black/30 px-1 py-0.5">/uploads</code> / <code className="rounded bg-black/30 px-1 py-0.5">public</code>, nebo plná URL. U článku se při chybějícím obrázku zkusí použít náhled z cílové stránky.</li>
               <li>Pořadí zmínek na stránce odpovídá pořadí v souboru – nejnovější dávej nahoru.</li>
             </ul>
             <pre className="mt-3 overflow-x-auto rounded border border-white/12 bg-[#05070c] p-3 text-xs leading-5 text-white/78">{`## Titulek zmínky
@@ -384,9 +384,8 @@ const AdminEditor = () => {
 - Typ: article
 - Datum: 13. července 2026
 - Odkaz: https://www.blesk.cz/clanek/...
-- Obrázek: https://.../nahled.jpg
-
-Krátký perex, který se zobrazí na kartě.`}</pre>
+- Abstract: Krátký perex, který se zobrazí na kartě.
+- Obrázek: https://.../nahled.jpg`}</pre>
           </section>
         )}
 

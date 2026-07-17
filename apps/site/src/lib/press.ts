@@ -49,6 +49,56 @@ const readPressRaw = async (): Promise<string> => {
   return fs.readFileSync(pressPath, "utf8")
 }
 
+const extractMetaImage = (html: string) => {
+  const patterns = [
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["'][^>]*>/i,
+    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["'][^>]*>/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["'][^>]*>/i
+  ]
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern)
+    if (match?.[1]) return match[1]
+  }
+
+  return undefined
+}
+
+const getArticlePreviewImage = async (href: string) => {
+  if (!/^https?:\/\//i.test(href)) return undefined
+
+  try {
+    const response = await fetch(href, {
+      cache: "force-cache",
+      headers: {
+        accept: "text/html",
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36"
+      },
+      signal: AbortSignal.timeout(5000)
+    })
+
+    if (!response.ok) return undefined
+
+    return extractMetaImage(await response.text())
+  } catch {
+    return undefined
+  }
+}
+
+const withArticlePreviewImages = async (mentions: PressMention[]) =>
+  Promise.all(
+    mentions.map(async (mention) => {
+      if (mention.imageUrl || mention.sourceType !== "article") {
+        return mention
+      }
+
+      const imageUrl = await getArticlePreviewImage(mention.href)
+      return imageUrl ? { ...mention, imageUrl } : mention
+    })
+  )
+
 const normaliseType = (value: string): PressSourceType =>
   value.trim().toLowerCase() === "facebook" ? "facebook" : "article"
 
@@ -64,6 +114,7 @@ export const parsePressMentions = (raw: string): PressMention[] => {
     date: string
     href: string
     imageUrl?: string
+    abstract?: string
     excerptLines: string[]
   }
 
@@ -78,7 +129,7 @@ export const parsePressMentions = (raw: string): PressMention[] => {
       date: current.date,
       href: current.href || "#",
       imageUrl: current.imageUrl || undefined,
-      excerpt: current.excerptLines.join(" ").trim()
+      excerpt: current.abstract || current.excerptLines.join(" ").trim()
     })
   }
 
@@ -92,6 +143,7 @@ export const parsePressMentions = (raw: string): PressMention[] => {
         sourceType: "article",
         date: "",
         href: "",
+        abstract: undefined,
         excerptLines: []
       }
       continue
@@ -109,6 +161,7 @@ export const parsePressMentions = (raw: string): PressMention[] => {
       else if (key === "datum") current.date = value
       else if (key === "odkaz") current.href = value
       else if (key === "obrázek" || key === "obrazek") current.imageUrl = value || undefined
+      else if (key === "abstract" || key === "abstrakt") current.abstract = value
       continue
     }
 
@@ -120,7 +173,7 @@ export const parsePressMentions = (raw: string): PressMention[] => {
 }
 
 export const getPressMentions = async (): Promise<PressMention[]> =>
-  parsePressMentions(await readPressRaw())
+  withArticlePreviewImages(parsePressMentions(await readPressRaw()))
 
 const ogManifestPath = path.join(process.cwd(), ".og-cache/og-manifest.json")
 
