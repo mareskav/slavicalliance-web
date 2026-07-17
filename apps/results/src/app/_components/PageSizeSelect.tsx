@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Loader2 } from "lucide-react"
 import { useTransition } from "react"
 
+import { useResultsNavigation } from "./ResultsNavigationContext"
+
 type PageSizeSelectProps = {
   pageSize: number
   options: number[]
@@ -14,6 +16,7 @@ export const PageSizeSelect = ({ pageSize, options }: PageSizeSelectProps) => {
   const pathname = usePathname()
   const appPathname = pathname.replace(/^\/vysledky(?=\/|$)/, "") || "/"
   const searchParams = useSearchParams()
+  const resultsNavigation = useResultsNavigation()
   const [isPending, startTransition] = useTransition()
 
   return (
@@ -27,6 +30,8 @@ export const PageSizeSelect = ({ pageSize, options }: PageSizeSelectProps) => {
             const params = new URLSearchParams(searchParams)
             params.set("page", "1")
             params.set("pageSize", event.target.value)
+
+            resultsNavigation?.beginDefaultResultsNavigation()
 
             startTransition(() => {
               router.push(`${appPathname}?${params.toString()}`)

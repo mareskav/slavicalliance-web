@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Loader2 } from "lucide-react"
 import { useTransition } from "react"
 
+import { useResultsNavigation } from "./ResultsNavigationContext"
+
 type LeagueRoundSelectProps = {
   selectedRoundCount: number
   playedRounds: number
@@ -14,6 +16,7 @@ export const LeagueRoundSelect = ({ selectedRoundCount, playedRounds }: LeagueRo
   const pathname = usePathname()
   const appPathname = pathname.replace(/^\/vysledky(?=\/|$)/, "") || "/"
   const searchParams = useSearchParams()
+  const resultsNavigation = useResultsNavigation()
   const [isPending, startTransition] = useTransition()
   const options = Array.from({ length: Math.max(playedRounds, 1) }, (_, index) => index + 1)
 
@@ -35,6 +38,8 @@ export const LeagueRoundSelect = ({ selectedRoundCount, playedRounds }: LeagueRo
             } else {
               params.set("rounds", event.target.value)
             }
+
+            resultsNavigation?.beginDefaultResultsNavigation({ activeView: "league" })
 
             startTransition(() => {
               router.push(`${appPathname}?${params.toString()}`, { scroll: false })

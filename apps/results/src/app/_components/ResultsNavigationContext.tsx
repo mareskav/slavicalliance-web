@@ -13,6 +13,7 @@ export type PendingResultsNavigation = {
 
 type ResultsNavigationContextValue = {
   beginResultsNavigation: (navigation: PendingResultsNavigation) => void
+  beginDefaultResultsNavigation: (navigation?: Partial<PendingResultsNavigation>) => void
 }
 
 const ResultsNavigationContext = createContext<ResultsNavigationContextValue | null>(null)

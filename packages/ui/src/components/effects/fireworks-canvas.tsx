@@ -46,16 +46,16 @@ const getViewportIntensity = (width: number, height: number) => {
 }
 
 const scheduleDelay = (width: number, height: number, compact: boolean) => {
-  if (compact) return randomBetween(1700, 2800)
+  if (compact) return randomBetween(1300, 2200)
 
   const intensity = getViewportIntensity(width, height)
-  return randomBetween(1250 - intensity * 420, 2200 - intensity * 520)
+  return randomBetween(1050 - intensity * 380, 1900 - intensity * 480)
 }
 
 const getBurstCount = (width: number, compact: boolean) => {
-  if (compact) return 1
-  if (width >= 1280) return Math.random() > 0.72 ? 3 : Math.random() > 0.38 ? 2 : 1
-  if (width >= 900) return Math.random() > 0.68 ? 2 : 1
+  if (compact) return Math.random() > 0.7 ? 2 : 1
+  if (width >= 1280) return Math.random() > 0.62 ? 3 : Math.random() > 0.3 ? 2 : 1
+  if (width >= 900) return Math.random() > 0.55 ? 2 : 1
   return 1
 }
 
@@ -132,11 +132,11 @@ const getBurstOrigin = (
 const spawnBurst = (particles: Particle[], width: number, height: number, origin = getBurstOrigin(width, height)) => {
   const { x, y } = origin
   const hue = getFireworkHue()
-  const count = Math.round(randomBetween(26, 38))
+  const count = Math.round(randomBetween(30, 42))
 
   for (let i = 0; i < count; i += 1) {
     const angle = (Math.PI * 2 * i) / count + randomBetween(-0.08, 0.08)
-    const speed = randomBetween(0.65, 2.05)
+    const speed = randomBetween(0.7, 2.2)
 
     particles.push({
       x,
@@ -145,10 +145,10 @@ const spawnBurst = (particles: Particle[], width: number, height: number, origin
       vy: Math.sin(angle) * speed,
       age: 0,
       life: randomBetween(95, 145),
-      size: randomBetween(1.7, 3.2),
+      size: randomBetween(2.1, 3.8),
       hue: hue + randomBetween(-24, 24),
-      trail: randomBetween(2.8, 5),
-      sparkle: Math.random() > 0.86,
+      trail: randomBetween(3, 5.4),
+      sparkle: Math.random() > 0.82,
       twinkle: randomBetween(0, Math.PI * 2)
     })
   }
@@ -239,8 +239,8 @@ export const FireworksCanvas = ({ enabled }: { enabled: boolean }) => {
       for (let i = particles.length - 1; i >= 0; i -= 1) {
         const particle = particles[i]
         const progress = particle.age / particle.life
-        const alpha = Math.max(0, (1 - progress) * 0.58)
-        const tailAlpha = alpha * 0.62
+        const alpha = Math.max(0, (1 - progress) * 0.74)
+        const tailAlpha = alpha * 0.66
         const starPulse =
           particle.sparkle && progress < 0.48
             ? 0.68 + Math.sin(particle.age * 0.2 + particle.twinkle) * 0.32
@@ -312,7 +312,7 @@ export const FireworksCanvas = ({ enabled }: { enabled: boolean }) => {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[-9] h-screen w-screen opacity-80 mix-blend-screen"
+      className="pointer-events-none fixed inset-0 z-[-9] h-screen w-screen opacity-95 mix-blend-screen"
     />
   )
 }

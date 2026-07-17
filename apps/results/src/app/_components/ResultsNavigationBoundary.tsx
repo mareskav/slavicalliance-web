@@ -8,6 +8,27 @@ import { ResultsLoadingSkeleton } from "./ResultsLoadingSkeleton"
 
 type PendingState = PendingResultsNavigation & { origin: string }
 
+const getDefaultPendingNavigation = (searchParams: URLSearchParams): PendingResultsNavigation => {
+  const activeView = searchParams.get("view") === "league" ? "league" : "team"
+
+  if (activeView === "league") {
+    return {
+      activeView,
+      title: "Dlouhodobé soutěže",
+      teamName: searchParams.get("team") ?? undefined
+    }
+  }
+
+  const teamName = searchParams.get("team") ?? "Slavic Alliance"
+
+  return {
+    activeView,
+    title: teamName,
+    subtitle: "Výsledky týmu u Hospodského kvízu",
+    teamName
+  }
+}
+
 export const ResultsNavigationBoundary = ({ children }: { children: ReactNode }) => {
   const [pending, setPending] = useState<PendingState | null>(null)
   const pathname = usePathname()
@@ -17,14 +38,23 @@ export const ResultsNavigationBoundary = ({ children }: { children: ReactNode })
   // Keep the freshest location available to the click handler without
   // recreating the context value (which would re-render every consumer).
   const locationRef = useRef(currentLocation)
+  const searchParamsRef = useRef(searchParams)
   useEffect(() => {
     locationRef.current = currentLocation
-  }, [currentLocation])
+    searchParamsRef.current = searchParams
+  }, [currentLocation, searchParams])
 
   const contextValue = useMemo(
     () => ({
       beginResultsNavigation: (navigation: PendingResultsNavigation) => {
         setPending({ ...navigation, origin: locationRef.current })
+      },
+      beginDefaultResultsNavigation: (navigation: Partial<PendingResultsNavigation> = {}) => {
+        setPending({
+          ...getDefaultPendingNavigation(new URLSearchParams(searchParamsRef.current)),
+          ...navigation,
+          origin: locationRef.current
+        })
       }
     }),
     []

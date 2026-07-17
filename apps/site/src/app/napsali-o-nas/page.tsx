@@ -3,7 +3,7 @@ import { ArrowUpRight, Facebook, Newspaper } from "lucide-react"
 
 import { getPressMentions, getShareImage } from "@/lib/press"
 
-const pageDescription = "Články a příspěvky, ve kterých se psalo o týmu Slavic Alliance."
+const pageDescription = "Kde se o Slavic Alliance píše?"
 const pageTitle = "Napsali o nás | Slavic Alliance"
 
 export const generateMetadata = async (): Promise<Metadata> => {

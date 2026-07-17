@@ -6,6 +6,7 @@ import { useTransition } from "react"
 
 import type { LeagueSummary } from "@/lib/quiz-results"
 import { formatLeagueName } from "../_lib/formatters"
+import { useResultsNavigation } from "./ResultsNavigationContext"
 
 type LeagueSelectProps = {
   leagues: LeagueSummary[]
@@ -22,12 +23,19 @@ export const LeagueSelect = ({
   const pathname = usePathname()
   const appPathname = pathname.replace(/^\/vysledky(?=\/|$)/, "") || "/"
   const searchParams = useSearchParams()
+  const resultsNavigation = useResultsNavigation()
   const [isPending, startTransition] = useTransition()
 
   const selectLeague = (nextLeagueId: number) => {
     if (nextLeagueId === selectedLeagueId) {
       return
     }
+
+    const nextLeague = leagues.find((league) => league.leagueId === nextLeagueId)
+    resultsNavigation?.beginDefaultResultsNavigation({
+      activeView: "league",
+      title: nextLeague ? formatLeagueName(nextLeague.leagueName, nextLeague.periodStart) : "Dlouhodobé soutěže"
+    })
 
     startTransition(() => {
       const params = new URLSearchParams(searchParams)
