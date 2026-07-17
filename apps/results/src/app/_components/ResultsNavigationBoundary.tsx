@@ -60,27 +60,11 @@ export const ResultsNavigationBoundary = ({ children }: { children: ReactNode })
     []
   )
 
-  // Show the skeleton only while we are still on the page the navigation
-  // started from. As soon as the URL changes the destination has committed, so
-  // we fall back to `children`. Deriving this during render (instead of
-  // resetting via an effect) means the skeleton clears reliably even when the
-  // boundary is not remounted by a changing `key` - e.g. redirects to a
-  // canonical team URL, or landing on a page with the same navigation key.
-  const showSkeleton = pending !== null && pending.origin === currentLocation
-
-  // Drop stale pending state once navigation has completed, so navigating back
-  // to the origin URL later does not re-trigger the skeleton. Deferred to keep
-  // it out of the synchronous effect body; the skeleton is already hidden via
-  // `showSkeleton`, so this has no visual effect.
-  useEffect(() => {
-    if (!pending || pending.origin === currentLocation) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => setPending(null), 0)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [pending, currentLocation])
+  // Keep the skeleton visible for the whole client navigation. The URL can
+  // update before the server payload has committed; hiding on URL change causes
+  // a blank gap between the skeleton and the next page. Successful navigations
+  // remount this boundary via its page-level `key`, which clears `pending`.
+  const showSkeleton = pending !== null
 
   return (
     <ResultsNavigationProvider value={contextValue}>
