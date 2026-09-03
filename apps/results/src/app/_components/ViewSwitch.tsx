@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Trophy, Users } from "lucide-react"
+import { Sparkles, Trophy, Users } from "lucide-react"
 import type { MouseEvent } from "react"
 
 import type { ResultView } from "../_lib/types"
@@ -41,11 +41,17 @@ export const ViewSwitch = ({
               subtitle: "Výsledky týmu u Hospodského kvízu",
               teamName
             }
-          : {
-              activeView: "league",
-              title: "Dlouhodobé soutěže",
-              teamName
-            }
+          : nextView === "special"
+            ? {
+                activeView: "special",
+                title: "Speciály",
+                teamName
+              }
+            : {
+                activeView: "league",
+                title: "Dlouhodobé soutěže",
+                teamName
+              }
       )
     }
 
@@ -77,6 +83,18 @@ export const ViewSwitch = ({
       >
         <Trophy className="h-4 w-4 shrink-0" />
         Dlouhodobé soutěže
+      </Link>
+      <Link
+        href={getViewHref("special", teamName)}
+        onClick={handleNavigationClick("special")}
+        className={`inline-flex h-10 min-w-0 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
+          activeView === "special"
+            ? "bg-sky-100/14 text-white ring-1 ring-sky-100/18"
+            : "text-white/62 hover:bg-white/7 hover:text-white"
+        }`}
+      >
+        <Sparkles className="h-4 w-4 shrink-0" />
+        Speciály
       </Link>
     </nav>
   )

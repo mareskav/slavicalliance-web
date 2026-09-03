@@ -87,7 +87,7 @@ export const getLeagueCutsHref = (
 
 export const getViewHref = (view: ResultView, teamName?: string, teamIdQuery?: string | null) => {
   const params = new URLSearchParams()
-  if (view === "league") params.set("view", view)
+  if (view === "league" || view === "special") params.set("view", view)
   if (view === "team" && teamName) {
     params.set("team", teamName)
     if (teamIdQuery !== undefined && teamIdQuery !== null) params.set("teamId", teamIdQuery)

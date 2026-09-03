@@ -1,6 +1,6 @@
 import type { LeagueStandingTeam } from "@/lib/quiz-results"
 
-export type ResultView = "team" | "league"
+export type ResultView = "team" | "league" | "special"
 export type SortDirection = "asc" | "desc"
 export type TeamSortKey =
   | "date"
