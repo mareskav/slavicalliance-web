@@ -20,6 +20,14 @@ const login = async (page: Page) => {
 }
 
 test.describe("admin manual-results flow", () => {
+  test.beforeEach(({ page }) => {
+    // "Vymazat" now confirms via window.confirm() before deleting; accept it
+    // by default so existing flows that expect the delete to go through keep
+    // working. Tests that specifically check the confirmation prompt itself
+    // override this per-test.
+    page.on("dialog", (dialog) => dialog.accept())
+  })
+
   test("tab selection persists across reload", async ({ page }) => {
     await login(page)
 
@@ -122,10 +130,71 @@ test.describe("admin manual-results flow", () => {
     expect(await doplnovacekInput.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false)
     await expect(page.locator("tbody tr", { hasText: invalidPubName })).toHaveCount(0)
   })
+
+  test("dismissing the 'Vymazat' confirmation keeps the row", async ({ page }) => {
+    // Override the accept-by-default handler from beforeEach for this one test.
+    page.removeAllListeners("dialog")
+    page.on("dialog", (dialog) => dialog.dismiss())
+
+    await login(page)
+    await page.getByRole("button", { name: "Historické výsledky" }).click()
+
+    const pubName = `E2E Keep Pub ${Date.now()}`
+    const form = page.locator("form", { hasText: "Nový výsledek" })
+    await form.locator('input[type="date"]').fill("2024-01-15")
+    await form.locator('input[type="text"]').fill(pubName)
+    await form.getByRole("button", { name: "Přidat výsledek" }).click()
+
+    const row = page.locator("tbody tr", { hasText: pubName }).first()
+    await expect(row).toBeVisible()
+
+    await row.getByRole("button", { name: "Vymazat" }).click()
+    await expect(page.locator("tbody tr", { hasText: pubName })).toHaveCount(1)
+  })
+
+  test("switching 'Upravit' to another row while unsaved changes exist prompts to discard", async ({ page }) => {
+    await login(page)
+    await page.getByRole("button", { name: "Historické výsledky" }).click()
+
+    const pubA = `E2E Discard A ${Date.now()}`
+    const pubB = `E2E Discard B ${Date.now()}`
+    const form = page.locator("form", { hasText: "Nový výsledek" })
+
+    await form.locator('input[type="date"]').fill("2024-01-15")
+    await form.locator('input[type="text"]').fill(pubA)
+    await form.getByRole("button", { name: "Přidat výsledek" }).click()
+    await expect(page.locator("tbody tr", { hasText: pubA })).toBeVisible()
+
+    await form.locator('input[type="date"]').fill("2024-01-15")
+    await form.locator('input[type="text"]').fill(pubB)
+    await form.getByRole("button", { name: "Přidat výsledek" }).click()
+    await expect(page.locator("tbody tr", { hasText: pubB })).toBeVisible()
+
+    const rowA = page.locator("tbody tr", { hasText: pubA }).first()
+    await rowA.getByRole("button", { name: "Upravit" }).click()
+
+    let dialogSeen = false
+    page.once("dialog", (dialog) => {
+      dialogSeen = true
+      dialog.dismiss()
+    })
+
+    const rowB = page.locator("tbody tr", { hasText: pubB }).first()
+    await rowB.getByRole("button", { name: "Upravit" }).click()
+
+    expect(dialogSeen).toBe(true)
+    // Dismissed, so row A should still be the one being edited.
+    await expect(page.locator("tbody tr").first().locator("textarea")).toBeVisible()
+    await expect(page.locator("tbody tr", { hasText: pubA }).first().locator("textarea")).toHaveCount(1)
+  })
 })
 
 test.describe("admin manual-results flow (mobile card layout)", () => {
   test.use({ viewport: { width: 375, height: 812 } })
+
+  test.beforeEach(({ page }) => {
+    page.on("dialog", (dialog) => dialog.accept())
+  })
 
   test("can add, edit and vymazat a manual result on the mobile card layout", async ({ page }) => {
     await login(page)
