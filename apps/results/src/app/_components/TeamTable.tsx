@@ -1,4 +1,4 @@
-import { ArrowUpRight, MapPin, Star } from "lucide-react"
+import { AlertTriangle, ArrowUpRight, MapPin, Star } from "lucide-react"
 
 import type { QuizResult } from "@/lib/quiz-results"
 import { formatCompactDate, formatDate, formatNumber } from "../_lib/formatters"
@@ -142,6 +142,15 @@ export const TeamTable = ({
                 <span className="md:hidden">{formatCompactDate(result.quizDate)}</span>
                 <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
               </p>
+              {result.source === "manual" ? (
+                <span
+                  className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-200/24 bg-amber-300/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100"
+                  title="Ručně zadaný výsledek kapitánem"
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  <span className="hidden sm:inline">Ručně</span>
+                </span>
+              ) : null}
             </td>
             <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-3 md:py-3">
               <span className="text-base font-bold text-white md:text-lg">
@@ -165,15 +174,19 @@ export const TeamTable = ({
                   {result.pub ?? "Místo neuvedeno"}
                 </p>
                 <div className="grid shrink-0 grid-cols-[82px_102px] gap-1.5">
-                  <a
-                    href={result.pubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-7 items-center justify-center gap-1 rounded-full bg-white/5.5 px-2 text-xs text-white/62 hover:bg-white/10 hover:text-white"
-                  >
-                    <MapPin className="h-3.5 w-3.5" />
-                    Hospoda
-                  </a>
+                  {result.source === "scraped" ? (
+                    <a
+                      href={result.pubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-7 items-center justify-center gap-1 rounded-full bg-white/5.5 px-2 text-xs text-white/62 hover:bg-white/10 hover:text-white"
+                    >
+                      <MapPin className="h-3.5 w-3.5" />
+                      Hospoda
+                    </a>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
                   {result.quizDetailsUrl ? (
                     <a
                       href={result.quizDetailsUrl}
