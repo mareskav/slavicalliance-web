@@ -24,6 +24,9 @@ type TeamOption = {
 
 const DEFAULT_TEAM_NAME = "Slavic Alliance"
 
+// Sentinel select value for "this team isn't in the list, let me type a name".
+const CUSTOM_TEAM_VALUE = "__custom__"
+
 // The team <select>'s value has to carry both the id and the name together:
 // the same team_id can be reused under a different name over time (and vice
 // versa), so neither field alone safely identifies a choice.
@@ -52,6 +55,7 @@ const buildEditTeamOptions = (teams: TeamOption[], current: TeamOption): TeamOpt
 
 type FormState = {
   teamSelection: string
+  customTeamName: string
   quizDate: string
   points: string
   doplnovacek: string
@@ -64,12 +68,23 @@ const buildDefaultForm = (teams: TeamOption[]): FormState => {
 
   return {
     teamSelection: defaultTeam ? encodeTeamOption(defaultTeam) : "",
+    customTeamName: "",
     quizDate: "",
     points: "",
     doplnovacek: "",
     pub: "",
     note: ""
   }
+}
+
+// Resolves the team actually selected: either a known team from the list, or
+// a freshly typed ad-hoc name (teamId: null) when the custom option is chosen.
+const resolveSelectedTeam = (form: FormState): TeamOption | null => {
+  if (form.teamSelection === CUSTOM_TEAM_VALUE) {
+    const name = form.customTeamName.trim()
+    return name ? { teamId: null, name } : null
+  }
+  return decodeTeamOption(form.teamSelection)
 }
 
 const formatDate = (iso: string) => {
@@ -158,9 +173,13 @@ const ManualResultsPanel = () => {
     event.preventDefault()
     setError("")
 
-    const selectedTeam = decodeTeamOption(form.teamSelection)
+    const selectedTeam = resolveSelectedTeam(form)
     if (!selectedTeam) {
-      setError("Vyberte tým.")
+      setError(
+        form.teamSelection === CUSTOM_TEAM_VALUE
+          ? "Zadejte název týmu."
+          : "Vyberte tým."
+      )
       return
     }
 
@@ -195,7 +214,12 @@ const ManualResultsPanel = () => {
     }
   }
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (id: string, teamName: string) => {
+    const confirmed = window.confirm(
+      `Opravdu chceš smazat výsledek týmu „${teamName}“? Tuto akci nelze v administraci vrátit zpět.`
+    )
+    if (!confirmed) return
+
     setError("")
     setRejectingId(id)
 
@@ -220,10 +244,18 @@ const ManualResultsPanel = () => {
   }
 
   const startEdit = (result: ManualResult) => {
+    if (editingId !== null && editingId !== result.id) {
+      const confirmed = window.confirm(
+        "Rozpracovaná úprava jiného řádku ještě není uložená. Opravdu ji chceš zahodit a upravit tento řádek?"
+      )
+      if (!confirmed) return
+    }
+
     setError("")
     setEditingId(result.id)
     setEditForm({
       teamSelection: encodeTeamOption({ teamId: result.teamId, name: result.teamName }),
+      customTeamName: "",
       quizDate: toLocalIsoDate(result.quizDate),
       points: result.points !== null ? String(result.points) : "",
       doplnovacek: result.doplnovacek !== null ? String(result.doplnovacek) : "",
@@ -240,9 +272,13 @@ const ManualResultsPanel = () => {
   const handleSaveEdit = async (id: string) => {
     setError("")
 
-    const selectedTeam = decodeTeamOption(editForm.teamSelection)
+    const selectedTeam = resolveSelectedTeam(editForm)
     if (!selectedTeam) {
-      setError("Vyberte tým.")
+      setError(
+        editForm.teamSelection === CUSTOM_TEAM_VALUE
+          ? "Zadejte název týmu."
+          : "Vyberte tým."
+      )
       return
     }
 
@@ -282,6 +318,20 @@ const ManualResultsPanel = () => {
 
   return (
     <section className="mt-4 flex flex-col gap-5">
+      {error ? (
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 rounded-md border border-red-300/30 bg-red-950/95 px-3 py-2 text-sm text-red-200 shadow-lg">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError("")}
+            aria-label="Zavřít"
+            className="shrink-0 rounded-md px-1 text-red-200/70 hover:text-red-100"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       <p className="rounded-md border border-amber-300/24 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
         Ručně zadaný výsledek se hned zobrazí na stránce Slavic Alliance (či zvoleného týmu) s
         ostatními výsledky. Do žebříčků lig (Praha finále, dlouhodobé i speciální ligy) se ale
@@ -311,8 +361,23 @@ const ManualResultsPanel = () => {
                 {team.name}
               </option>
             ))}
+            <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
           </select>
         </label>
+
+        {form.teamSelection === CUSTOM_TEAM_VALUE ? (
+          <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
+            Název nového týmu *
+            <input
+              type="text"
+              value={form.customTeamName}
+              onChange={(event) => setForm((prev) => ({ ...prev, customTeamName: event.target.value }))}
+              placeholder="Zadej název týmu"
+              className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+              required
+            />
+          </label>
+        ) : null}
 
         <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
           Datum kvízu *
@@ -376,12 +441,6 @@ const ManualResultsPanel = () => {
           ))}
         </datalist>
 
-        {error ? (
-          <p className="col-span-full rounded-md border border-red-300/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            {error}
-          </p>
-        ) : null}
-
         <button
           type="submit"
           disabled={submitting}
@@ -428,8 +487,23 @@ const ManualResultsPanel = () => {
                             {team.name}
                           </option>
                         ))}
+                        <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
                       </select>
                     </label>
+                    {editForm.teamSelection === CUSTOM_TEAM_VALUE ? (
+                      <label className="flex flex-col gap-1 text-xs text-white/58">
+                        Název nového týmu
+                        <input
+                          type="text"
+                          value={editForm.customTeamName}
+                          onChange={(event) =>
+                            setEditForm((prev) => ({ ...prev, customTeamName: event.target.value }))
+                          }
+                          placeholder="Zadej název týmu"
+                          className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+                        />
+                      </label>
+                    ) : null}
                     <div className="grid grid-cols-2 gap-2">
                       <label className="flex flex-col gap-1 text-xs text-white/58">
                         Body
@@ -520,7 +594,7 @@ const ManualResultsPanel = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleReject(result.id)}
+                        onClick={() => handleReject(result.id, result.teamName)}
                         disabled={rejectingId === result.id}
                         className="h-9 flex-1 rounded-md border border-red-300/24 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
                       >
@@ -574,7 +648,19 @@ const ManualResultsPanel = () => {
                               </option>
                             )
                           )}
+                          <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
                         </select>
+                        {editForm.teamSelection === CUSTOM_TEAM_VALUE ? (
+                          <input
+                            type="text"
+                            value={editForm.customTeamName}
+                            onChange={(event) =>
+                              setEditForm((prev) => ({ ...prev, customTeamName: event.target.value }))
+                            }
+                            placeholder="Název nového týmu"
+                            className="mt-1 h-8 w-full rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+                          />
+                        ) : null}
                       </td>
                       <td className="px-3 py-2">
                         <input
@@ -660,7 +746,7 @@ const ManualResultsPanel = () => {
                         </button>{" "}
                         <button
                           type="button"
-                          onClick={() => handleReject(result.id)}
+                          onClick={() => handleReject(result.id, result.teamName)}
                           disabled={rejectingId === result.id}
                           className="h-8 rounded-md border border-red-300/24 px-3 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
                         >
