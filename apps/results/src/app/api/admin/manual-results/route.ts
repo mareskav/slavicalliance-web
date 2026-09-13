@@ -241,8 +241,8 @@ export const PATCH = async (request: Request) => {
           : partial.doplnovacek === null || partial.doplnovacek === ""
             ? null
             : Number(partial.doplnovacek),
-      pub: typeof partial.pub === "string" ? partial.pub.trim() : undefined,
-      note: typeof partial.note === "string" ? partial.note.trim() : undefined
+      pub: typeof partial.pub === "string" ? partial.pub.trim() || null : undefined,
+      note: typeof partial.note === "string" ? partial.note.trim() || null : undefined
     })
 
     if (!result) {

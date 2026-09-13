@@ -107,43 +107,43 @@ export const insertManualResult = async (
   return mapManualResultRow(result.rows[0])
 }
 
-// Uses coalesce() for a partial update, so an omitted field is left
-// unchanged. Note this means an explicit `null` for a nullable field
-// (teamId, points, doplnovacek, pub, note) is indistinguishable from "not
-// provided" and also leaves the existing value in place — there is no way to
-// clear one of these fields back to null through this function. Not needed
-// by the current admin UI (which only ever sends fields it wants to
-// overwrite with a real value); revisit if a "clear this field" affordance
-// is added.
+// Only fields present (not `undefined`) in `input` are written, so a caller
+// can send a genuine partial update. An explicit `null` for a nullable field
+// (teamId, points, doplnovacek, pub, note) DOES clear it to null - this is
+// distinct from omitting the field entirely, which leaves the existing value
+// untouched. (An earlier version used coalesce() for every column, which
+// made an explicit null indistinguishable from "not provided" and silently
+// ignored attempts to clear a field back to empty.)
 export const updateManualResult = async (
   id: string,
   input: Partial<ManualResultInput>
 ): Promise<ManualResult | null> => {
+  const values: unknown[] = [id]
+  const assignments: string[] = []
+
+  const setField = (column: string, value: unknown) => {
+    values.push(value)
+    assignments.push(`${column} = $${values.length}`)
+  }
+
+  if (input.teamId !== undefined) setField("team_id", input.teamId)
+  if (input.teamName !== undefined) setField("team_name", input.teamName)
+  if (input.quizDate !== undefined) setField("quiz_date", input.quizDate)
+  if (input.points !== undefined) setField("points", input.points)
+  if (input.doplnovacek !== undefined) setField("doplnovacek", input.doplnovacek)
+  if (input.pub !== undefined) setField("pub", input.pub)
+  if (input.note !== undefined) setField("note", input.note)
+
+  assignments.push("updated_at = now()")
+
   const result = await queryManualResultsDatabase<ManualResultRow>(
     `
       update public.quiz_manual_results
-      set
-        team_id = coalesce($2, team_id),
-        team_name = coalesce($3, team_name),
-        quiz_date = coalesce($4, quiz_date),
-        points = coalesce($5, points),
-        doplnovacek = coalesce($6, doplnovacek),
-        pub = coalesce($7, pub),
-        note = coalesce($8, note),
-        updated_at = now()
+      set ${assignments.join(", ")}
       where id = $1::bigint and status <> 'rejected'
       returning ${manualResultColumns}
     `,
-    [
-      id,
-      input.teamId ?? null,
-      input.teamName ?? null,
-      input.quizDate ?? null,
-      input.points ?? null,
-      input.doplnovacek ?? null,
-      input.pub ?? null,
-      input.note ?? null
-    ]
+    values
   )
 
   return result.rows[0] ? mapManualResultRow(result.rows[0]) : null
