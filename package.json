@@ -17,10 +17,15 @@
     "deploy:results": "npm --workspace apps/results run deploy",
     "upload:results": "npm --workspace apps/results run upload",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "npm run test:site && npm run test:results",
+    "test:site": "npm --workspace apps/site run test",
+    "test:results": "npm --workspace apps/results run test",
+    "test:e2e": "npm --workspace apps/site run test:e2e"
   },
   "devDependencies": {
     "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "vitest": "^3.2.4"
   }
 }
