@@ -17,6 +17,7 @@ export type TeamSummary = {
 
 export type QuizResult = {
   id: string
+  source: "scraped" | "manual"
   teamId: number | null
   teamName: string
   orderInQuiz: number | null
@@ -190,13 +191,35 @@ const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
     best_place: number
     duplicate_name_count: number
   }>(`
-    with team_summaries as (
+    with combined as (
+      select
+        team_id,
+        team_name,
+        pub,
+        points,
+        order_in_quiz,
+        quiz_date,
+        id as id_num
+      from public.quiz_results
+      union all
+      select
+        team_id,
+        team_name,
+        pub,
+        points,
+        order_in_quiz,
+        quiz_date,
+        id as id_num
+      from public.quiz_manual_results
+      where status <> 'rejected'
+    ),
+    team_summaries as (
       select
         team_id,
         team_name,
         (array_agg(
           nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '')
-          order by quiz_date desc, id desc
+          order by quiz_date desc, id_num desc
         ))[1] as team_pub,
         count(*)::int as quiz_count,
         min(quiz_date) as first_date,
@@ -204,7 +227,7 @@ const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
         round(avg(points)::numeric, 2) as average_points,
         max(points) as best_points,
         min(order_in_quiz) as best_place
-      from public.quiz_results
+      from combined
       group by team_id, team_name
     )
     select
@@ -237,8 +260,9 @@ const loadTeamSummaries = async (): Promise<TeamSummary[]> => {
   }))
 }
 
-const mapQuizResultRow = (row: {
+export type CombinedQuizResultRow = {
   id: string
+  source: "scraped" | "manual"
   team_id: number | null
   team_name: string
   order_in_quiz: number | null
@@ -252,8 +276,15 @@ const mapQuizResultRow = (row: {
   clenu: number | null
   max_body_v_kole: number | null
   league_name: string | null
-}): QuizResult => ({
-  id: row.id,
+}
+
+// Kept pure and exported so the id-prefixing/tagging logic (which must never
+// let a scraped row and a manual row collide on React key / identity, even
+// when their underlying numeric ids match) is unit-testable without a
+// database. See src/lib/quiz-results.test.ts.
+export const mapCombinedQuizResultRow = (row: CombinedQuizResultRow): QuizResult => ({
+  id: `${row.source === "scraped" ? "s" : "m"}${row.id}`,
+  source: row.source,
   teamId: row.team_id,
   teamName: row.team_name,
   orderInQuiz: row.order_in_quiz,
@@ -261,7 +292,7 @@ const mapQuizResultRow = (row: {
   quizDate: row.quiz_date.toISOString(),
   pub: row.pub,
   pubUrl: row.pub_url ?? "#",
-  quizDetailsUrl: getQuizDetailsUrl(row.quiz_details_id),
+  quizDetailsUrl: row.source === "scraped" ? getQuizDetailsUrl(row.quiz_details_id) : null,
   tip56Question: row.tip_56_question,
   doplnovacek: row.doplnovacek,
   clenu: row.clenu,
@@ -270,53 +301,65 @@ const mapQuizResultRow = (row: {
 })
 
 const loadTeamResults = async (teamId: number | null, teamName: string): Promise<QuizResult[]> => {
-  const result = await queryDatabase<{
-    id: string
-    team_id: number | null
-    team_name: string
-    order_in_quiz: number | null
-    points: number | null
-    quiz_date: Date
-    pub: string | null
-    pub_url: string | null
-    quiz_details_id: string | null
-    tip_56_question: string | null
-    doplnovacek: number | null
-    clenu: number | null
-    max_body_v_kole: number | null
-    league_name: string | null
-  }>(
+  const result = await queryDatabase<CombinedQuizResultRow>(
     `
-      select
-        id::text,
-        team_id,
-        team_name,
-        order_in_quiz,
-        points,
-        quiz_date,
-        pub,
-        pub_url,
-        quiz_details_id,
-        tip_56_question,
-        doplnovacek,
-        clenu,
-        max_body_v_kole,
-        nullif(trim(league_name), '') as league_name
-      from public.quiz_results
-      where (
-        $1::integer is not null
-        and team_id = $1::integer
-      ) or (
-        $1::integer is null
-        and team_id is null
-        and team_name = $2
+      with combined as (
+        select
+          id::text as id,
+          'scraped'::text as source,
+          team_id,
+          team_name,
+          order_in_quiz,
+          points,
+          quiz_date,
+          pub,
+          pub_url,
+          quiz_details_id,
+          tip_56_question,
+          doplnovacek,
+          clenu,
+          max_body_v_kole,
+          nullif(trim(league_name), '') as league_name
+        from public.quiz_results
+        where (
+          $1::integer is not null
+          and team_id = $1::integer
+        ) or (
+          $1::integer is null
+          and team_id is null
+          and team_name = $2
+        )
+        union all
+        select
+          id::text as id,
+          'manual'::text as source,
+          team_id,
+          team_name,
+          order_in_quiz,
+          points,
+          quiz_date,
+          pub,
+          null::text as pub_url,
+          null::text as quiz_details_id,
+          tip_56_question,
+          doplnovacek,
+          clenu,
+          max_body_v_kole,
+          nullif(trim(league_name), '') as league_name
+        from public.quiz_manual_results
+        where status <> 'rejected'
+          and (
+            ($1::integer is not null and team_id = $1::integer)
+            or ($1::integer is null and team_id is null and team_name = $2)
+          )
       )
-      order by quiz_date desc, id desc
+      select * from combined
+      order by quiz_date desc, id::bigint desc
     `,
     [teamId, teamName]
   )
 
-  return result.rows.map(mapQuizResultRow)
+  return result.rows.map(mapCombinedQuizResultRow)
 }
 
 const loadLatestQuizResultsUpdate = async () => {
@@ -327,6 +370,41 @@ const loadLatestQuizResultsUpdate = async () => {
   return result.rows[0]?.last_result_date
     ? result.rows[0].last_result_date.toISOString()
     : null
+}
+
+const loadKnownPubNames = async (): Promise<string[]> => {
+  const result = await queryDatabase<{ pub_name: string }>(`
+    select distinct pub_name from (
+      select nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as pub_name
+      from public.quiz_results
+      union
+      select nullif(trim(pub_name), '') from public.quiz_pub_reservations
+    ) names
+    where pub_name is not null
+    order by pub_name
+    limit 500
+  `)
+
+  return result.rows.map((row) => row.pub_name)
+}
+
+export type KnownTeam = {
+  teamId: number
+  name: string
+}
+
+// Distinct (team_id, name) pairs from the scraper-owned teams registry, so
+// the manual-results admin form can offer a real select instead of free
+// text — a name can recur under different ids and an id under different
+// names over time, so both fields identify a choice together.
+const loadKnownTeams = async (): Promise<KnownTeam[]> => {
+  const result = await queryDatabase<{ team_id: number; name: string }>(`
+    select distinct team_id, name
+    from public.teams
+    order by name, team_id
+  `)
+
+  return result.rows.map((row) => ({ teamId: row.team_id, name: row.name }))
 }
 
 const parseLeagueId = (leagueId: string | undefined) => {
@@ -791,6 +869,24 @@ const getCachedLatestQuizResultsUpdate = unstable_cache(
   }
 )
 
+const getCachedKnownPubNames = unstable_cache(
+  loadKnownPubNames,
+  ["quiz-results", "known-pub-names"],
+  {
+    revalidate: 3600,
+    tags: ["quiz-results", "quiz-pub-reservations"]
+  }
+)
+
+const getCachedKnownTeams = unstable_cache(
+  loadKnownTeams,
+  ["quiz-results", "known-teams"],
+  {
+    revalidate: 3600,
+    tags: ["quiz-results", "teams"]
+  }
+)
+
 export const getTeamSummaries = async () => {
   return loadTeamSummaries()
 }
@@ -817,4 +913,12 @@ export const getSpecialLeagueStandings = async (leagueId?: string) => {
   const lastResultDate = await getCachedLatestQuizResultsUpdate()
 
   return getCachedSpecialLeagueStandings(lastResultDate, leagueId)
+}
+
+export const getKnownPubNames = async () => {
+  return getCachedKnownPubNames()
+}
+
+export const getKnownTeams = async () => {
+  return getCachedKnownTeams()
 }
