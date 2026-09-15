@@ -1,4 +1,4 @@
-import { isAuthenticated } from "../../../../_lib/admin.js"
+import { isAdmin } from "../../../../_lib/admin.js"
 import { Env, json, postFromMarkdown, postKey } from "../../../../_shared/content"
 
 interface PagesContext {
@@ -8,7 +8,7 @@ interface PagesContext {
 }
 
 export const onRequestPut = async ({ env, request, params }: PagesContext) => {
-  if (!(await isAuthenticated(request, env))) {
+  if (!(await isAdmin(request, env))) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 
