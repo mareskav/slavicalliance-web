@@ -1,5 +1,6 @@
-import { isAuthenticated, json } from "../../_lib/admin.js"
+import { getSession, json } from "../../_lib/admin.js"
 
 export const onRequestGet = async ({ request, env }) => {
-  return json({ authenticated: await isAuthenticated(request, env) })
+  const session = await getSession(request, env)
+  return json({ authenticated: session !== null, role: session?.role ?? null })
 }
