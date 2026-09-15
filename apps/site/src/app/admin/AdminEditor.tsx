@@ -2,8 +2,11 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react"
 
+import ManualResultsPanel from "./ManualResultsPanel"
+
 type LoadState = "checking" | "login" | "ready"
 type SaveState = "idle" | "saving" | "saved" | "error"
+type Role = "admin" | "captain"
 type MarkdownAction =
   | "bold"
   | "italic"
@@ -25,6 +28,19 @@ const PAGES: PageConfig[] = [
   { slug: "napsali-o-nas", label: "Napsali o nás", file: "contents/pages/napsali-o-nas.md" }
 ]
 
+const MANUAL_RESULTS_TAB = "manual-results"
+const ACTIVE_TAB_STORAGE_KEY = "admin-active-tab"
+const VALID_TABS = [...PAGES.map((page) => page.slug), MANUAL_RESULTS_TAB]
+
+const readStoredTab = (): string => {
+  if (typeof window === "undefined") {
+    return PAGES[0].slug
+  }
+
+  const stored = window.localStorage.getItem(ACTIVE_TAB_STORAGE_KEY)
+  return stored && VALID_TABS.includes(stored) ? stored : PAGES[0].slug
+}
+
 const markdownButtons: Array<{ action: MarkdownAction; label: string; title: string }> = [
   { action: "bold", label: "B", title: "Tučný text" },
   { action: "italic", label: "I", title: "Kurzíva" },
@@ -41,12 +57,26 @@ const AdminEditor = () => {
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
   const [saveState, setSaveState] = useState<SaveState>("idle")
-  const [slug, setSlug] = useState<string>(PAGES[0].slug)
+  const [role, setRole] = useState<Role | null>(null)
+  const [activeTab, setActiveTab] = useState<string>(readStoredTab)
   const editorRef = useRef<HTMLTextAreaElement>(null)
 
-  const activePage = PAGES.find((page) => page.slug === slug) ?? PAGES[0]
+  const activePage = PAGES.find((page) => page.slug === activeTab)
+  const isManualResultsTab = activeTab === MANUAL_RESULTS_TAB
 
-  const loadFile = async (targetSlug: string = slug) => {
+  const loadPageContent = async (targetSlug: string) => {
+    const response = await fetch(`/api/content/pages/${targetSlug}`)
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null)
+      throw new Error(payload?.error || "Soubor se nepodařilo načíst.")
+    }
+
+    const payload = await response.json()
+    setContent(payload.raw)
+  }
+
+  const loadFile = async () => {
     const sessionResponse = await fetch("/api/admin/session")
 
     if (!sessionResponse.ok) {
@@ -60,27 +90,40 @@ const AdminEditor = () => {
       return
     }
 
-    const response = await fetch(`/api/content/pages/${targetSlug}`)
+    const nextRole: Role = session.role === "admin" ? "admin" : "captain"
+    setRole(nextRole)
 
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null)
-      throw new Error(payload?.error || "Soubor se nepodařilo načíst.")
+    if (nextRole === "captain") {
+      setActiveTab(MANUAL_RESULTS_TAB)
+      setLoadState("ready")
+      return
     }
 
-    const payload = await response.json()
-    setContent(payload.raw)
+    if (activeTab === MANUAL_RESULTS_TAB) {
+      setLoadState("ready")
+      return
+    }
+
+    const targetSlug = PAGES.some((page) => page.slug === activeTab) ? activeTab : PAGES[0].slug
+    await loadPageContent(targetSlug)
+    setActiveTab(targetSlug)
     setLoadState("ready")
   }
 
-  const handleSelectPage = async (nextSlug: string) => {
-    if (nextSlug === slug) return
+  const handleSelectTab = async (nextTab: string) => {
+    if (nextTab === activeTab) return
 
-    setSlug(nextSlug)
     setSaveState("idle")
     setError("")
 
+    if (nextTab === MANUAL_RESULTS_TAB) {
+      setActiveTab(nextTab)
+      return
+    }
+
     try {
-      await loadFile(nextSlug)
+      await loadPageContent(nextTab)
+      setActiveTab(nextTab)
     } catch (loadError: unknown) {
       setError(loadError instanceof Error ? loadError.message : "Soubor se nepodařilo načíst.")
     }
@@ -96,6 +139,14 @@ const AdminEditor = () => {
 
     return () => window.clearTimeout(timeout)
   }, [])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, activeTab)
+    } catch {
+      // localStorage can be unavailable (private mode, disabled storage) - not persisting the tab is a harmless degradation
+    }
+  }, [activeTab])
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -126,7 +177,7 @@ const AdminEditor = () => {
     setSaveState("saving")
     setError("")
 
-    const response = await fetch(`/api/admin/content/pages/${slug}`, {
+    const response = await fetch(`/api/admin/content/pages/${activeTab}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ raw: content })
@@ -301,40 +352,60 @@ const AdminEditor = () => {
   return (
     <main className="min-h-screen bg-[#0d1218] text-white">
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/12 pb-4">
+        <div className="flex flex-col gap-3 border-b border-white/12 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold">{activePage.label}</h1>
-            <p className="mt-1 text-sm text-white/58">{activePage.file}</p>
+            <h1 className="text-xl font-semibold">
+              {isManualResultsTab ? "Historické výsledky" : activePage?.label}
+            </h1>
+            <p className="mt-1 text-sm text-white/58">
+              {isManualResultsTab ? "Ruční zadání výsledků kvízu" : activePage?.file}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-md border border-white/14 p-0.5">
-              {PAGES.map((page) => (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {role === "admin" ? (
+              <div className="flex rounded-md border border-white/14 p-0.5">
+                {PAGES.map((page) => (
+                  <button
+                    key={page.slug}
+                    onClick={() => handleSelectTab(page.slug)}
+                    className={
+                      page.slug === activeTab
+                        ? "h-9 flex-1 rounded px-3 text-sm font-semibold bg-white/12 text-white sm:flex-none"
+                        : "h-9 flex-1 rounded px-3 text-sm text-white/70 hover:bg-white/8 sm:flex-none"
+                    }
+                  >
+                    {page.label}
+                  </button>
+                ))}
                 <button
-                  key={page.slug}
-                  onClick={() => handleSelectPage(page.slug)}
+                  onClick={() => handleSelectTab(MANUAL_RESULTS_TAB)}
                   className={
-                    page.slug === slug
-                      ? "h-9 rounded px-3 text-sm font-semibold bg-white/12 text-white"
-                      : "h-9 rounded px-3 text-sm text-white/70 hover:bg-white/8"
+                    isManualResultsTab
+                      ? "h-9 flex-1 rounded px-3 text-sm font-semibold bg-white/12 text-white sm:flex-none"
+                      : "h-9 flex-1 rounded px-3 text-sm text-white/70 hover:bg-white/8 sm:flex-none"
                   }
                 >
-                  {page.label}
+                  Historické výsledky
                 </button>
-              ))}
+              </div>
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                onClick={handleLogout}
+                className="h-10 flex-1 rounded-md border border-white/14 px-4 text-sm text-white/76 hover:bg-white/8 sm:flex-none"
+              >
+                Odhlásit
+              </button>
+              {isManualResultsTab ? null : (
+                <button
+                  onClick={handleSave}
+                  disabled={saveState === "saving"}
+                  className="h-10 flex-1 rounded-md bg-sky-200 px-5 text-sm font-semibold text-slate-950 hover:bg-white disabled:cursor-wait disabled:opacity-70 sm:flex-none"
+                >
+                  {saveState === "saving" ? "Ukládám..." : "Uložit"}
+                </button>
+              )}
             </div>
-            <button
-              onClick={handleLogout}
-              className="h-10 rounded-md border border-white/14 px-4 text-sm text-white/76 hover:bg-white/8"
-            >
-              Odhlásit
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saveState === "saving"}
-              className="h-10 rounded-md bg-sky-200 px-5 text-sm font-semibold text-slate-950 hover:bg-white disabled:cursor-wait disabled:opacity-70"
-            >
-              {saveState === "saving" ? "Ukládám..." : "Uložit"}
-            </button>
           </div>
         </div>
 
@@ -349,7 +420,9 @@ const AdminEditor = () => {
           </p>
         ) : null}
 
-        {slug === "landing" ? (
+        {isManualResultsTab ? (
+          <ManualResultsPanel />
+        ) : activeTab === "landing" ? (
           <section className="mt-4 rounded-md border border-sky-200/20 bg-sky-300/5 p-4 text-sm leading-6 text-white/85">
             <h2 className="text-base font-semibold text-white">Jak upravovat obsah</h2>
             <ul className="mt-2 space-y-1.5 text-white/78">
@@ -389,6 +462,7 @@ const AdminEditor = () => {
           </section>
         )}
 
+        {isManualResultsTab ? null : (
         <div className="mt-5 overflow-hidden rounded-md border border-white/12 bg-[#05070c]">
           <div className="flex flex-wrap items-center gap-1 border-b border-white/12 bg-white/[0.04] p-2">
             {markdownButtons.map((button) => (
@@ -415,6 +489,7 @@ const AdminEditor = () => {
             className="min-h-[72vh] w-full flex-1 resize-none bg-transparent p-4 font-mono text-sm leading-6 text-white outline-none ring-sky-300/30 focus:ring-4"
           />
         </div>
+        )}
       </div>
     </main>
   )
