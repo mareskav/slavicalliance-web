@@ -305,6 +305,23 @@ PR opened: `feature/special-standings` → `main` on GitHub
 (mareskav/slavicalliance-web#6). Not merged — still needs the e2e run and
 manual smoke test below before that's reasonable.
 
+**Scope reminder**: this feature stays a minimal "add one historical result
+for one team" admin UI (see `CLAUDE.md`'s MVP framing). The "Admin UX
+follow-ups" list below is ideas for later, not a committed roadmap — don't
+build ahead of an actual request.
+
+**Verified 2026-09-15**: manual results (`quiz_manual_results`) never count
+toward league standings, confirmed by reading
+`apps/results/src/lib/quiz-results.ts` — `loadRegularLeagueStandingRows`
+(dlouhodobé ligy) and `loadSpecialLeagueStandingRows` (speciální ligy incl.
+Praha finále) both query only `public.quiz_results`; `quiz_manual_results` is
+unioned in only for a single team's own results page
+(`loadTeamResults`/`loadTeamSummaries`). The info banner in
+`ManualResultsPanel.tsx` already states this correctly — no change needed.
+
+A Czech admin/usage guide for the captain covering the whole `/admin` flow
+lives at [`docs/admin-navod-kapitan.md`](../admin-navod-kapitan.md).
+
 ## Next steps (pick up here)
 
 1. **Run the e2e suite for real at least once.** It's been type-checked and
