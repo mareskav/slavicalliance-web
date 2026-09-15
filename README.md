@@ -112,6 +112,16 @@ npm run upload:results
 
 On Windows, OpenNext may fail while creating symlinks during the Worker bundle step. Use WSL/Linux for `npm run deploy:results` if that happens.
 
+## Open Items
+
+Manual quiz results / captain role (`apps/admin` → "Historické výsledky"):
+PR [#6](https://github.com/mareskav/slavicalliance-web/pull/6) is open but
+not merged — still needs a real e2e run and manual smoke test against a
+Postgres with the full schema, plus there's a prioritized list of admin UX
+follow-ups (no save-success feedback, ad-hoc team rows not flagged in the
+admin list, no submitted-by/updated-at display, ...). See "Status" and
+"Next steps" in `docs/plans/captain-manual-quiz-results.md`.
+
 ## Lessons Learned
 
 Notes worth re-reading before touching similar code again, distilled from

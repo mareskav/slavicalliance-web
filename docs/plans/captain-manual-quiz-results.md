@@ -275,14 +275,49 @@ tests (`apps/site/e2e/admin-manual-results.spec.ts`) plus a
 `page.on("dialog", ...)` handler added to the existing tests so they still
 pass now that "Vymazat" pops a confirm dialog.
 
+## Status (2026-09-15)
+
+Rollout step 5 (the site-side role/session work) had been implemented but
+was sitting uncommitted, and got mis-classified in an earlier session as
+"unrelated CMS/admin WIP" and excluded from the PR. It's actually the
+missing site half of this feature — without it, `CAPTAIN_PASSWORD` login
+did nothing on `apps/site` and `ManualResultsPanel` wasn't reachable from
+`/admin` at all. Committed now, split by concern:
+
+- `apps/site/functions/_lib/admin.js`: `getSession` returns a role
+  (`admin`/`captain`) instead of a bare boolean; `isAdmin`/`isAuthenticated`
+  built on top. Covered by `admin.test.js`.
+- `login.js`: accepts `CAPTAIN_PASSWORD` alongside `ADMIN_PASSWORD`, signs
+  the role into the session cookie. `session.js` exposes the role. Covered
+  by `login.test.js`.
+- `content/pages/[slug].ts`, `content/posts/[slug].ts`, `uploads.ts`: gated
+  on `isAdmin` instead of `isAuthenticated`, so a captain session is
+  rejected from editing site content/uploading assets — this is the actual
+  security boundary between the two roles. Covered by `cms-routes.test.js`
+  (no session / captain session / admin session, for all three routes).
+- `AdminEditor.tsx`: wires in `ManualResultsPanel`, branches the whole tab
+  UI on role — admin gets the existing page tabs plus "Historické
+  výsledky", captain goes straight to `ManualResultsPanel` with no page
+  tabs or Markdown editor rendered. Active tab persists via
+  `localStorage`.
+
+PR opened: `feature/special-standings` → `main` on GitHub
+(mareskav/slavicalliance-web#6). Not merged — still needs the e2e run and
+manual smoke test below before that's reasonable.
+
 ## Next steps (pick up here)
 
 1. **Run the e2e suite for real at least once.** It's been type-checked and
    `playwright test --list` confirms all 8 tests load, but none have
    actually executed in this environment — there's no local
    `ADMIN_PASSWORD`/`DATABASE_URL`/`DATABASE_URL_RW` or a running local
-   Postgres available to the assistant. Set up `apps/site/.env.local` (see
-   root `README.md` → Environment Variables) and a local Postgres, then run:
+   Postgres available to the assistant, and no schema for the
+   scraper-owned tables (`quiz_results`, `teams`, `quiz_pub_reservations`,
+   `quiz_leagues`) exists anywhere in this repo to stand one up from
+   scratch — only `apps/results/sql/001-quiz-manual-results.sql` and
+   `002-roles-and-grants.sql`. Set up `apps/site/.env.local` (see root
+   `README.md` → Environment Variables) against a Postgres that already has
+   that schema, then run:
 
    ```bash
    npm run dev --prefix apps/site
@@ -290,19 +325,47 @@ pass now that "Vymazat" pops a confirm dialog.
    npx playwright test apps/site/e2e/admin-manual-results.spec.ts --project=chromium
    ```
 
-2. **Manually smoke-test both roles in a real browser** once a local
-   Postgres + `.env.local` exist: log in as `admin` and as `captain`
+2. **Manually smoke-test both roles in a real browser** once that Postgres
+   + `.env.local` exist: log in as `admin` and as `captain`
    (`CAPTAIN_PASSWORD`), exercise add/edit/reject, the new ad-hoc team entry,
-   and the discard-edit prompt, on both desktop and mobile widths.
-3. **Open the PR**: `feature/special-standings` → `main`. Do not push or
-   open it without asking again in the session that does it — this is a
-   standing rule, not a one-time confirmation.
-4. **Optional follow-up ideas, not yet scoped or committed to**:
-   - An "unreject" action (currently a soft-deleted row has no path back —
-     intentional MVP scope per the "Neon awareness"/MVP note in the root
-     `CLAUDE.md`, but worth a deliberate decision if it comes up again).
-   - Visually flagging a row whose `team_id` is `null` (ad-hoc team) in the
-     results list, beyond the existing "Ručně" badge on the public
-     `TeamTable` (`apps/results/src/app/_components/TeamTable.tsx`), so an
-     admin editing the list later can spot at a glance which rows aren't
-     linked to a real team.
+   and the discard-edit prompt, on both desktop and mobile widths. Also
+   confirm a captain login can no longer reach `PUT
+   /api/admin/content/pages/*` or `POST /api/admin/uploads` (401).
+3. **Merge the PR** (mareskav/slavicalliance-web#6) once 1-2 are done. Ask
+   again before merging — this is a standing rule, not a one-time
+   confirmation from opening it.
+
+### Admin UX follow-ups, roughly in priority order
+
+Not yet scoped or started; flagging so a future session doesn't have to
+rediscover them from scratch.
+
+1. **No positive save feedback.** The error banner (sticky, dismissible) has
+   no counterpart for success — after "Přidat výsledek" or "Uložit" the form
+   just clears and the list refreshes silently. If the new/edited row sorts
+   below the fold, a captain has no confirmation the save actually happened.
+   Cheapest fix: a transient "Uloženo" banner reusing the existing sticky
+   banner slot, or briefly highlighting the affected row.
+2. **Ad-hoc rows (`team_id: null`) aren't flagged in the admin list.** The
+   public `TeamTable` shows a "Ručně" badge; the admin table/cards in
+   `ManualResultsPanel.tsx` show nothing, so a typo in the free-text "Jiný
+   tým" field silently creates an orphaned team with no visual warning where
+   it'd actually get caught. Also: the free-text input has no fuzzy-match
+   against `teams` (loaded via `/vysledky/api/admin/teams`), so a near-miss
+   typo of an existing team name creates a second, disconnected team instead
+   of surfacing "did you mean X?".
+3. **`submittedBy`/`submittedAt`/`updatedAt` are stored but never shown.**
+   Fine today with a single captain; becomes relevant the moment a second
+   person gets `CAPTAIN_PASSWORD` — no way to tell who entered or last
+   touched a row.
+4. **No search/filter/pagination** on the results list. Not a problem yet at
+   current volume (see the "current usage" note in the root `CLAUDE.md`),
+   but worth watching as the table grows.
+5. **Cosmetic**: native `window.confirm()` dialogs (delete, discard-edit)
+   look inconsistent with the rest of the dark-themed panel. Not worth
+   fixing until the panel gets an actual modal component for something
+   else.
+
+Still explicitly out of scope, not just deprioritized: an "unreject" action
+for soft-deleted rows (intentional MVP boundary — see `CLAUDE.md`'s MVP
+note; revisit only as a deliberate decision, not a drive-by fix).
