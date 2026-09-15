@@ -4,15 +4,22 @@ export const onRequestPost = async ({ request, env }) => {
   try {
     const { password } = await request.json()
 
-    if (!password || password !== requiredEnv(env, "ADMIN_PASSWORD")) {
+    const role =
+      password && password === requiredEnv(env, "ADMIN_PASSWORD")
+        ? "admin"
+        : password && env.CAPTAIN_PASSWORD && password === env.CAPTAIN_PASSWORD
+          ? "captain"
+          : null
+
+    if (!role) {
       return json({ error: "Invalid password" }, { status: 401 })
     }
 
     return json(
-      { authenticated: true },
+      { authenticated: true, role },
       {
         headers: {
-          "Set-Cookie": await createSessionCookie(env),
+          "Set-Cookie": await createSessionCookie(env, role),
         },
       },
     )

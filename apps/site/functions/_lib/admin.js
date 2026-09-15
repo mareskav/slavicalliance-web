@@ -1,5 +1,6 @@
 const sessionCookieName = "sa_admin_session"
 const sessionMaxAgeSeconds = 60 * 60 * 8
+const validRoles = ["admin", "captain"]
 
 const json = (payload, init = {}) =>
   new Response(JSON.stringify(payload), {
@@ -59,9 +60,9 @@ const parseCookies = (request) => {
   return cookies
 }
 
-const createSessionCookie = async (env) => {
+const createSessionCookie = async (env, role) => {
   const expiresAt = Math.floor(Date.now() / 1000) + sessionMaxAgeSeconds
-  const payload = base64UrlEncode(JSON.stringify({ exp: expiresAt }))
+  const payload = base64UrlEncode(JSON.stringify({ role, exp: expiresAt }))
   const signature = await hmac(requiredEnv(env, "SESSION_SECRET"), payload)
 
   return `${sessionCookieName}=${payload}.${signature}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${sessionMaxAgeSeconds}`
@@ -69,27 +70,40 @@ const createSessionCookie = async (env) => {
 
 const clearSessionCookie = `${sessionCookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
 
-const isAuthenticated = async (request, env) => {
+const getSession = async (request, env) => {
   const token = parseCookies(request).get(sessionCookieName)
 
   if (!token) {
-    return false
+    return null
   }
 
   const [payload, signature] = token.split(".")
 
   if (!payload || !signature) {
-    return false
+    return null
   }
 
   const expected = await hmac(requiredEnv(env, "SESSION_SECRET"), payload)
 
   if (signature !== expected) {
-    return false
+    return null
   }
 
   const session = JSON.parse(base64UrlDecode(payload))
-  return typeof session.exp === "number" && session.exp > Math.floor(Date.now() / 1000)
+
+  if (!validRoles.includes(session.role)) {
+    return null
+  }
+
+  if (typeof session.exp !== "number" || session.exp <= Math.floor(Date.now() / 1000)) {
+    return null
+  }
+
+  return session
 }
 
-export { clearSessionCookie, createSessionCookie, isAuthenticated, json, requiredEnv }
+const isAuthenticated = async (request, env) => (await getSession(request, env)) !== null
+
+const isAdmin = async (request, env) => (await getSession(request, env))?.role === "admin"
+
+export { clearSessionCookie, createSessionCookie, getSession, isAdmin, isAuthenticated, json, requiredEnv }

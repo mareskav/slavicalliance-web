@@ -5,6 +5,7 @@ import { getLeagueCutCount, getLeagueSortKey, getSortDirection, getTeamSortKey }
 import type { ResultView } from "./_lib/types"
 import { ResultsUnavailable } from "./_components/ResultsUnavailable"
 import { LeagueStandingsPage } from "./LeagueStandingsPage"
+import { SpecialStandingsPage } from "./SpecialStandingsPage"
 import { TeamResultsPage } from "./TeamResultsPage"
 
 export const dynamic = "force-dynamic"
@@ -75,10 +76,11 @@ const ResultsPage = async ({
   }>
 }) => {
   const params = await searchParams
-  const activeView: ResultView = params?.team && params?.view !== "league" ? "team" : "league"
+  const activeView: ResultView =
+    params?.view === "special" ? "special" : params?.team && params?.view !== "league" ? "team" : "league"
 
-  if (params?.view === "league" && params?.team) {
-    const canonicalParams = new URLSearchParams({ view: "league" })
+  if ((params?.view === "league" || params?.view === "special") && params?.team) {
+    const canonicalParams = new URLSearchParams({ view: params.view })
 
     if (params.page) {
       canonicalParams.set("page", params.page)
@@ -109,6 +111,10 @@ const ResultsPage = async ({
     }
 
     redirect(`/?${canonicalParams.toString()}`)
+  }
+
+  if (activeView === "special") {
+    return <SpecialStandingsPage teamName={params?.team ?? defaultTeamName} leagueId={params?.leagueId} />
   }
 
   if (activeView === "league") {

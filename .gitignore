@@ -19,6 +19,9 @@ pnpm-debug.log*
 
 # Testing
 coverage/
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Generated OG share images (rebuilt on every build)
 apps/site/public/og/

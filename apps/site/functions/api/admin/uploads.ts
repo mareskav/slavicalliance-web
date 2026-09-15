@@ -1,4 +1,4 @@
-import { isAuthenticated } from "../../_lib/admin.js"
+import { isAdmin } from "../../_lib/admin.js"
 import { Env, json } from "../../_shared/content"
 
 interface PagesContext {
@@ -13,7 +13,7 @@ const safeName = (name: string) =>
     .replace(/^-+|-+$/g, "")
 
 export const onRequestPost = async ({ env, request }: PagesContext) => {
-  if (!(await isAuthenticated(request, env))) {
+  if (!(await isAdmin(request, env))) {
     return json({ error: "Unauthorized" }, { status: 401 })
   }
 

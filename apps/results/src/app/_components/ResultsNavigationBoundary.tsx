@@ -9,12 +9,21 @@ import { ResultsLoadingSkeleton } from "./ResultsLoadingSkeleton"
 type PendingState = PendingResultsNavigation & { origin: string }
 
 const getDefaultPendingNavigation = (searchParams: URLSearchParams): PendingResultsNavigation => {
-  const activeView = searchParams.get("view") === "league" ? "league" : "team"
+  const viewParam = searchParams.get("view")
+  const activeView = viewParam === "league" || viewParam === "special" ? viewParam : "team"
 
   if (activeView === "league") {
     return {
       activeView,
       title: "Dlouhodobé soutěže",
+      teamName: searchParams.get("team") ?? undefined
+    }
+  }
+
+  if (activeView === "special") {
+    return {
+      activeView,
+      title: "Speciály",
       teamName: searchParams.get("team") ?? undefined
     }
   }
