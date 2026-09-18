@@ -17,6 +17,16 @@ const sessionCookieName = "sa_admin_session"
 const sessionMaxAgeSeconds = 60 * 60 * 8
 const validRoles = ["admin", "captain"]
 
+// Mirrors NON_PUB_NAMES in apps/results/src/lib/quiz-results.ts — a handful
+// of historical quiz_results.pub values are actually event/league names, not
+// real venues, and would otherwise pollute the "Hospoda" autocomplete.
+const NON_PUB_NAMES = [
+  "Finále Praha",
+  "Kvízový pohár FINÁLE",
+  "Praha a Střední Čechy finále podzim 2019",
+  "Univerzitní kvíz PRAHA Finále",
+]
+
 const npmExecPath = process.env.npm_execpath
 const npmCommand = npmExecPath ? process.execPath : process.platform === "win32" ? "npm.cmd" : "npm"
 const npmArgs = (args) => (npmExecPath ? [npmExecPath, ...args] : args)
@@ -482,7 +492,8 @@ const handleLocalApi = async (request, response, pathname) => {
     }
 
     try {
-      const result = await pool.query(`
+      const result = await pool.query(
+        `
         select distinct pub_name from (
           select nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as pub_name
           from public.quiz_results
@@ -490,9 +501,12 @@ const handleLocalApi = async (request, response, pathname) => {
           select nullif(trim(pub_name), '') from public.quiz_pub_reservations
         ) names
         where pub_name is not null
+          and pub_name <> all($1::text[])
         order by pub_name
         limit 500
-      `)
+      `,
+        [NON_PUB_NAMES]
+      )
       json(response, { pubNames: result.rows.map((row) => row.pub_name) })
     } catch (error) {
       console.error("pub-names GET error:", error)

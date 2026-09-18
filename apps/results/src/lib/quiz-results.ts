@@ -372,8 +372,20 @@ const loadLatestQuizResultsUpdate = async () => {
     : null
 }
 
+// A handful of historical `quiz_results.pub` values are actually event/league
+// names, not real venues (e.g. finals events recorded under "Finále Praha"
+// instead of the venue that hosted them). Excluded so they don't pollute the
+// "Hospoda" autocomplete on the manual-results admin form.
+const NON_PUB_NAMES = [
+  "Finále Praha",
+  "Kvízový pohár FINÁLE",
+  "Praha a Střední Čechy finále podzim 2019",
+  "Univerzitní kvíz PRAHA Finále",
+]
+
 const loadKnownPubNames = async (): Promise<string[]> => {
-  const result = await queryDatabase<{ pub_name: string }>(`
+  const result = await queryDatabase<{ pub_name: string }>(
+    `
     select distinct pub_name from (
       select nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as pub_name
       from public.quiz_results
@@ -381,9 +393,12 @@ const loadKnownPubNames = async (): Promise<string[]> => {
       select nullif(trim(pub_name), '') from public.quiz_pub_reservations
     ) names
     where pub_name is not null
+      and pub_name <> all($1::text[])
     order by pub_name
     limit 500
-  `)
+  `,
+    [NON_PUB_NAMES]
+  )
 
   return result.rows.map((row) => row.pub_name)
 }
