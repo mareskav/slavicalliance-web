@@ -58,6 +58,9 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/tasks.json
 
+# Claude Code local config (per-machine, not shared)
+.claude/
+
 # TypeScript / tooling caches
 *.tsbuildinfo
 
