@@ -78,14 +78,14 @@ type LeagueRow = {
 }
 
 let pool: Pool | null = null
-const pragueSpring2026LeagueUrl = "https://www.hospodskykviz.cz/vysledky/470"
+const pragueAutumn2026LeagueUrl = "https://www.hospodskykviz.cz/vysledky/499"
 const ignoredFinalePrahaLeagueUrl = "https://www.hospodskykviz.cz/vysledky/461"
 const ignoredFinaleJaro2026Url = "https://www.hospodskykviz.cz/vysledky/492"
 const ignoredLeagueUrls = [ignoredFinalePrahaLeagueUrl, ignoredFinaleJaro2026Url]
 const ignoredLeagueNames = ["Finále Praha", "Finále jaro 2026"]
 const specialLeagueUrls = ignoredLeagueUrls
 const specialLeagueNames = ignoredLeagueNames
-const primaryLeagueUrls = [pragueSpring2026LeagueUrl]
+const primaryLeagueUrls = [pragueAutumn2026LeagueUrl]
 const pragueLeagueNamePatterns = ["%praha%", "%prahy%", "%praze%", "%praž%"]
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
 const latestQuizResultsUpdateCacheSeconds = 60
@@ -487,7 +487,7 @@ const loadPrahaLeagueSummaries = async (): Promise<LeagueSummary[]> => {
       ignoredLeagueUrls,
       ignoredLeagueNames,
       pragueLeagueNamePatterns,
-      pragueSpring2026LeagueUrl
+      pragueAutumn2026LeagueUrl
     ]
   )
 
@@ -648,7 +648,7 @@ const loadLongTermLeagueStandings = async (
             ignoredLeagueUrls,
             ignoredLeagueNames,
             pragueLeagueNamePatterns,
-            pragueSpring2026LeagueUrl
+            pragueAutumn2026LeagueUrl
           ]
         }
       : {
