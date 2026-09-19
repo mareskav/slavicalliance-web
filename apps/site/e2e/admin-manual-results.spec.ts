@@ -16,7 +16,7 @@ const login = async (page: Page) => {
   await page.goto("/admin")
   await page.getByLabel("Heslo").fill(adminPassword as string)
   await page.getByRole("button", { name: "Přihlásit" }).click()
-  await expect(page.getByRole("button", { name: "Historické výsledky" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Historické výsledky" })).toBeVisible()
 }
 
 test.describe("admin manual-results flow", () => {
@@ -31,13 +31,13 @@ test.describe("admin manual-results flow", () => {
   test("tab selection persists across reload", async ({ page }) => {
     await login(page)
 
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
     await expect(page.getByRole("heading", { name: "Historické výsledky" })).toBeVisible()
 
     await page.reload()
     await expect(page.getByRole("heading", { name: "Historické výsledky" })).toBeVisible()
 
-    await page.getByRole("button", { name: "Domovská stránka" }).click()
+    await page.getByRole("link", { name: "Domovská stránka" }).click()
     await expect(page.getByRole("heading", { name: "Domovská stránka" })).toBeVisible()
 
     await page.reload()
@@ -46,7 +46,7 @@ test.describe("admin manual-results flow", () => {
 
   test("can add, edit and reject a manual result", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
     await expect(page.getByRole("heading", { name: "Historické výsledky" })).toBeVisible()
 
     const form = page.locator("form", { hasText: "Nový výsledek" })
@@ -89,7 +89,7 @@ test.describe("admin manual-results flow", () => {
 
   test("the old 'Zrušit' label no longer exists anywhere in the panel", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
     await expect(page.getByRole("heading", { name: "Historické výsledky" })).toBeVisible()
 
     await expect(page.getByRole("button", { name: "Zrušit", exact: true })).toHaveCount(0)
@@ -97,7 +97,7 @@ test.describe("admin manual-results flow", () => {
 
   test("blocks a non-half-point score via native step validation, no row is created", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
 
     const invalidPubName = `E2E Invalid Points Pub ${Date.now()}`
     const form = page.locator("form", { hasText: "Nový výsledek" })
@@ -116,7 +116,7 @@ test.describe("admin manual-results flow", () => {
 
   test("blocks a non-integer doplňovačka via native step validation, no row is created", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
 
     const invalidPubName = `E2E Invalid Doplnovacek Pub ${Date.now()}`
     const form = page.locator("form", { hasText: "Nový výsledek" })
@@ -137,7 +137,7 @@ test.describe("admin manual-results flow", () => {
     page.on("dialog", (dialog) => dialog.dismiss())
 
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
 
     const pubName = `E2E Keep Pub ${Date.now()}`
     const form = page.locator("form", { hasText: "Nový výsledek" })
@@ -154,7 +154,7 @@ test.describe("admin manual-results flow", () => {
 
   test("switching 'Upravit' to another row while unsaved changes exist prompts to discard", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
 
     const pubA = `E2E Discard A ${Date.now()}`
     const pubB = `E2E Discard B ${Date.now()}`
@@ -198,7 +198,7 @@ test.describe("admin manual-results flow (mobile card layout)", () => {
 
   test("can add, edit and vymazat a manual result on the mobile card layout", async ({ page }) => {
     await login(page)
-    await page.getByRole("button", { name: "Historické výsledky" }).click()
+    await page.getByRole("link", { name: "Historické výsledky" }).click()
     await expect(page.getByRole("heading", { name: "Historické výsledky" })).toBeVisible()
 
     const pubName = `E2E Mobile Pub ${Date.now()}`
