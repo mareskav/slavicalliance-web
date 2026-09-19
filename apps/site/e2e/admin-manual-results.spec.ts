@@ -173,6 +173,10 @@ test.describe("admin manual-results flow", () => {
     const rowA = page.locator("tbody tr", { hasText: pubA }).first()
     await rowA.getByRole("button", { name: "Upravit" }).click()
 
+    // Override the accept-by-default handler from beforeEach so only this
+    // listener handles the dialog (otherwise both fire and the loser throws
+    // "Cannot dismiss dialog which is already handled").
+    page.removeAllListeners("dialog")
     let dialogSeen = false
     page.once("dialog", (dialog) => {
       dialogSeen = true
@@ -183,9 +187,12 @@ test.describe("admin manual-results flow", () => {
     await rowB.getByRole("button", { name: "Upravit" }).click()
 
     expect(dialogSeen).toBe(true)
-    // Dismissed, so row A should still be the one being edited.
-    await expect(page.locator("tbody tr").first().locator("textarea")).toBeVisible()
-    await expect(page.locator("tbody tr", { hasText: pubA }).first().locator("textarea")).toHaveCount(1)
+    // Dismissed, so row A should still be the one being edited. Row order is
+    // by submitted_at desc and unaffected by edit state, so newer row B (added
+    // after A) stays at index 0 and A at index 1 - text-based row filters can't
+    // be used here since pub name became an <input> value once editing started.
+    await expect(page.locator("tbody tr").nth(1).locator("textarea")).toBeVisible()
+    await expect(page.locator("tbody tr").nth(0).locator("textarea")).toHaveCount(0)
   })
 })
 
