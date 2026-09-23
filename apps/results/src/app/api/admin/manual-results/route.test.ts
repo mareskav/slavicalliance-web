@@ -26,7 +26,7 @@ const sign = async (value: string) => {
   return base64UrlEncode(String.fromCharCode(...new Uint8Array(signature)))
 }
 
-const cookieFor = async (role: "admin" | "captain") => {
+const cookieFor = async (role: "admin") => {
   const payload = base64UrlEncode(JSON.stringify({ role, exp: Math.floor(Date.now() / 1000) + 1000 }))
   const signature = await sign(payload)
   return `sa_admin_session=${payload}.${signature}`
@@ -42,7 +42,7 @@ const manualRow = {
   pub: "Test Pub",
   note: null,
   status: "approved",
-  submitted_by: "captain",
+  submitted_by: "admin",
   submitted_at: new Date("2026-01-10T00:00:00.000Z"),
   updated_at: new Date("2026-01-10T00:00:00.000Z")
 }
@@ -82,9 +82,9 @@ describe("manual-results route", () => {
       expect(queryManualResultsDatabase).not.toHaveBeenCalled()
     })
 
-    it("lists results for an authenticated captain", async () => {
+    it("lists results for an authenticated admin", async () => {
       queryManualResultsDatabase.mockResolvedValueOnce({ rows: [manualRow] })
-      const cookie = await cookieFor("captain")
+      const cookie = await cookieFor("admin")
 
       const response = await GET(buildRequest("GET", { cookie }))
       const body = await response.json()
@@ -111,9 +111,9 @@ describe("manual-results route", () => {
       expect(queryManualResultsDatabase).not.toHaveBeenCalled()
     })
 
-    it("allows a captain session to insert", async () => {
+    it("allows an admin session to insert", async () => {
       queryManualResultsDatabase.mockResolvedValueOnce({ rows: [manualRow] })
-      const cookie = await cookieFor("captain")
+      const cookie = await cookieFor("admin")
 
       const response = await POST(buildRequest("POST", { cookie, body: validBody }))
 
@@ -128,7 +128,7 @@ describe("manual-results route", () => {
         null,
         "Test Pub",
         "note",
-        "captain"
+        "admin"
       ])
     })
 
@@ -249,7 +249,7 @@ describe("manual-results route", () => {
       queryManualResultsDatabase.mockResolvedValueOnce({
         rows: [{ ...manualRow, status: "rejected" }]
       })
-      const cookie = await cookieFor("captain")
+      const cookie = await cookieFor("admin")
 
       const response = await PATCH(
         buildRequest("PATCH", { cookie, body: { id: "1", action: "reject" } })

@@ -44,15 +44,6 @@ describe("getAdminSession (apps/results)", () => {
     expect(session).toEqual({ role: "admin", exp: expect.any(Number) })
   })
 
-  it("round-trips a valid captain session", async () => {
-    vi.stubEnv("SESSION_SECRET", secret)
-    const cookie = await buildCookie({ role: "captain", exp: Math.floor(Date.now() / 1000) + 1000 })
-
-    const session = await getAdminSession(requestWithCookie(cookie))
-
-    expect(session).toEqual({ role: "captain", exp: expect.any(Number) })
-  })
-
   it("rejects a tampered signature", async () => {
     vi.stubEnv("SESSION_SECRET", secret)
     const cookie = await buildCookie({ role: "admin", exp: Math.floor(Date.now() / 1000) + 1000 })

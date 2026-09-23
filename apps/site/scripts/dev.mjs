@@ -15,7 +15,7 @@ const siteRoot = join(dirname(fileURLToPath(import.meta.url)), "..")
 const repoRoot = join(siteRoot, "../..")
 const sessionCookieName = "sa_admin_session"
 const sessionMaxAgeSeconds = 60 * 60 * 8
-const validRoles = ["admin", "captain"]
+const validRoles = ["admin"]
 
 // Mirrors NON_PUB_NAMES in apps/results/src/lib/quiz-results.ts — a handful
 // of historical quiz_results.pub values are actually event/league names, not
@@ -707,13 +707,10 @@ const handleLocalApi = async (request, response, pathname) => {
   if (request.method === "POST" && pathname === "/api/admin/login") {
     const { password } = await readJsonBody(request)
     const adminPassword = requiredEnv("ADMIN_PASSWORD")
-    const captainPassword = localEnv.CAPTAIN_PASSWORD
 
     let role = null
     if (password && password === adminPassword) {
       role = "admin"
-    } else if (password && captainPassword && password === captainPassword) {
-      role = "captain"
     }
 
     if (!role) {

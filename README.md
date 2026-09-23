@@ -16,7 +16,7 @@ Monorepo for the public Slavic Alliance website, quiz reservation overview, and 
   - `public.quiz_results` for team result history.
   - `public.quiz_leagues` for the long-term league window and metadata.
   - `public.quiz_pub_reservations` for upcoming pub quiz reservations.
-  - `public.quiz_manual_results` for team result history entered manually by a captain through `/admin`, unioned into the read paths alongside `quiz_results`.
+  - `public.quiz_manual_results` for team result history entered manually by an admin through `/admin`, unioned into the read paths alongside `quiz_results`.
 
 ## Local Development
 
@@ -53,9 +53,8 @@ Use the root `.env.local` for normal monorepo development. App-level `.env.local
 - `SITE_APP_URL` or `NEXT_PUBLIC_SITE_APP_URL`: canonical site URL used by the results app header. Defaults locally to `http://localhost:3000`.
 - `CONTENT_SITE_URL`: optional source for production site builds to fetch live Markdown content from `/api/content/pages/landing`; defaults to `https://slavicalliance.cz` in production.
 - `ADMIN_PASSWORD`: password for `/admin`.
-- `CAPTAIN_PASSWORD`: optional password for the captain role in `/admin`, which can only add manual quiz results, not edit site content.
 - `SESSION_SECRET`: HMAC secret for the admin session cookie.
-- `DATABASE_URL_RW`: PostgreSQL connection string for the low-privilege `sa_web_rw` role used only by the manual-results write API (`insert`/`update` on `quiz_manual_results`, no access to the scraper-owned tables). See `docs/plans/captain-manual-quiz-results.md` and `apps/results/sql/`.
+- `DATABASE_URL_RW`: PostgreSQL connection string for the low-privilege `sa_web_rw` role used only by the manual-results write API (`insert`/`update` on `quiz_manual_results`, no access to the scraper-owned tables). See `docs/plans/manual-quiz-results.md` and `apps/results/sql/`.
 - `DEPLOY_HOOK_URL`: optional Cloudflare Pages deploy hook called after editing the landing page in admin.
 
 ## Cloudflare Setup
@@ -72,7 +71,6 @@ Configure Cloudflare bindings, variables, and secrets:
 - `apps/site` Pages project:
   - R2 binding `CONTENT_BUCKET` to `slavicalliance-site-content`
   - secret `ADMIN_PASSWORD`
-  - secret `CAPTAIN_PASSWORD`
   - secret `SESSION_SECRET`
   - optional variable or secret `DEPLOY_HOOK_URL`
 - `apps/results` Worker:
@@ -114,13 +112,13 @@ On Windows, OpenNext may fail while creating symlinks during the Worker bundle s
 
 ## Open Items
 
-Manual quiz results / captain role (`apps/admin` → "Historické výsledky"):
+Manual quiz results (`apps/admin` → "Historické výsledky"):
 PR [#6](https://github.com/mareskav/slavicalliance-web/pull/6) is open but
 not merged — still needs a real e2e run and manual smoke test against a
 Postgres with the full schema, plus there's a prioritized list of admin UX
 follow-ups (no save-success feedback, ad-hoc team rows not flagged in the
 admin list, no submitted-by/updated-at display, ...). See "Status" and
-"Next steps" in `docs/plans/captain-manual-quiz-results.md`.
+"Next steps" in `docs/plans/manual-quiz-results.md`.
 
 ## Lessons Learned
 

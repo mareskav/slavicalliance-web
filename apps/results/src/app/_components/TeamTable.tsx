@@ -145,7 +145,7 @@ export const TeamTable = ({
               {result.source === "manual" ? (
                 <span
                   className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-200/24 bg-amber-300/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100"
-                  title="Ručně zadaný výsledek kapitánem"
+                  title="Ručně zadaný výsledek"
                 >
                   <AlertTriangle className="h-3 w-3" />
                   <span className="hidden sm:inline">Ručně</span>

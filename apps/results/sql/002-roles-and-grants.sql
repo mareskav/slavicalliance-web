@@ -1,6 +1,6 @@
--- Captain manual quiz results — roles and grants
+-- Manual quiz results — roles and grants
 --
--- Source: docs/plans/captain-manual-quiz-results.md, "Roles and grants"
+-- Source: docs/plans/manual-quiz-results.md, "Roles and grants"
 -- section (copied verbatim). Run AFTER 001-quiz-manual-results.sql, as
 -- neondb_owner, in the Neon SQL editor (NOT via the Neon Console UI — a
 -- role created through the console/API inherits neon_superuser, which

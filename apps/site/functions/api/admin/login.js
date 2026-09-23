@@ -4,12 +4,7 @@ export const onRequestPost = async ({ request, env }) => {
   try {
     const { password } = await request.json()
 
-    const role =
-      password && password === requiredEnv(env, "ADMIN_PASSWORD")
-        ? "admin"
-        : password && env.CAPTAIN_PASSWORD && password === env.CAPTAIN_PASSWORD
-          ? "captain"
-          : null
+    const role = password && password === requiredEnv(env, "ADMIN_PASSWORD") ? "admin" : null
 
     if (!role) {
       return json({ error: "Invalid password" }, { status: 401 })

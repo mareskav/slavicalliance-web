@@ -1,6 +1,6 @@
 const sessionCookieName = "sa_admin_session"
 
-export type AdminSessionRole = "admin" | "captain"
+export type AdminSessionRole = "admin"
 export type AdminSession = { role: AdminSessionRole; exp: number }
 
 const base64UrlEncode = (input: string) =>
@@ -71,7 +71,7 @@ export const getAdminSession = async (request: Request): Promise<AdminSession | 
 
   const session = JSON.parse(base64UrlDecode(payload)) as { role?: unknown; exp?: unknown }
 
-  if (session.role !== "admin" && session.role !== "captain") {
+  if (session.role !== "admin") {
     return null
   }
 

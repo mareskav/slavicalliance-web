@@ -42,17 +42,6 @@ describe("admin session (apps/site)", () => {
     expect(await isAuthenticated(request, env)).toBe(true)
   })
 
-  it("round-trips a valid captain session", async () => {
-    const setCookie = await createSessionCookie(env, "captain")
-    const request = requestWithCookie(extractCookiePair(setCookie))
-
-    const session = await getSession(request, env)
-
-    expect(session).toEqual({ role: "captain", exp: expect.any(Number) })
-    expect(await isAdmin(request, env)).toBe(false)
-    expect(await isAuthenticated(request, env)).toBe(true)
-  })
-
   it("rejects a tampered signature", async () => {
     const setCookie = await createSessionCookie(env, "admin")
     const [payload, signature] = extractCookiePair(setCookie).split("=")[1].split(".")

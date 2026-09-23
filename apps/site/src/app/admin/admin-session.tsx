@@ -1,70 +1,35 @@
 "use client"
 
-import { FormEvent, createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { FormEvent, useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 
-import { ADMIN_TABS, MANUAL_RESULTS_SLUG } from "./pages-config"
+import { ADMIN_TABS } from "./pages-config"
 
-type Role = "admin" | "captain"
 type LoadState = "checking" | "login" | "ready"
 
-type AdminSessionContextValue = {
-  role: Role
-}
-
-const AdminSessionContext = createContext<AdminSessionContextValue | null>(null)
-
-export const useAdminRole = (): Role => {
-  const context = useContext(AdminSessionContext)
-  if (!context) {
-    throw new Error("useAdminRole must be used within the admin layout")
-  }
-  return context.role
-}
-
-const fetchRole = async (): Promise<Role | null> => {
+const fetchAuthenticated = async (): Promise<boolean> => {
   const response = await fetch("/api/admin/session")
 
   if (!response.ok) {
-    return null
+    return false
   }
 
   const session = await response.json()
-  if (!session.authenticated) {
-    return null
-  }
-
-  return session.role === "admin" ? "admin" : "captain"
+  return Boolean(session.authenticated)
 }
 
 const AdminSessionProvider = ({ children }: { children: ReactNode }) => {
   const [loadState, setLoadState] = useState<LoadState>("checking")
-  const [role, setRole] = useState<Role | null>(null)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const pathname = usePathname()
-  const router = useRouter()
 
   useEffect(() => {
-    fetchRole()
-      .then((nextRole) => {
-        if (nextRole) {
-          setRole(nextRole)
-          setLoadState("ready")
-        } else {
-          setLoadState("login")
-        }
-      })
+    fetchAuthenticated()
+      .then((authenticated) => setLoadState(authenticated ? "ready" : "login"))
       .catch(() => setLoadState("login"))
   }, [])
-
-  useEffect(() => {
-    if (loadState !== "ready" || role !== "captain") return
-    if (pathname !== `/admin/${MANUAL_RESULTS_SLUG}`) {
-      router.replace(`/admin/${MANUAL_RESULTS_SLUG}`)
-    }
-  }, [loadState, role, pathname, router])
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -88,13 +53,7 @@ const AdminSessionProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setPassword("")
-    const nextRole = await fetchRole()
-    if (nextRole) {
-      setRole(nextRole)
-      setLoadState("ready")
-    } else {
-      setLoadState("login")
-    }
+    setLoadState((await fetchAuthenticated()) ? "ready" : "login")
   }
 
   const handleLogout = async () => {
@@ -149,52 +108,46 @@ const AdminSessionProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AdminSessionContext.Provider value={{ role: role! }}>
-      <main className="min-h-screen bg-[#0d1218] text-white">
-        <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6">
-          <div className="flex flex-col gap-3 border-b border-white/12 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            {role === "admin" ? (
-              <div className="flex rounded-md border border-white/14 p-0.5">
-                {ADMIN_TABS.map((tab) => {
-                  const href = `/admin/${tab.slug}`
-                  const isActive = pathname === href
+    <main className="min-h-screen bg-[#0d1218] text-white">
+      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6">
+        <div className="flex flex-col gap-3 border-b border-white/12 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex rounded-md border border-white/14 p-0.5">
+            {ADMIN_TABS.map((tab) => {
+              const href = `/admin/${tab.slug}`
+              const isActive = pathname === href
 
-                  return (
-                    <Link
-                      key={tab.slug}
-                      href={href}
-                      className={
-                        isActive
-                          ? "flex h-9 flex-1 items-center justify-center rounded px-3 text-sm font-semibold bg-white/12 text-white sm:flex-none"
-                          : "flex h-9 flex-1 items-center justify-center rounded px-3 text-sm text-white/70 hover:bg-white/8 sm:flex-none"
-                      }
-                    >
-                      {tab.label}
-                    </Link>
-                  )
-                })}
-              </div>
-            ) : (
-              <div />
-            )}
-            <button
-              onClick={handleLogout}
-              className="h-10 flex-1 rounded-md border border-white/14 px-4 text-sm text-white/76 hover:bg-white/8 sm:flex-none"
-            >
-              Odhlásit
-            </button>
+              return (
+                <Link
+                  key={tab.slug}
+                  href={href}
+                  className={
+                    isActive
+                      ? "flex h-9 flex-1 items-center justify-center rounded px-3 text-sm font-semibold bg-white/12 text-white sm:flex-none"
+                      : "flex h-9 flex-1 items-center justify-center rounded px-3 text-sm text-white/70 hover:bg-white/8 sm:flex-none"
+                  }
+                >
+                  {tab.label}
+                </Link>
+              )
+            })}
           </div>
-
-          {error ? (
-            <p className="mt-4 rounded-md border border-red-300/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-              {error}
-            </p>
-          ) : null}
-
-          {children}
+          <button
+            onClick={handleLogout}
+            className="h-10 flex-1 rounded-md border border-white/14 px-4 text-sm text-white/76 hover:bg-white/8 sm:flex-none"
+          >
+            Odhlásit
+          </button>
         </div>
-      </main>
-    </AdminSessionContext.Provider>
+
+        {error ? (
+          <p className="mt-4 rounded-md border border-red-300/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {error}
+          </p>
+        ) : null}
+
+        {children}
+      </div>
+    </main>
   )
 }
 

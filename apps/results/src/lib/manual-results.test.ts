@@ -19,7 +19,7 @@ const baseRow: ManualResultRow = {
   pub: "Test Pub",
   note: "note",
   status: "approved",
-  submitted_by: "captain",
+  submitted_by: "admin",
   submitted_at: new Date("2026-01-10T12:00:00.000Z"),
   updated_at: new Date("2026-01-11T12:00:00.000Z")
 }
@@ -38,7 +38,7 @@ describe("mapManualResultRow", () => {
       pub: "Test Pub",
       note: "note",
       status: "approved",
-      submittedBy: "captain",
+      submittedBy: "admin",
       submittedAt: "2026-01-10T12:00:00.000Z",
       updatedAt: "2026-01-11T12:00:00.000Z"
     })

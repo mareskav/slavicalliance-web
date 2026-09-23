@@ -64,9 +64,9 @@ describe.each(cases)("$name", ({ invoke }) => {
     expect(env.CONTENT_BUCKET.put).not.toHaveBeenCalled()
   })
 
-  it("rejects a captain session", async () => {
+  it("rejects a session with an unrecognized role", async () => {
     const env = buildEnv()
-    const cookie = await cookieHeaderFor("captain")
+    const cookie = await cookieHeaderFor("superadmin")
     const response = await invoke(env, cookie)
 
     expect(response.status).toBe(401)

@@ -17,26 +17,8 @@ describe("admin login", () => {
     expect(response.headers.get("Set-Cookie")).toContain("sa_admin_session=")
   })
 
-  it("logs in as captain with CAPTAIN_PASSWORD", async () => {
-    const env = { ...baseEnv, CAPTAIN_PASSWORD: "captain-pw" }
-    const response = await onRequestPost({ request: requestWithPassword("captain-pw"), env })
-
-    expect(response.status).toBe(200)
-    const body = await response.json()
-    expect(body).toEqual({ authenticated: true, role: "captain" })
-    expect(response.headers.get("Set-Cookie")).toContain("sa_admin_session=")
-  })
-
   it("rejects a wrong password", async () => {
     const response = await onRequestPost({ request: requestWithPassword("nope"), env: baseEnv })
-
-    expect(response.status).toBe(401)
-    const body = await response.json()
-    expect(body.error).toBe("Invalid password")
-  })
-
-  it("cleanly rejects a captain login attempt when CAPTAIN_PASSWORD is unset", async () => {
-    const response = await onRequestPost({ request: requestWithPassword("whatever-a-captain-might-type"), env: baseEnv })
 
     expect(response.status).toBe(401)
     const body = await response.json()

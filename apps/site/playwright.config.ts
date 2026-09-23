@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test"
 
 // Mirrors apps/site/scripts/dev.mjs's parseEnvFile: dev.mjs reads these same
 // files itself to configure the local server, so tests read them too to get
-// ADMIN_PASSWORD/CAPTAIN_PASSWORD without hardcoding or duplicating secrets.
+// ADMIN_PASSWORD without hardcoding or duplicating secrets.
 const parseEnvFile = (filePath: string): Record<string, string> => {
   if (!existsSync(filePath)) {
     return {}

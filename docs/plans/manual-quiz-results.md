@@ -1,8 +1,21 @@
-# Captain manual quiz results — plan
+# Manual quiz results — plan
 
-Goal: let a team captain add historical quiz entries through the existing
-`/admin` editor, without ever being able to write to the scraper-owned tables
-(`quiz_results`, `quiz_leagues`, `quiz_pub_reservations`).
+## Superseded (2026-09-23)
+
+The "captain" role described throughout this doc has been removed. Admin and
+captain were always the same real person, so the two-role split (`admin` vs.
+`captain`, `ADMIN_PASSWORD` vs. `CAPTAIN_PASSWORD`) was unnecessary complexity
+and has been collapsed into a single `admin` role/password everywhere
+(`apps/site/functions/_lib/admin.js`, `login.js`, `admin-session.tsx`,
+`apps/results/src/lib/admin-session.ts`, `apps/site/scripts/dev.mjs`, and
+their tests). The rest of this document is kept as the historical record of
+the original design and rollout — read "captain" below as the same person who
+is now just "admin". `docs/admin-navod-kapitan.md` has been replaced by
+`docs/admin-navod.md`.
+
+Goal (as originally written): let a team captain add historical quiz entries
+through the existing `/admin` editor, without ever being able to write to the
+scraper-owned tables (`quiz_results`, `quiz_leagues`, `quiz_pub_reservations`).
 
 ## Decisions
 

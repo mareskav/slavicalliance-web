@@ -1,23 +1,22 @@
-# Admin návod pro kapitána – zadávání historických výsledků
+# Admin návod – zadávání historických výsledků
 
-Tento návod popisuje, co kapitán vidí a může dělat po přihlášení do `/admin`
-heslem role „captain“ (`CAPTAIN_PASSWORD`). Je psaný pro kapitána týmu, ne
-pro vývojáře – technické detaily jsou v
-[`docs/plans/captain-manual-quiz-results.md`](plans/captain-manual-quiz-results.md).
+Tento návod popisuje, co uvidíš a můžeš dělat po přihlášení do `/admin`
+heslem `ADMIN_PASSWORD`. Je psaný pro běžné použití, ne pro vývojáře –
+technické detaily jsou v
+[`docs/plans/manual-quiz-results.md`](plans/manual-quiz-results.md).
 
 ## 1. Přihlášení
 
 1. Otevři `https://slavicalliance.cz/admin` (lokálně `http://localhost:3000/admin`).
-2. Zadej heslo, které jsi dostal/a (kapitánské heslo, ne admin heslo).
-3. Po přihlášení se rovnou zobrazí stránka **Historické výsledky** – kapitán
-   nemá přístup k žádné jiné admin sekci (úprava textů webu, nahrávání
-   obrázků atd. je jen pro roli admin).
+2. Zadej admin heslo.
+3. Po přihlášení se zobrazí všechny admin sekce (úprava textů webu, nahrávání
+   obrázků, **Historické výsledky** atd.).
 
 Odhlásíš se tlačítkem **Odhlásit** vpravo nahoře.
 
-## 2. K čemu stránka slouží
+## 2. K čemu záložka Historické výsledky slouží
 
-Stránka **Historické výsledky** slouží k tomu, aby šlo ručně dopsat výsledek
+Záložka **Historické výsledky** slouží k tomu, aby šlo ručně dopsat výsledek
 kvízu, který systém sám nestihl/nemohl načíst automaticky (např. starší
 kvízy, kvízy mimo běžný scraping). Zadává se **vždy jeden výsledek jednoho
 týmu k jednomu datu**.
@@ -86,6 +85,6 @@ Aby bylo jasné, co není chyba, ale zatím nezavedená funkce:
 - Nejde hromadně upravovat nebo importovat více výsledků najednou.
 - Nejde vyhledávat/filtrovat v seznamu – zatím se prochází celý seznam.
 
-Stránka je záměrně jednoduchá – jejím jediným účelem je dát kapitánovi
-možnost doplnit chybějící historický výsledek jednoho týmu, ne nahradit
-administraci celého systému výsledků.
+Stránka je záměrně jednoduchá – jejím jediným účelem je dát možnost doplnit
+chybějící historický výsledek jednoho týmu, ne nahradit administraci celého
+systému výsledků.

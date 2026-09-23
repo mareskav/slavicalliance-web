@@ -1,6 +1,6 @@
 const sessionCookieName = "sa_admin_session"
 const sessionMaxAgeSeconds = 60 * 60 * 8
-const validRoles = ["admin", "captain"]
+const validRoles = ["admin"]
 
 const json = (payload, init = {}) =>
   new Response(JSON.stringify(payload), {

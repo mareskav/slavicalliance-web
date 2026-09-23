@@ -41,7 +41,7 @@ vs. N rows all autosaving), and default to the more conservative design.
 Current usage (a single admin, one row at a time) is well within Neon limits
 even at hundreds of writes/week — active compute time and connection count are
 what's billed/limited, not total historical request count. If multiple
-admins/captains ever edit concurrently, each Cloudflare Worker isolate opens
+admins ever edit concurrently, each Cloudflare Worker isolate opens
 its own `pg.Pool` (`manual-results-db.ts`, `max: 2`), so concurrent requests
 could stack connections faster than expected. Not urgent today, but if that
 happens, consider pointing `DATABASE_URL_RW` at Neon's pooled (`-pooler`)

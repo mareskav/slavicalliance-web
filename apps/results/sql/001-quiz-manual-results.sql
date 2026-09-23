@@ -1,6 +1,6 @@
--- Captain manual quiz results — migration
+-- Manual quiz results — migration
 --
--- Source: docs/plans/captain-manual-quiz-results.md, "Schema" section
+-- Source: docs/plans/manual-quiz-results.md, "Schema" section
 -- (copied verbatim). Additive and reversible with `drop table
 -- public.quiz_manual_results;`.
 --
