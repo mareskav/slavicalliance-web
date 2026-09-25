@@ -13,14 +13,11 @@ const getDroppedPoints = (
 ) => {
   if (cutCount === 0) return []
   const selectedResults = getSelectedLeagueResults(team, selectedRoundCount)
-  const missingRounds = Math.max(0, selectedRoundCount - selectedResults.length)
-  const allPoints = [
-    ...selectedResults.map((r) => r.points),
-    ...Array<number>(missingRounds).fill(0)
-  ]
-  return allPoints
+  const effectiveCutCount = selectedResults.length > cutCount ? cutCount : 0
+  return selectedResults
+    .map((r) => r.points)
     .sort((a, b) => a - b)
-    .slice(0, cutCount)
+    .slice(0, effectiveCutCount)
 }
 
 const getLeaguePoints = (
