@@ -300,6 +300,9 @@ export const mapCombinedQuizResultRow = (row: CombinedQuizResultRow): QuizResult
   specialName: row.league_name
 })
 
+// A team id is not unique to one team (the scraper files several unrelated
+// teams under the same id), so a team is identified by id *and* name, the same
+// way loadTeamSummaries groups it.
 const loadTeamResults = async (teamId: number | null, teamName: string): Promise<QuizResult[]> => {
   const result = await queryDatabase<CombinedQuizResultRow>(
     `
@@ -321,14 +324,8 @@ const loadTeamResults = async (teamId: number | null, teamName: string): Promise
           max_body_v_kole,
           nullif(trim(league_name), '') as league_name
         from public.quiz_results
-        where (
-          $1::integer is not null
-          and team_id = $1::integer
-        ) or (
-          $1::integer is null
-          and team_id is null
-          and team_name = $2
-        )
+        where team_name = $2
+          and team_id is not distinct from $1::integer
         union all
         select
           id::text as id,
@@ -348,10 +345,8 @@ const loadTeamResults = async (teamId: number | null, teamName: string): Promise
           nullif(trim(league_name), '') as league_name
         from public.quiz_manual_results
         where status <> 'rejected'
-          and (
-            ($1::integer is not null and team_id = $1::integer)
-            or ($1::integer is null and team_id is null and team_name = $2)
-          )
+          and team_name = $2
+          and team_id is not distinct from $1::integer
       )
       select * from combined
       order by quiz_date desc, id::bigint desc
@@ -523,15 +518,50 @@ const getTotalRegularLeagueRounds = (league: LeagueRow) =>
   Math.floor((league.period_stop.getTime() - league.period_start.getTime()) / millisecondsPerWeek) +
   1
 
+// Which teams a league page lists is scraped into quiz_league_teams. Hospodsky
+// kviz team ids are not unique per team and quiz_results has no region, so this
+// is the only way to keep teams from other regions out of a league. Leagues
+// without membership rows (and databases without the table yet) stay unfiltered.
+const leagueMembershipFilter = (resultsAlias: string) => `
+  and (
+    not exists (select 1 from public.quiz_league_teams where league_url = $3)
+    or exists (
+      select 1 from public.quiz_league_teams member
+      where member.league_url = $3 and member.team_name = ${resultsAlias}.team_name
+    )
+  )`
+
+const queryWithLeagueMembership = async <Row extends QueryResultRow>(
+  league: LeagueRow,
+  buildQuery: (membershipFilter: string) => string,
+  resultsAlias: string,
+  values: unknown[]
+) => {
+  if (!league.league_url) {
+    return queryDatabase<Row>(buildQuery(""), values)
+  }
+
+  try {
+    return await queryDatabase<Row>(buildQuery(leagueMembershipFilter(resultsAlias)), [...values, league.league_url])
+  } catch (error) {
+    if ((error as { code?: string }).code !== "42P01") {
+      throw error
+    }
+
+    return queryDatabase<Row>(buildQuery(""), values)
+  }
+}
+
 const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
-  const result = await queryDatabase<{
+  const result = await queryWithLeagueMembership<{
     team_id: number | null
     team_name: string
     team_pub: string | null
     duplicate_name_count: number
     league_results: LeagueResultPoints[]
   }>(
-    `
+    league,
+    (membershipFilter) => `
       with results_in_league as (
         select
           null::integer as team_id,
@@ -543,7 +573,7 @@ const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
           floor((quiz_date - $1::date)::numeric / 7)::int as league_week
         from public.quiz_results
         where quiz_date between $1 and $2
-          and nullif(trim(league_name), '') is null
+          and nullif(trim(league_name), '') is null${membershipFilter}
       ),
       picked_results as (
         select distinct on (team_name, league_week)
@@ -581,6 +611,7 @@ const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
       from team_totals
       order by team_name, team_id nulls last
     `,
+    "quiz_results",
     [league.period_start, league.period_stop]
   )
 
@@ -592,13 +623,15 @@ const loadLeagueStandingRows = async (league: LeagueRow) => {
 }
 
 const loadLeagueTotalPubs = async (league: LeagueRow) => {
-  const result = await queryDatabase<{ total_pubs: number }>(
-    `
+  const result = await queryWithLeagueMembership<{ total_pubs: number }>(
+    league,
+    (membershipFilter) => `
       select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
       from public.quiz_results
       where quiz_date between $1 and $2
-        and nullif(trim(league_name), '') is null
+        and nullif(trim(league_name), '') is null${membershipFilter}
     `,
+    "quiz_results",
     [league.period_start, league.period_stop]
   )
 

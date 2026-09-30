@@ -4,6 +4,7 @@ import { getLeagueSortHref } from "../_lib/navigation"
 import type { LeagueStandingDisplayTeam, LeagueSortKey, SortDirection } from "../_lib/types"
 import { Placement } from "./Placement"
 import { SortHeader } from "./SortHeader"
+import { TeamLink } from "./TeamLink"
 
 export const LeagueTable = ({
   teams,
@@ -110,7 +111,19 @@ export const LeagueTable = ({
                 </div>
               </td>
               <td className="min-w-0 px-1.5 py-2.5 sm:px-2 md:px-5 md:py-3">
-                <span className="block truncate font-semibold text-white">{team.teamName}</span>
+                <TeamLink
+                  teamName={team.teamName}
+                  teamIdQuery={
+                    team.teamId !== null
+                      ? String(team.teamId)
+                      : team.duplicateNameCount > 1
+                        ? "none"
+                        : null
+                  }
+                  className="block truncate font-semibold text-white transition hover:text-sky-100 hover:underline"
+                >
+                  {team.teamName}
+                </TeamLink>
                 {team.duplicateNameCount > 1 ? (
                   <span className="block truncate text-xs font-medium text-white/42">
                     {team.teamPub ?? "hospoda neuvedena"}
