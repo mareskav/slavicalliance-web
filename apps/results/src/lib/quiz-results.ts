@@ -544,7 +544,10 @@ const queryWithLeagueMembership = async <Row extends QueryResultRow>(
   try {
     return await queryDatabase<Row>(buildQuery(leagueMembershipFilter(resultsAlias)), [...values, league.league_url])
   } catch (error) {
-    if ((error as { code?: string }).code !== "42P01") {
+    // 42P01: table not created yet, 42501: read role not granted on it yet.
+    const code = (error as { code?: string }).code
+
+    if (code !== "42P01" && code !== "42501") {
       throw error
     }
 
