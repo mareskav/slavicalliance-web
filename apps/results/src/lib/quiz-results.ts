@@ -522,12 +522,35 @@ const getTotalRegularLeagueRounds = (league: LeagueRow) =>
 // kviz team ids are not unique per team and quiz_results has no region, so this
 // is the only way to keep teams from other regions out of a league. Leagues
 // without membership rows (and databases without the table yet) stay unfiltered.
+//
+// Names are not unique either: a row is also dropped when its pub (ignoring the
+// weekday suffix) belongs to a same-named team in another league but not to the
+// one in this league. Rows whose pub is unknown to every league are kept.
+const pubKey = (column: string) =>
+  `lower(trim(regexp_replace(trim(${column}), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')))`
+
 const leagueMembershipFilter = (resultsAlias: string) => `
   and (
     not exists (select 1 from public.quiz_league_teams where league_url = $3)
-    or exists (
-      select 1 from public.quiz_league_teams member
-      where member.league_url = $3 and member.team_name = ${resultsAlias}.team_name
+    or (
+      exists (
+        select 1 from public.quiz_league_teams member
+        where member.league_url = $3 and member.team_name = ${resultsAlias}.team_name
+      )
+      and not (
+        exists (
+          select 1 from public.quiz_league_teams other
+          where other.league_url <> $3
+            and other.team_name = ${resultsAlias}.team_name
+            and ${pubKey("other.pub")} = ${pubKey(`${resultsAlias}.pub`)}
+        )
+        and not exists (
+          select 1 from public.quiz_league_teams member
+          where member.league_url = $3
+            and member.team_name = ${resultsAlias}.team_name
+            and ${pubKey("member.pub")} = ${pubKey(`${resultsAlias}.pub`)}
+        )
+      )
     )
   )`
 
@@ -906,7 +929,7 @@ const getCachedSpecialLeagueStandings = unstable_cache(
 const getCachedLongTermLeagueStandings = unstable_cache(
   async (lastResultDate: string | null, leagueId: string | undefined) =>
     loadLongTermLeagueStandings(lastResultDate, leagueId),
-  ["quiz-results", "long-term-league-standings-by-update-and-league-v8"],
+  ["quiz-results", "long-term-league-standings-by-update-and-league-v9"],
   {
     revalidate: leagueStandingsCacheSeconds,
     tags: ["quiz-results"]
