@@ -166,7 +166,8 @@ const ResultsPage = async ({
     // Links that only carry a name (the league tables have no team ids) render
     // directly. Redirecting them to the canonical URL costs a second round trip
     // and showed up as a blank page between the loading skeleton and the team.
-    const isNameOnlyLink = params.teamId === undefined && canonicalTeamId !== "none"
+    const isNameOnlyLink =
+      params.teamId === undefined && params.team === selectedSummary.teamName && canonicalTeamId !== "none"
 
     if (!isNameOnlyLink && (params.team !== selectedSummary.teamName || params.teamId !== canonicalTeamId)) {
       redirect(

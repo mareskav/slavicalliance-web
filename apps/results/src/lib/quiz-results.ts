@@ -551,6 +551,8 @@ const queryWithLeagueMembership = async <Row extends QueryResultRow>(
       throw error
     }
 
+    console.warn(`quiz_league_teams unavailable (${code}); showing unfiltered standings for ${league.league_url}`)
+
     return queryDatabase<Row>(buildQuery(""), values)
   }
 }
@@ -567,7 +569,7 @@ const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
     (membershipFilter) => `
       with results_in_league as (
         select
-          null::integer as team_id,
+          team_id,
           team_name,
           nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
           (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
@@ -592,7 +594,7 @@ const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
       ),
       team_totals as (
         select
-          null::integer as team_id,
+          (array_agg(team_id order by quiz_date desc, id desc))[1] as team_id,
           team_name,
           (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
           coalesce(
@@ -629,7 +631,7 @@ const loadLeagueTotalPubs = async (league: LeagueRow) => {
   const result = await queryWithLeagueMembership<{ total_pubs: number }>(
     league,
     (membershipFilter) => `
-      select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
+      select count(distinct nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
       from public.quiz_results
       where quiz_date between $1 and $2
         and nullif(trim(league_name), '') is null${membershipFilter}
@@ -812,7 +814,7 @@ const loadSpecialLeagueStandingRows = async (league: LeagueRow) => {
 const loadSpecialLeagueTotalPubs = async (league: LeagueRow) => {
   const result = await queryDatabase<{ total_pubs: number }>(
     `
-      select count(distinct nullif(trim(regexp_replace(trim(pub), '\s+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
+      select count(distinct nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
       from public.quiz_results
       where trim(league_name) = $1
     `,
@@ -904,7 +906,7 @@ const getCachedSpecialLeagueStandings = unstable_cache(
 const getCachedLongTermLeagueStandings = unstable_cache(
   async (lastResultDate: string | null, leagueId: string | undefined) =>
     loadLongTermLeagueStandings(lastResultDate, leagueId),
-  ["quiz-results", "long-term-league-standings-by-update-and-league-v7"],
+  ["quiz-results", "long-term-league-standings-by-update-and-league-v8"],
   {
     revalidate: leagueStandingsCacheSeconds,
     tags: ["quiz-results"]

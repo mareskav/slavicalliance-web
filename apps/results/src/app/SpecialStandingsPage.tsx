@@ -40,8 +40,6 @@ export const SpecialStandingsPage = async ({
   const defaultLeagueDisplayName = defaultLeague
     ? formatLeagueName(defaultLeague.leagueName, defaultLeague.periodStart)
     : undefined
-  const selectedLeagueIdParam =
-    standings?.leagueId === defaultLeagueId ? undefined : String(standings?.leagueId ?? "")
 
   if (!standings) {
     const navigationKey = ["special", leagueId ?? defaultLeagueId ?? "none", "empty"].join(":")
