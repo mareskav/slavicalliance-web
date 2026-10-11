@@ -26,7 +26,7 @@ export const AppChrome = ({
   const [currentHighlights, setCurrentHighlights] = useState(fireworksHighlights)
   const [achievementLabel, setAchievementLabel] = useState<string | null>(null)
   const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/")
-  const resultsHref = "/vysledky?team=Slavic%20Alliance"
+  const resultsHref = "/vysledky"
 
   useEffect(() => {
     const readyTimer = window.setTimeout(() => {
