@@ -15,12 +15,13 @@ const getPool = () => {
 
   pool ??= new Pool({
     connectionString,
-    connectionTimeoutMillis: 2000,
+    // Neon can take several seconds to wake a suspended compute; admin writes are rare and explicit.
+    connectionTimeoutMillis: 8000,
     idleTimeoutMillis: 5000,
     max: 2,
     maxLifetimeSeconds: 60,
-    query_timeout: 4000,
-    statement_timeout: 4000
+    query_timeout: 8000,
+    statement_timeout: 8000
   })
   return pool
 }
