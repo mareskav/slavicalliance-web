@@ -66,3 +66,6 @@ Thumbs.db
 
 # Misc secrets
 *.pem
+
+# Local snapshot output (publish:results:dry)
+.snapshots/

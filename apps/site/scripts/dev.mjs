@@ -17,7 +17,7 @@ const sessionCookieName = "sa_admin_session"
 const sessionMaxAgeSeconds = 60 * 60 * 8
 const validRoles = ["admin"]
 
-// Mirrors NON_PUB_NAMES in apps/results/src/lib/quiz-results.ts — a handful
+// Mirrors NON_PUB_NAMES in packages/results-data/src/quiz-results.ts — a handful
 // of historical quiz_results.pub values are actually event/league names, not
 // real venues, and would otherwise pollute the "Hospoda" autocomplete.
 const NON_PUB_NAMES = [
@@ -253,7 +253,7 @@ const getQuizPool = () => {
 }
 
 // Separate pool on DATABASE_URL_RW (the sa_web_rw role), matching
-// apps/results/src/lib/manual-results-db.ts's split from the read-only
+// packages/results-data/src/manual-results-db.ts's split from the read-only
 // quiz pool above — kept apart even in local dev so a bug here can't reach
 // the scraper-owned tables through the wrong connection.
 let manualResultsPool = null
@@ -306,7 +306,7 @@ const todayIsoDate = () => new Date().toISOString().slice(0, 10)
 
 const isFiniteNonNegativeNumber = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0
 
-// Mirrors apps/results/src/app/api/admin/manual-results/route.ts: points are
+// Mirrors apps/site/functions/api/admin/manual-results.ts: points are
 // scored in half-point increments, doplňovačky in whole points.
 const isHalfPointNumber = (value) => Math.abs(value * 2 - Math.round(value * 2)) < 1e-9
 
@@ -361,7 +361,7 @@ const validateManualResultInput = (body) => {
 const isUniqueViolation = (error) => error && typeof error === "object" && error.code === "23505"
 
 const handleLocalApi = async (request, response, pathname) => {
-  if (request.method === "GET" && pathname === "/vysledky/api/quiz-reservations") {
+  if (request.method === "GET" && pathname === "/api/quiz-reservations") {
     const pool = getQuizPool()
     if (!pool) {
       json(response, { error: "DATABASE_URL is not configured." }, { status: 503 })
@@ -477,7 +477,7 @@ const handleLocalApi = async (request, response, pathname) => {
     return true
   }
 
-  if (request.method === "GET" && pathname === "/vysledky/api/admin/pub-names") {
+  if (request.method === "GET" && pathname === "/api/admin/pub-names") {
     const session = getLocalSession(request)
 
     if (!session) {
@@ -515,7 +515,7 @@ const handleLocalApi = async (request, response, pathname) => {
     return true
   }
 
-  if (request.method === "GET" && pathname === "/vysledky/api/admin/teams") {
+  if (request.method === "GET" && pathname === "/api/admin/teams") {
     const session = getLocalSession(request)
 
     if (!session) {
@@ -543,7 +543,7 @@ const handleLocalApi = async (request, response, pathname) => {
     return true
   }
 
-  if (pathname === "/vysledky/api/admin/manual-results") {
+  if (pathname === "/api/admin/manual-results") {
     const session = getLocalSession(request)
 
     if (!session) {
@@ -632,7 +632,7 @@ const handleLocalApi = async (request, response, pathname) => {
         }
 
         // Only validate fields the caller actually sent; a PATCH edit may touch
-        // a subset of columns, mirroring apps/results/src/app/api/admin/manual-results/route.ts.
+        // a subset of columns, mirroring apps/site/functions/api/admin/manual-results.ts.
         if (body.teamName !== undefined || body.quizDate !== undefined) {
           const validation = validateManualResultInput({
             teamName: body.teamName ?? "placeholder",

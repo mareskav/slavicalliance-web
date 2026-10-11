@@ -1,3 +1,5 @@
+> **Note:** this plan is historical. `apps/results` was removed; its code now lives in `packages/results-data` and the write API in `apps/site/functions/api/admin/`.
+
 # Manual quiz results — plan
 
 ## Superseded (2026-09-23)
@@ -7,7 +9,7 @@ captain were always the same real person, so the two-role split (`admin` vs.
 `captain`, `ADMIN_PASSWORD` vs. `CAPTAIN_PASSWORD`) was unnecessary complexity
 and has been collapsed into a single `admin` role/password everywhere
 (`apps/site/functions/_lib/admin.js`, `login.js`, `admin-session.tsx`,
-`apps/results/src/lib/admin-session.ts`, `apps/site/scripts/dev.mjs`, and
+`packages/results-data/src/admin-session.ts`, `apps/site/scripts/dev.mjs`, and
 their tests). The rest of this document is kept as the historical record of
 the original design and rollout — read "captain" below as the same person who
 is now just "admin". `docs/admin-navod-kapitan.md` has been replaced by
@@ -32,7 +34,7 @@ scraper-owned tables (`quiz_results`, `quiz_leagues`, `quiz_pub_reservations`).
   never a hard `DELETE`, so bad entries stay recoverable.
 - **Storage**: a new table, `quiz_manual_results`, physically separate from
   the scraper tables. Same `(team_id, team_name)` shape as `quiz_results` so
-  `getTeamKey()` in `apps/results/src/lib/quiz-results.ts` treats a manual
+  `getTeamKey()` in `packages/results-data/src/quiz-results.ts` treats a manual
   row and a scraped row for the same team as the same team.
 - **DB-level enforcement (the actual boundary)**: a new low-privilege
   Postgres role, `sa_web_rw`, with `INSERT, UPDATE` on `quiz_manual_results`
@@ -52,7 +54,7 @@ scraper-owned tables (`quiz_results`, `quiz_leagues`, `quiz_pub_reservations`).
   (host-only, `Path=/`) reaches `apps/results` automatically — no CORS, no
   second session mechanism.
 - **Reads**: `loadTeamResults` and `loadTeamSummaries` in
-  `apps/results/src/lib/quiz-results.ts` `UNION ALL` the two tables and tag
+  `packages/results-data/src/quiz-results.ts` `UNION ALL` the two tables and tag
   each row with `source: "scraped" | "manual"` for a UI badge. League and
   special-league standings (`loadRegularLeagueStandingRows`,
   `loadSpecialLeagueStandingRows`, totals) stay scraper-only — unioning there
@@ -208,7 +210,7 @@ isn't done until its test is:
   a `captain`-role session gets 401/403, an `admin`-role session succeeds,
   no session gets 401. Mock `env.CONTENT_BUCKET.put` so nothing real is
   written.
-- `apps/results/src/lib/admin-session.test.ts` — same coverage as the
+- `packages/results-data/src/admin-session.test.ts` — same coverage as the
   `apps/site` version, since the plan requires the HMAC logic to be
   byte-for-byte compatible across the two apps; ideally the same test
   vectors (same `SESSION_SECRET`, same payload) are asserted in both test
@@ -221,7 +223,7 @@ isn't done until its test is:
   successful insert calls `query` with the expected SQL parameters (assert
   on the mock's call args, not on real DB state); PATCH soft-delete sets
   `status = 'rejected'` and never issues a `DELETE`.
-- `apps/results/src/lib/quiz-results.test.ts` — the `UNION ALL` mapping
+- `packages/results-data/src/quiz-results.test.ts` — the `UNION ALL` mapping
   logic: given mocked rows from both tables, scraped rows get `source:
   "scraped"` and `id` prefixed `'s'`, manual rows get `source: "manual"` and
   `id` prefixed `'m'`, and the two never collide even when the underlying
@@ -283,7 +285,7 @@ real bug and four UX gaps, all now fixed and covered by tests:
   team already missing from the list).
 
 Test coverage added alongside: 5 new unit tests for `updateManualResult`
-(`apps/results/src/lib/manual-results.test.ts`), and 2 new Playwright e2e
+(`packages/results-data/src/manual-results.test.ts`), and 2 new Playwright e2e
 tests (`apps/site/e2e/admin-manual-results.spec.ts`) plus a
 `page.on("dialog", ...)` handler added to the existing tests so they still
 pass now that "Vymazat" pops a confirm dialog.
@@ -325,7 +327,7 @@ build ahead of an actual request.
 
 **Verified 2026-09-15**: manual results (`quiz_manual_results`) never count
 toward league standings, confirmed by reading
-`apps/results/src/lib/quiz-results.ts` — `loadRegularLeagueStandingRows`
+`packages/results-data/src/quiz-results.ts` — `loadRegularLeagueStandingRows`
 (dlouhodobé ligy) and `loadSpecialLeagueStandingRows` (speciální ligy incl.
 Praha finále) both query only `public.quiz_results`; `quiz_manual_results` is
 unioned in only for a single team's own results page
@@ -344,7 +346,7 @@ lives at [`docs/admin-navod-kapitan.md`](../admin-navod-kapitan.md).
    Postgres available to the assistant, and no schema for the
    scraper-owned tables (`quiz_results`, `teams`, `quiz_pub_reservations`,
    `quiz_leagues`) exists anywhere in this repo to stand one up from
-   scratch — only `apps/results/sql/001-quiz-manual-results.sql` and
+   scratch — only `packages/results-data/sql/001-quiz-manual-results.sql` and
    `002-roles-and-grants.sql`. Set up `apps/site/.env.local` (see root
    `README.md` → Environment Variables) against a Postgres that already has
    that schema, then run:

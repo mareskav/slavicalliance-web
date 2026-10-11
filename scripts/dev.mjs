@@ -2,7 +2,6 @@ import { spawn } from "node:child_process"
 
 const commands = [
   { name: "site", args: ["--workspace", "apps/site", "run", "dev"] },
-  { name: "results", args: ["--workspace", "apps/results", "run", "dev"] },
 ]
 
 const npmExecPath = process.env.npm_execpath

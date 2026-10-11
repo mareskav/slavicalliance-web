@@ -12,9 +12,7 @@ export const SlavicAllianceHeader = ({ achievementLabel }: { achievementLabel?: 
       : pathname.startsWith("/napsali-o-nas")
         ? "press"
         : "home"
-  const resultsHref =
-    process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() ||
-    (process.env.NODE_ENV === "development" ? "http://localhost:3001/vysledky" : "/vysledky")
+  const resultsHref = "/vysledky?team=Slavic%20Alliance"
 
   return (
     <SharedSlavicAllianceHeader

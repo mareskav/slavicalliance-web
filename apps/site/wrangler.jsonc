@@ -3,10 +3,15 @@
   "name": "slavicalliance-site",
   "pages_build_output_dir": "./out",
   "compatibility_date": "2026-05-28",
+  "compatibility_flags": ["nodejs_compat"],
   "r2_buckets": [
     {
       "binding": "CONTENT_BUCKET",
       "bucket_name": "slavicalliance-site-content"
+    },
+    {
+      "binding": "RESULTS_DATA_BUCKET",
+      "bucket_name": "slavicalliance-results-data"
     }
   ]
 }

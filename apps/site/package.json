@@ -15,9 +15,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@repo/results-data": "*",
     "@repo/ui": "*",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
+    "lucide-react": "^0.511.0",
     "next": "16.2.6",
     "pg": "^8.21.0",
     "react": "19.2.3",

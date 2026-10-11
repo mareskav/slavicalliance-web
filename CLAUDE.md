@@ -15,7 +15,7 @@ historical-results workflow specifically.
 
 ## Neon (production Postgres) awareness
 
-Production `apps/results` and `apps/site` talk to Neon serverless Postgres
+Production `apps/site` (Pages Functions) and the snapshot publish workflow talk to Neon serverless Postgres
 (`DATABASE_URL` / `DATABASE_URL_RW`). Neon bills/limits on active compute
 time and connection count, and a serverless branch can suspend and need to
 wake on a new connection. Keep this in mind whenever you touch code that
@@ -26,7 +26,7 @@ issues queries:
   autosave. Admin UIs in this repo (see `ManualResultsPanel.tsx`) intentionally
   edit one row at a time and only write on explicit Save/Submit.
 - Prefer `unstable_cache` (see the `getKnownPubNames`/`getKnownTeams` pattern
-  in `apps/results/src/lib/quiz-results.ts`) for slow-changing, DB-derived
+  in `packages/results-data/src/quiz-results.ts`) for slow-changing, DB-derived
   data instead of querying on every request.
 - Avoid adding polling loops or frequent background refetches against Neon;
   if live-ish data is needed, favor a sane revalidate window over a tight
@@ -41,7 +41,7 @@ vs. N rows all autosaving), and default to the more conservative design.
 Current usage (a single admin, one row at a time) is well within Neon limits
 even at hundreds of writes/week — active compute time and connection count are
 what's billed/limited, not total historical request count. If multiple
-admins ever edit concurrently, each Cloudflare Worker isolate opens
+admins ever edit concurrently, each Cloudflare Pages Function isolate opens
 its own `pg.Pool` (`manual-results-db.ts`, `max: 2`), so concurrent requests
 could stack connections faster than expected. Not urgent today, but if that
 happens, consider pointing `DATABASE_URL_RW` at Neon's pooled (`-pooler`)

@@ -7,27 +7,7 @@ export const isSafeLink = (href: string) =>
   href.startsWith("../") ||
   href.startsWith("#")
 
-export const normaliseHref = (href: string) => {
-  if (href.startsWith("/vysledky")) {
-    const resultsHref =
-      process.env.NEXT_PUBLIC_RESULTS_APP_URL?.trim() ||
-      (process.env.NODE_ENV === "development" ? "http://localhost:3001/vysledky" : "/vysledky")
-
-    try {
-      const base = new URL(resultsHref, "http://localhost")
-      const target = new URL(href, "http://localhost")
-      base.search = target.search
-      if (resultsHref.startsWith("http://") || resultsHref.startsWith("https://")) {
-        return `${base.origin}${base.pathname}${base.search}`
-      }
-      return `${base.pathname}${base.search}`
-    } catch {
-      return href
-    }
-  }
-
-  return href
-}
+export const normaliseHref = (href: string) => href
 
 export const renderInlineMarkdown = (text: string) => {
   return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|_[^_]+_)/g).map((part, index) => {

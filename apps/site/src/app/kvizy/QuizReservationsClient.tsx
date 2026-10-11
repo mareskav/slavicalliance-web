@@ -75,7 +75,7 @@ export const QuizReservationsClient = () => {
   useEffect(() => {
     const controller = new AbortController()
 
-    fetch("/vysledky/api/quiz-reservations", { signal: controller.signal, cache: "no-store" })
+    fetch("/api/quiz-reservations", { signal: controller.signal, cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json() as Promise<{

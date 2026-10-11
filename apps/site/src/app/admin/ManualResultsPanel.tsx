@@ -1,5 +1,6 @@
 "use client"
 
+import { markResultsFresh } from "@/lib/results-freshness"
 import { FormEvent, useEffect, useState } from "react"
 
 type ManualResult = {
@@ -123,7 +124,7 @@ const ManualResultsPanel = () => {
   const loadResults = async () => {
     setLoading(true)
     try {
-      const response = await fetch("/vysledky/api/admin/manual-results", { cache: "no-store" })
+      const response = await fetch("/api/admin/manual-results", { cache: "no-store" })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
@@ -141,7 +142,7 @@ const ManualResultsPanel = () => {
 
   const loadPubNames = async () => {
     try {
-      const response = await fetch("/vysledky/api/admin/pub-names", { cache: "no-store" })
+      const response = await fetch("/api/admin/pub-names", { cache: "no-store" })
       if (!response.ok) return
       const payload = await response.json()
       setPubNames(payload.pubNames ?? [])
@@ -152,7 +153,7 @@ const ManualResultsPanel = () => {
 
   const loadTeams = async () => {
     try {
-      const response = await fetch("/vysledky/api/admin/teams", { cache: "no-store" })
+      const response = await fetch("/api/admin/teams", { cache: "no-store" })
       if (!response.ok) return
       const payload = await response.json()
       const loadedTeams: TeamOption[] = payload.teams ?? []
@@ -186,7 +187,7 @@ const ManualResultsPanel = () => {
     setSubmitting(true)
 
     try {
-      const response = await fetch("/vysledky/api/admin/manual-results", {
+      const response = await fetch("/api/admin/manual-results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -204,6 +205,8 @@ const ManualResultsPanel = () => {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error || `Uložení se nezdařilo (HTTP ${response.status}).`)
       }
+
+      markResultsFresh()
 
       setForm(buildDefaultForm(teams))
       await loadResults()
@@ -224,7 +227,7 @@ const ManualResultsPanel = () => {
     setRejectingId(id)
 
     try {
-      const response = await fetch("/vysledky/api/admin/manual-results", {
+      const response = await fetch("/api/admin/manual-results", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, action: "reject" })
@@ -234,6 +237,8 @@ const ManualResultsPanel = () => {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error || `Zrušení se nezdařilo (HTTP ${response.status}).`)
       }
+
+      markResultsFresh()
 
       await loadResults()
     } catch (rejectError: unknown) {
@@ -285,7 +290,7 @@ const ManualResultsPanel = () => {
     setSavingEdit(true)
 
     try {
-      const response = await fetch("/vysledky/api/admin/manual-results", {
+      const response = await fetch("/api/admin/manual-results", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -304,6 +309,8 @@ const ManualResultsPanel = () => {
         const payload = await response.json().catch(() => null)
         throw new Error(payload?.error || `Uložení se nezdařilo (HTTP ${response.status}).`)
       }
+
+      markResultsFresh()
 
       cancelEdit()
       await loadResults()
