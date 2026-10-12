@@ -421,21 +421,15 @@ Pages Functions (see root `README.md`). Open items for the admin page:
       endpoint.
 - [ ] Reject the test row (Slavic Alliance, 2019-11-18, Adélka) in production.
 - [x] Test row (Slavic Alliance, 2019-11-18, Adélka) was deleted by the admin.
-- [ ] Check the verification run of `Sync recent quiz results` (quiz-scrapper
-      run 38189209205, started 2026-10-12 00:45Z with the catch-up cap
-      `RECENT_CATCHUP_MAX_TEAMS=150`, commit 30fb009). If it was cancelled at
-      the 60 min timeout, lower the cap or persist progress to Neon per team.
-- [ ] Around 2026-10-19: confirm the Cloudflare "Workers hit the free tier CPU
+- [x] Scraper fix verified (2026-10-12): quiz-scrapper run 38189209205 with
+      the catch-up cap `RECENT_CATCHUP_MAX_TEAMS=150` (commit 30fb009) finished
+      successfully in 25 min (191 teams instead of 2178) and its `Trigger
+      results snapshot publish` step started `Publish results snapshots`
+      (run 38190827845). The remaining catch-up backlog drains over later runs.
+- [ ] Around 2026-10-19 (cloud routine `trig_011QXn7gUQCv51dQGqy8pY6d` runs 09:00 Prague and reports on claude.ai/code/routines): confirm the Cloudflare "Workers hit the free tier CPU
       limit" e-mails have stopped. If they continue, the e-mail names the
       offending Worker; check `wrangler pages deployment tail`.
-- [ ] Verify the scrape-triggered publish (quiz-scrapper `Trigger results
-      snapshot publish` step, secret `RESULTS_PUBLISH_TOKEN`) on the next
-      successful `Sync recent quiz results` run. Not verified yet: the
-      2026-10-12 01:38 run was cancelled at the 60 min timeout because the
-      "completed reservations" branch of `scrape_recent_results.py` picked
-      2178 teams (`completed_results=0`, `upcoming_reserved_catchup=1916`)
-      instead of ~30; three earlier runs (9.-10. 10.) were cancelled the
-      same way. Until fixed, snapshots refresh only via the publish cron.
+
 
 Still explicitly out of scope, not just deprioritized: an "unreject" action
 for soft-deleted rows (intentional MVP boundary — see `CLAUDE.md`'s MVP
