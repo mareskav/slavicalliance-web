@@ -419,7 +419,6 @@ Pages Functions (see root `README.md`). Open items for the admin page:
       `wrangler pages deployment tail` output during the save. If several
       admins edit concurrently, point `DATABASE_URL_RW` at Neon's `-pooler`
       endpoint.
-- [ ] Reject the test row (Slavic Alliance, 2019-11-18, Adélka) in production.
 - [x] Test row (Slavic Alliance, 2019-11-18, Adélka) was deleted by the admin.
 - [x] Scraper fix verified (2026-10-12): quiz-scrapper run 38189209205 with
       the catch-up cap `RECENT_CATCHUP_MAX_TEAMS=150` (commit 30fb009) finished
