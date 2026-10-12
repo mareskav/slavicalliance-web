@@ -420,6 +420,14 @@ Pages Functions (see root `README.md`). Open items for the admin page:
       admins edit concurrently, point `DATABASE_URL_RW` at Neon's `-pooler`
       endpoint.
 - [ ] Reject the test row (Slavic Alliance, 2019-11-18, Adélka) in production.
+- [x] Test row (Slavic Alliance, 2019-11-18, Adélka) was deleted by the admin.
+- [ ] Check the verification run of `Sync recent quiz results` (quiz-scrapper
+      run 38189209205, started 2026-10-12 00:45Z with the catch-up cap
+      `RECENT_CATCHUP_MAX_TEAMS=150`, commit 30fb009). If it was cancelled at
+      the 60 min timeout, lower the cap or persist progress to Neon per team.
+- [ ] Around 2026-10-19: confirm the Cloudflare "Workers hit the free tier CPU
+      limit" e-mails have stopped. If they continue, the e-mail names the
+      offending Worker; check `wrangler pages deployment tail`.
 - [ ] Verify the scrape-triggered publish (quiz-scrapper `Trigger results
       snapshot publish` step, secret `RESULTS_PUBLISH_TOKEN`) on the next
       successful `Sync recent quiz results` run. Not verified yet: the
