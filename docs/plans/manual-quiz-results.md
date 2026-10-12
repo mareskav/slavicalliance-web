@@ -398,6 +398,29 @@ rediscover them from scratch.
    fixing until the panel gets an actual modal component for something
    else.
 
+### TODO after the static-export cutover (2026-10-12)
+
+`/vysledky` is now served by Pages from R2 snapshots; the admin API runs as
+Pages Functions (see root `README.md`). Open items for the admin page:
+
+- [ ] Surface a failed publish dispatch (`requestSnapshotPublish`) in the
+      admin response/panel, so an admin knows the snapshot may not be fresh.
+- [ ] Keep the "Uloženo" feedback (follow-up 1 above) in mind: since the
+      incremental refresh updates the team snapshot within ~1 s, the saved
+      row appears on the team page right away.
+- [ ] Note on the public site that manual results appear on the team page
+      only and do not count towards league tables yet (the admin page
+      already says so).
+- [ ] Count manual results into league standings: needs a league and round
+      per manual row (schema + UI + snapshot builders).
+- [ ] Bulk entry, if historical results are ever added in larger batches.
+- [ ] First-save failures were suspected to be Neon cold starts; timeouts in
+      `manual-results-db.ts` were raised to 8 s. If it still fails, capture
+      `wrangler pages deployment tail` output during the save. If several
+      admins edit concurrently, point `DATABASE_URL_RW` at Neon's `-pooler`
+      endpoint.
+- [ ] Reject the test row (Slavic Alliance, 2019-11-18, Adélka) in production.
+
 Still explicitly out of scope, not just deprioritized: an "unreject" action
 for soft-deleted rows (intentional MVP boundary — see `CLAUDE.md`'s MVP
 note; revisit only as a deliberate decision, not a drive-by fix).
