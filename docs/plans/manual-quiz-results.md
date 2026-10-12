@@ -420,6 +420,14 @@ Pages Functions (see root `README.md`). Open items for the admin page:
       admins edit concurrently, point `DATABASE_URL_RW` at Neon's `-pooler`
       endpoint.
 - [ ] Reject the test row (Slavic Alliance, 2019-11-18, Adélka) in production.
+- [ ] Verify the scrape-triggered publish (quiz-scrapper `Trigger results
+      snapshot publish` step, secret `RESULTS_PUBLISH_TOKEN`) on the next
+      successful `Sync recent quiz results` run. Not verified yet: the
+      2026-10-12 01:38 run was cancelled at the 60 min timeout because the
+      "completed reservations" branch of `scrape_recent_results.py` picked
+      2178 teams (`completed_results=0`, `upcoming_reserved_catchup=1916`)
+      instead of ~30; three earlier runs (9.-10. 10.) were cancelled the
+      same way. Until fixed, snapshots refresh only via the publish cron.
 
 Still explicitly out of scope, not just deprioritized: an "unreject" action
 for soft-deleted rows (intentional MVP boundary — see `CLAUDE.md`'s MVP
