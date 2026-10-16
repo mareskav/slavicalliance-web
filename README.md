@@ -19,6 +19,9 @@ Monorepo for the public Slavic Alliance website, quiz reservation overview, and 
   - `public.quiz_manual_results` for team result history entered manually by an admin through `/admin`, unioned into the team result history alongside `quiz_results`.
 - Results pages (`/vysledky`) read public JSON snapshots (`index.json`, `team/*`, `league/*`, `special/*`) from the R2 bucket `slavicalliance-results-data`, served at `https://data.slavicalliance.cz` with `Cache-Control: public, max-age=60`. `npm run publish:results` (GitHub workflow `publish-results.yml`) rebuilds them from Postgres; it runs on a cron, on `workflow_dispatch`, after quiz-scrapper syncs, and after admin saves. An admin save also patches the touched team snapshots immediately inside the Function, and that browser bypasses the cache for a few minutes.
 
+Regular league identity rules, the 16 October homonym fix and PostgreSQL checks:
+[packages/results-data/README.md](packages/results-data/README.md).
+
 ## Local Development
 
 Create `.env.local` from `.env.example`, then run:

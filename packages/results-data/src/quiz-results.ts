@@ -1,3 +1,4 @@
+import { regularLeagueStandingQuery } from "./regular-league-query"
 import { Pool, type QueryResult, type QueryResultRow } from "pg"
 
 export type TeamSummary = {
@@ -491,6 +492,7 @@ const loadPrahaLeagueSummaries = async (): Promise<LeagueSummary[]> => {
 
 const mapLeagueStandingRows = (
   rows: {
+    identity_key?: string
     team_id: number | null
     team_name: string
     team_pub: string | null
@@ -500,7 +502,10 @@ const mapLeagueStandingRows = (
 ) =>
   rows.map((row) => ({
     teamId: row.team_id,
-    teamKey: getTeamKey(row.team_id, row.team_name),
+    teamKey:
+      row.team_id === null && row.identity_key
+        ? `${getTeamKey(null, row.team_name)}:identity:${row.identity_key}`
+        : getTeamKey(row.team_id, row.team_name),
     teamName: row.team_name,
     teamPub: row.team_pub,
     duplicateNameCount: row.duplicate_name_count,
@@ -587,61 +592,7 @@ const loadRegularLeagueStandingRows = async (league: LeagueRow) => {
     team_pub: string | null
     duplicate_name_count: number
     league_results: LeagueResultPoints[]
-  }>(
-    league,
-    (membershipFilter) => `
-      with results_in_league as (
-        select
-          team_id,
-          team_name,
-          nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
-          (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
-          quiz_date,
-          id,
-          floor((quiz_date - $1::date)::numeric / 7)::int as league_week
-        from public.quiz_results
-        where quiz_date between $1 and $2
-          and nullif(trim(league_name), '') is null${membershipFilter}
-      ),
-      picked_results as (
-        select distinct on (team_name, league_week)
-          team_id,
-          team_name,
-          team_pub,
-          league_points,
-          quiz_date,
-          id,
-          league_week + 1 as league_round
-        from results_in_league
-        order by team_name, league_week, quiz_date desc, id desc
-      ),
-      team_totals as (
-        select
-          (array_agg(team_id order by quiz_date desc, id desc))[1] as team_id,
-          team_name,
-          (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
-          coalesce(
-            json_agg(
-              json_build_object('round', league_round, 'points', league_points, 'date', quiz_date)
-              order by league_round, quiz_date, id
-            ),
-            '[]'::json
-          ) as league_results
-        from picked_results
-        group by team_name
-      )
-      select
-        team_totals.team_id,
-        team_totals.team_name,
-        team_totals.team_pub,
-        count(*) over (partition by team_totals.team_name)::int as duplicate_name_count,
-        team_totals.league_results
-      from team_totals
-      order by team_name, team_id nulls last
-    `,
-    "quiz_results",
-    [league.period_start, league.period_stop]
-  )
+  }>(league, regularLeagueStandingQuery, "quiz_results", [league.period_start, league.period_stop])
 
   return result.rows
 }

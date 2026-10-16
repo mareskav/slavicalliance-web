@@ -33,7 +33,8 @@ const leagueRow = (url: string | null) => ({
 
 const standingsCalls = () =>
   queryMock.mock.calls.filter(([text]) => String(text).includes("results_in_league"))
-const totalPubsCalls = () => queryMock.mock.calls.filter(([text]) => String(text).includes("total_pubs"))
+const totalPubsCalls = () =>
+  queryMock.mock.calls.filter(([text]) => String(text).includes("total_pubs"))
 
 const mockDatabase = (options: { url?: string | null; failMembershipWith?: string } = {}) => {
   const url = options.url === undefined ? leagueUrl : options.url
@@ -62,6 +63,26 @@ beforeEach(() => {
 })
 
 describe("league membership filter", () => {
+  it("gives unresolved same-name venues distinct stable React keys", async () => {
+    queryMock.mockImplementation(async (text: string) => {
+      if (text.includes("from public.quiz_leagues")) return { rows: [leagueRow(leagueUrl)] }
+      if (text.includes("results_in_league"))
+        return {
+          rows: ["A", "B"].map((venue) => ({
+            team_id: null,
+            team_name: "Same name",
+            identity_key: venue,
+            team_pub: venue,
+            duplicate_name_count: 2,
+            league_results: [{ round: 1, points: 40, date: "2026-09-14" }]
+          }))
+        }
+      return { rows: [] }
+    })
+    const result = await getLongTermLeagueStandings("178")
+    expect(result?.teams).toHaveLength(2)
+    expect(new Set(result?.teams.map((team) => team.teamKey)).size).toBe(2)
+  })
   it("binds the league url as $3 in the standings and total pubs queries", async () => {
     mockDatabase()
 
