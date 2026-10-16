@@ -1,3 +1,8 @@
+import {
+  aggregateLeagueNamePattern,
+  specialLeagueCatalogueQuery,
+  specialLeagueStandingQuery
+} from "./special-league-query"
 import { regularLeagueStandingQuery } from "./regular-league-query"
 import { Pool, type QueryResult, type QueryResultRow } from "pg"
 
@@ -83,8 +88,6 @@ const ignoredFinalePrahaLeagueUrl = "https://www.hospodskykviz.cz/vysledky/461"
 const ignoredFinaleJaro2026Url = "https://www.hospodskykviz.cz/vysledky/492"
 const ignoredLeagueUrls = [ignoredFinalePrahaLeagueUrl, ignoredFinaleJaro2026Url]
 const ignoredLeagueNames = ["Finále Praha", "Finále jaro 2026"]
-const specialLeagueUrls = ignoredLeagueUrls
-const specialLeagueNames = ignoredLeagueNames
 const primaryLeagueUrls = [pragueAutumn2026LeagueUrl]
 const pragueLeagueNamePatterns = ["%praha%", "%prahy%", "%praze%", "%praž%"]
 const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000
@@ -710,27 +713,7 @@ const loadLongTermLeagueStandings = async (
 }
 
 const loadSpecialLeagueSummaries = async (): Promise<LeagueSummary[]> => {
-  const result = await queryDatabase<{
-    id: number
-    league_name: string
-    period_start: Date
-    period_stop: Date
-    league_url: string | null
-  }>(
-    `
-      select
-        id::int,
-        league_name,
-        period_start,
-        period_stop,
-        league_url
-      from public.quiz_leagues
-      where league_url = any($1::text[]) or league_name = any($2::text[])
-      order by period_stop desc, period_start desc, id desc
-    `,
-    [specialLeagueUrls, specialLeagueNames]
-  )
-
+  const result = await queryDatabase<LeagueRow>(specialLeagueCatalogueQuery, [aggregateLeagueNamePattern])
   return result.rows.map(mapLeagueSummaryRow)
 }
 
@@ -738,50 +721,11 @@ const loadSpecialLeagueStandingRows = async (league: LeagueRow) => {
   const result = await queryDatabase<{
     team_id: number | null
     team_name: string
+    identity_key: string
     team_pub: string | null
     duplicate_name_count: number
     league_results: LeagueResultPoints[]
-  }>(
-    `
-      with results_in_league as (
-        select
-          null::integer as team_id,
-          team_name,
-          nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
-          coalesce(points, 0)::float8 as league_points,
-          quiz_date,
-          id,
-          dense_rank() over (partition by team_name order by quiz_date, id) as league_round
-        from public.quiz_results
-        where trim(league_name) = $1
-      ),
-      team_totals as (
-        select
-          null::integer as team_id,
-          team_name,
-          (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
-          coalesce(
-            json_agg(
-              json_build_object('round', league_round, 'points', league_points, 'date', quiz_date)
-              order by league_round, quiz_date, id
-            ),
-            '[]'::json
-          ) as league_results
-        from results_in_league
-        group by team_name
-      )
-      select
-        team_totals.team_id,
-        team_totals.team_name,
-        team_totals.team_pub,
-        count(*) over (partition by team_totals.team_name)::int as duplicate_name_count,
-        team_totals.league_results
-      from team_totals
-      order by team_name, team_id nulls last
-    `,
-    [league.league_name.trim()]
-  )
-
+  }>(specialLeagueStandingQuery, [league.league_name.trim(), league.period_start, league.period_stop])
   return result.rows
 }
 
@@ -791,8 +735,9 @@ const loadSpecialLeagueTotalPubs = async (league: LeagueRow) => {
       select count(distinct nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), ''))::int as total_pubs
       from public.quiz_results
       where trim(league_name) = $1
+        and quiz_date between $2::date and $3::date
     `,
-    [league.league_name.trim()]
+    [league.league_name.trim(), league.period_start, league.period_stop]
   )
 
   return result.rows[0]?.total_pubs ?? 0
@@ -803,50 +748,17 @@ const loadSpecialLeagueStandings = async (
   leagueId: string | undefined
 ): Promise<LeagueStandings | null> => {
   const selectedLeagueId = parseLeagueId(leagueId)
-  const leagueQuery =
-    selectedLeagueId === null
-      ? {
-          text: `
-            select
-              id::int,
-              league_name,
-              period_start,
-              period_stop,
-              league_url
-            from public.quiz_leagues
-            where league_url = any($1::text[]) or league_name = any($2::text[])
-            order by period_stop desc, period_start desc, id desc
-            limit 1
-          `,
-          values: [specialLeagueUrls, specialLeagueNames]
-        }
-      : {
-          text: `
-            select
-              id::int,
-              league_name,
-              period_start,
-              period_stop,
-              league_url
-            from public.quiz_leagues
-            where id = $1::int
-              and (league_url = any($2::text[]) or league_name = any($3::text[]))
-            limit 1
-          `,
-          values: [selectedLeagueId, specialLeagueUrls, specialLeagueNames]
-        }
-  const leagueResult = await queryDatabase<{
-    id: number
-    league_name: string
-    period_start: Date
-    period_stop: Date
-    league_url: string | null
-  }>(leagueQuery.text, leagueQuery.values)
-
-  const league = leagueResult.rows[0]
-
-  if (!league) {
-    return null
+  const summaries = await loadSpecialLeagueSummaries()
+  const summary = selectedLeagueId === null
+    ? summaries[0]
+    : summaries.find((candidate) => candidate.leagueId === selectedLeagueId)
+  if (!summary) return null
+  const league: LeagueRow = {
+    id: summary.leagueId,
+    league_name: summary.leagueName,
+    period_start: new Date(summary.periodStart),
+    period_stop: new Date(summary.periodStop),
+    league_url: summary.leagueUrl
   }
 
   const teams = mapLeagueStandingRows(await loadSpecialLeagueStandingRows(league))

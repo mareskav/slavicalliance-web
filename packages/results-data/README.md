@@ -58,4 +58,23 @@ nejasné párování, doplňováček, více výsledků v týdnu a vyloučení sp
 
 Změna dotazu sama neaktualizuje existující R2 snapshoty. Po bezpečném přenosu
 lokálních dat do Neonu je nutné sestavit/publikovat snapshoty s touto verzí
-dotazu. Tato oprava byla ověřena lokálně; v rámci práce se nic nepublikovalo.
+dotazu. Tato oprava byla ověřena lokálně; v rámci původní práce se nic nepublikovalo.
+
+## Historie a katalog speciálů – 16. 10. 2026
+
+Týmová historie nadále používá přesnou dvojici `(team_id, team_name)`, aby
+nespojovala homonyma. Chybějící ID se opravují ve zdrojových datech pouze po
+ověření jednotlivých výsledků na konkrétním veřejném profilu, nikoli fallbackem
+na samotný název. U Slavic Alliance šlo o 235 starších výsledků bez ID.
+
+`special-league-query.ts` nahrazuje původní seznam dvou povolených finále.
+Katalog nabídne neprázdné tematické soutěže a finále s výsledky uvnitř období
+soutěže. Vylučuje regionální, roční a celorepublikové agregáty, týdenní a letní
+ligy a konkrétní kvalifikaci `/461`; skutečné jednorázové události v podniku
+Finále Praha zůstávají speciály. Neznámé budoucí pojmenování běžné ligy může
+vyžadovat rozšíření pravidel katalogu.
+
+Speciální pořadí rozlišuje profily a nejednoznačné výsledky podle podniku,
+omezuje výsledky obdobím soutěže a používá body bez doplňováčku. Manuální
+historické výsledky do ligových tabulek nadále nevstupují. Regresní SQL testy
+jsou v `special-league-query.postgres.test.ts`.
