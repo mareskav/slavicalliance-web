@@ -636,7 +636,7 @@ const ManualResultsPanel = () => {
                     <div className="mt-2 grid grid-cols-3 gap-2 text-sm text-white">
                       <div>
                         <span className="text-white/45">Pořadí: </span>
-                        {result.orderInQuiz ?? "-"}
+                        {result.orderInQuiz !== null ? `${result.orderInQuiz}.` : "-"}
                       </div>
                       <div>
                         <span className="text-white/45">Body: </span>
@@ -683,7 +683,7 @@ const ManualResultsPanel = () => {
                       <tr key={result.id}>
                         <td className="whitespace-nowrap px-3 py-2 text-white">{formatDate(result.quizDate)}</td>
                         <td className="px-3 py-2 text-white">{result.teamName}</td>
-                        <td className="px-3 py-2 text-right text-white">{result.orderInQuiz ?? "-"}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.orderInQuiz !== null ? `${result.orderInQuiz}.` : "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.points ?? "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.doplnovacek ?? "-"}</td>
                         <td className="px-3 py-2 text-white/78">{result.pub ?? "-"}</td>
