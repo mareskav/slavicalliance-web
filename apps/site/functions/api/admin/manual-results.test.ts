@@ -129,6 +129,9 @@ describe("manual-results route", () => {
         null,
         "Test Pub",
         "note",
+        null,
+        null,
+        null,
         "admin"
       ])
     })

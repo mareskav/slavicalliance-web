@@ -280,6 +280,9 @@ const manualResultColumns = `
   order_in_quiz,
   points,
   doplnovacek,
+  clenu,
+  max_body_v_kole,
+  tip_56_question,
   pub,
   note,
   status,
@@ -296,6 +299,9 @@ const mapManualResultRow = (row) => ({
   orderInQuiz: row.order_in_quiz,
   points: row.points === null ? null : Number(row.points),
   doplnovacek: row.doplnovacek === null ? null : Number(row.doplnovacek),
+  clenu: row.clenu,
+  maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
+  tip56Question: row.tip_56_question === "1",
   pub: row.pub,
   note: row.note,
   status: row.status,
@@ -363,10 +369,33 @@ const validateManualResultInput = (body) => {
     doplnovacek = parsed
   }
 
+  let clenu = null
+  if (body.clenu !== undefined && body.clenu !== null && body.clenu !== "") {
+    const parsed = Number(body.clenu)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return { ok: false, error: "Team size must be a positive whole number." }
+    }
+    clenu = parsed
+  }
+
+  let maxBodyVKole = null
+  if (body.maxBodyVKole !== undefined && body.maxBodyVKole !== null && body.maxBodyVKole !== "") {
+    const parsed = Number(body.maxBodyVKole)
+    if (!isFiniteNonNegativeNumber(parsed) || !isHalfPointNumber(parsed)) {
+      return { ok: false, error: "Max points must be a non-negative number in half-point increments." }
+    }
+    maxBodyVKole = parsed
+  }
+
+  const tip56Question = body.tip56Question === true
+
   const pub = typeof body.pub === "string" && body.pub.trim() ? body.pub.trim() : null
   const note = typeof body.note === "string" && body.note.trim() ? body.note.trim() : null
 
-  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, pub, note } }
+  return {
+    ok: true,
+    value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, clenu, maxBodyVKole, tip56Question, pub, note },
+  }
 }
 
 const isUniqueViolation = (error) => error && typeof error === "object" && error.code === "23505"
@@ -591,15 +620,15 @@ const handleLocalApi = async (request, response, pathname) => {
       }
 
       try {
-        const { teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, pub, note } = validation.value
+        const { teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, clenu, maxBodyVKole, tip56Question, pub, note } = validation.value
         const result = await pool.query(
           `
             insert into public.quiz_manual_results
-              (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, submitted_by)
-            values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, clenu, max_body_v_kole, tip_56_question, submitted_by)
+            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             returning ${manualResultColumns}
           `,
-          [teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, pub, note, session.role]
+          [teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, pub, note, clenu, maxBodyVKole, tip56Question ? "1" : null, session.role]
         )
         json(response, { result: mapManualResultRow(result.rows[0]) }, { status: 201 })
       } catch (error) {
@@ -652,6 +681,9 @@ const handleLocalApi = async (request, response, pathname) => {
             teamId: body.teamId,
             points: body.points,
             doplnovacek: body.doplnovacek,
+            clenu: body.clenu,
+            maxBodyVKole: body.maxBodyVKole,
+            tip56Question: body.tip56Question,
             pub: body.pub,
             note: body.note,
           })
@@ -670,6 +702,9 @@ const handleLocalApi = async (request, response, pathname) => {
               team_name = coalesce($3, team_name),
               quiz_date = coalesce($4, quiz_date),
               order_in_quiz = coalesce($9, order_in_quiz),
+              clenu = coalesce($10, clenu),
+              max_body_v_kole = coalesce($11, max_body_v_kole),
+              tip_56_question = case when $12::boolean is null then tip_56_question when $12::boolean then '1' else null end,
               points = coalesce($5, points),
               doplnovacek = coalesce($6, doplnovacek),
               pub = coalesce($7, pub),
@@ -692,6 +727,9 @@ const handleLocalApi = async (request, response, pathname) => {
             typeof body.pub === "string" ? body.pub.trim() : null,
             typeof body.note === "string" ? body.note.trim() : null,
             body.orderInQuiz === undefined ? null : body.orderInQuiz === null || body.orderInQuiz === "" ? null : Number(body.orderInQuiz),
+            body.clenu === undefined ? null : body.clenu === null || body.clenu === "" ? null : Number(body.clenu),
+            body.maxBodyVKole === undefined ? null : body.maxBodyVKole === null || body.maxBodyVKole === "" ? null : Number(body.maxBodyVKole),
+            typeof body.tip56Question === "boolean" ? body.tip56Question : null,
           ]
         )
 

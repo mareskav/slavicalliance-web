@@ -40,7 +40,7 @@ export const TeamTable = ({
             />
           </th>
           <th
-            className="w-20 px-1 py-3 font-semibold sm:px-1.5 md:w-36 md:px-4"
+            className="w-24 px-1 py-3 font-semibold sm:px-1.5 md:w-36 md:px-4"
             aria-sort={sort === "date" ? (direction === "asc" ? "ascending" : "descending") : undefined}
           >
               <SortHeader
@@ -139,7 +139,7 @@ export const TeamTable = ({
             </td>
             <td className="px-1 py-2.5 sm:px-1.5 md:px-4 md:py-3">
               <div className="flex items-center gap-1.5">
-                <p className="whitespace-nowrap font-semibold leading-5 text-white">
+                <p className="whitespace-nowrap text-[15px] font-semibold leading-5 text-white md:text-base">
                   <span className="md:hidden">{formatCompactDate(result.quizDate)}</span>
                   <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
                 </p>

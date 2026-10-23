@@ -10,6 +10,9 @@ export type ManualResult = {
   orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
+  clenu: number | null
+  maxBodyVKole: number | null
+  tip56Question: boolean
   pub: string | null
   note: string | null
   status: ManualResultStatus
@@ -25,6 +28,9 @@ export type ManualResultInput = {
   orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
+  clenu: number | null
+  maxBodyVKole: number | null
+  tip56Question: boolean
   pub: string | null
   note: string | null
 }
@@ -37,6 +43,9 @@ export type ManualResultRow = {
   order_in_quiz: number | null
   points: number | null
   doplnovacek: number | null
+  clenu: number | null
+  max_body_v_kole: number | null
+  tip_56_question: string | null
   pub: string | null
   note: string | null
   status: ManualResultStatus
@@ -54,6 +63,9 @@ export const mapManualResultRow = (row: ManualResultRow): ManualResult => ({
   orderInQuiz: row.order_in_quiz,
   points: row.points === null ? null : Number(row.points),
   doplnovacek: row.doplnovacek === null ? null : Number(row.doplnovacek),
+  clenu: row.clenu,
+  maxBodyVKole: row.max_body_v_kole === null ? null : Number(row.max_body_v_kole),
+  tip56Question: row.tip_56_question === "1",
   pub: row.pub,
   note: row.note,
   status: row.status,
@@ -70,6 +82,9 @@ const manualResultColumns = `
   order_in_quiz,
   points,
   doplnovacek,
+  clenu,
+  max_body_v_kole,
+  tip_56_question,
   pub,
   note,
   status,
@@ -102,8 +117,8 @@ export const insertManualResult = async (
   const result = await queryManualResultsDatabase<ManualResultRow>(
     `
       insert into public.quiz_manual_results
-        (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, submitted_by)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, clenu, max_body_v_kole, tip_56_question, submitted_by)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       returning ${manualResultColumns}
     `,
     [
@@ -115,6 +130,9 @@ export const insertManualResult = async (
       input.doplnovacek,
       input.pub,
       input.note,
+      input.clenu,
+      input.maxBodyVKole,
+      input.tip56Question ? "1" : null,
       submittedBy
     ]
   )
@@ -147,6 +165,9 @@ export const updateManualResult = async (
   if (input.orderInQuiz !== undefined) setField("order_in_quiz", input.orderInQuiz)
   if (input.points !== undefined) setField("points", input.points)
   if (input.doplnovacek !== undefined) setField("doplnovacek", input.doplnovacek)
+  if (input.clenu !== undefined) setField("clenu", input.clenu)
+  if (input.maxBodyVKole !== undefined) setField("max_body_v_kole", input.maxBodyVKole)
+  if (input.tip56Question !== undefined) setField("tip_56_question", input.tip56Question ? "1" : null)
   if (input.pub !== undefined) setField("pub", input.pub)
   if (input.note !== undefined) setField("note", input.note)
 

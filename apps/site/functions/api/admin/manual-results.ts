@@ -28,6 +28,9 @@ type ManualResultRequestBody = {
   orderInQuiz?: unknown
   points?: unknown
   doplnovacek?: unknown
+  clenu?: unknown
+  maxBodyVKole?: unknown
+  tip56Question?: unknown
   pub?: unknown
   note?: unknown
 }
@@ -89,10 +92,33 @@ const validateManualResultInput = (body: ManualResultRequestBody): ValidationRes
     doplnovacek = parsed
   }
 
+  let clenu: number | null = null
+  if (body.clenu !== undefined && body.clenu !== null && body.clenu !== "") {
+    const parsed = Number(body.clenu)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return { ok: false, error: "Team size must be a positive whole number." }
+    }
+    clenu = parsed
+  }
+
+  let maxBodyVKole: number | null = null
+  if (body.maxBodyVKole !== undefined && body.maxBodyVKole !== null && body.maxBodyVKole !== "") {
+    const parsed = Number(body.maxBodyVKole)
+    if (!isFiniteNonNegativeNumber(parsed) || !isHalfPointNumber(parsed)) {
+      return { ok: false, error: "Max points must be a non-negative number in half-point increments." }
+    }
+    maxBodyVKole = parsed
+  }
+
+  const tip56Question = body.tip56Question === true
+
   const pub = typeof body.pub === "string" && body.pub.trim() ? body.pub.trim() : null
   const note = typeof body.note === "string" && body.note.trim() ? body.note.trim() : null
 
-  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, pub, note } }
+  return {
+    ok: true,
+    value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, clenu, maxBodyVKole, tip56Question, pub, note }
+  }
 }
 
 const isUniqueViolation = (error: unknown) =>
@@ -194,6 +220,9 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
       orderInQuiz: body.orderInQuiz,
       points: body.points,
       doplnovacek: body.doplnovacek,
+      clenu: body.clenu,
+      maxBodyVKole: body.maxBodyVKole,
+      tip56Question: body.tip56Question,
       pub: body.pub,
       note: body.note
     }
@@ -209,6 +238,9 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
         teamId: partial.teamId,
         points: partial.points,
         doplnovacek: partial.doplnovacek,
+        clenu: partial.clenu,
+        maxBodyVKole: partial.maxBodyVKole,
+        tip56Question: partial.tip56Question,
         pub: partial.pub,
         note: partial.note
       })
@@ -247,6 +279,19 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
           : partial.doplnovacek === null || partial.doplnovacek === ""
             ? null
             : Number(partial.doplnovacek),
+      clenu:
+        partial.clenu === undefined
+          ? undefined
+          : partial.clenu === null || partial.clenu === ""
+            ? null
+            : Number(partial.clenu),
+      maxBodyVKole:
+        partial.maxBodyVKole === undefined
+          ? undefined
+          : partial.maxBodyVKole === null || partial.maxBodyVKole === ""
+            ? null
+            : Number(partial.maxBodyVKole),
+      tip56Question: typeof partial.tip56Question === "boolean" ? partial.tip56Question : undefined,
       pub: typeof partial.pub === "string" ? partial.pub.trim() || null : undefined,
       note: typeof partial.note === "string" ? partial.note.trim() || null : undefined
     })

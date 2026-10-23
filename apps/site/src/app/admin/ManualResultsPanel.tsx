@@ -11,6 +11,9 @@ type ManualResult = {
   orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
+  clenu: number | null
+  maxBodyVKole: number | null
+  tip56Question: boolean
   pub: string | null
   note: string | null
   status: "approved" | "rejected"
@@ -63,6 +66,9 @@ type FormState = {
   orderInQuiz: string
   points: string
   doplnovacek: string
+  clenu: string
+  maxBodyVKole: string
+  tip56Question: boolean
   pub: string
   note: string
 }
@@ -77,6 +83,9 @@ const buildDefaultForm = (teams: TeamOption[]): FormState => {
     orderInQuiz: "",
     points: "",
     doplnovacek: "",
+    clenu: "",
+    maxBodyVKole: "",
+    tip56Question: false,
     pub: "",
     note: ""
   }
@@ -242,7 +251,39 @@ const ResultFormFields = ({
         />
       </label>
 
-      <label className={`${labelClass} col-span-2`}>
+      <label className={labelClass}>
+        Max v kole
+        <input
+          type="text"
+          inputMode="decimal"
+          value={form.maxBodyVKole}
+          onChange={update("maxBodyVKole")}
+          className={inputClass}
+        />
+      </label>
+
+      <label className={labelClass}>
+        Členů v týmu
+        <input
+          type="text"
+          inputMode="numeric"
+          value={form.clenu}
+          onChange={update("clenu")}
+          className={inputClass}
+        />
+      </label>
+
+      <label className="col-span-2 flex h-10 items-center gap-2 self-end text-sm text-white/72 sm:col-span-1">
+        <input
+          type="checkbox"
+          checked={form.tip56Question}
+          onChange={(event) => setForm((prev) => ({ ...prev, tip56Question: event.target.checked }))}
+          className="h-5 w-5 accent-sky-300"
+        />
+        56. otázka
+      </label>
+
+      <label className={`${labelClass} col-span-2 sm:col-span-4`}>
         Hospoda
         <input type="text" list="pub-names-list" value={form.pub} onChange={update("pub")} className={inputClass} />
       </label>
@@ -337,8 +378,8 @@ const ManualResultsPanel = () => {
       return
     }
 
-    if ([form.orderInQuiz, form.points, form.doplnovacek].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
-      setError("Pořadí, body a doplňovačky musí být číslo.")
+    if ([form.orderInQuiz, form.points, form.doplnovacek, form.clenu, form.maxBodyVKole].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
+      setError("Pořadí, body, doplňovačky, max a počet členů musí být číslo.")
       return
     }
 
@@ -356,6 +397,9 @@ const ManualResultsPanel = () => {
           orderInQuiz: parseOptionalNumber(form.orderInQuiz),
           points: parseOptionalNumber(form.points),
           doplnovacek: parseOptionalNumber(form.doplnovacek),
+          clenu: parseOptionalNumber(form.clenu),
+          maxBodyVKole: parseOptionalNumber(form.maxBodyVKole),
+          tip56Question: form.tip56Question,
           pub: form.pub.trim() ? form.pub.trim() : null,
           note: form.note.trim() ? form.note.trim() : null
         })
@@ -426,6 +470,9 @@ const ManualResultsPanel = () => {
       orderInQuiz: result.orderInQuiz !== null ? String(result.orderInQuiz) : "",
       points: result.points !== null ? String(result.points) : "",
       doplnovacek: result.doplnovacek !== null ? String(result.doplnovacek) : "",
+      clenu: result.clenu !== null ? String(result.clenu) : "",
+      maxBodyVKole: result.maxBodyVKole !== null ? String(result.maxBodyVKole) : "",
+      tip56Question: result.tip56Question,
       pub: result.pub ?? "",
       note: result.note ?? ""
     })
@@ -449,7 +496,7 @@ const ManualResultsPanel = () => {
       return
     }
 
-    if ([editForm.orderInQuiz, editForm.points, editForm.doplnovacek].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
+    if ([editForm.orderInQuiz, editForm.points, editForm.doplnovacek, editForm.clenu, editForm.maxBodyVKole].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
       setError("Pořadí, body a doplňovačky musí být číslo.")
       return
     }
@@ -469,6 +516,9 @@ const ManualResultsPanel = () => {
           orderInQuiz: parseOptionalNumber(editForm.orderInQuiz),
           points: parseOptionalNumber(editForm.points),
           doplnovacek: parseOptionalNumber(editForm.doplnovacek),
+          clenu: parseOptionalNumber(editForm.clenu),
+          maxBodyVKole: parseOptionalNumber(editForm.maxBodyVKole),
+          tip56Question: editForm.tip56Question,
           pub: editForm.pub.trim() ? editForm.pub.trim() : null,
           note: editForm.note.trim() ? editForm.note.trim() : null
         })
@@ -664,7 +714,7 @@ const ManualResultsPanel = () => {
                         {showTeamColumn ? (
                           <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
                         ) : null}
-                        <div className={showTeamColumn ? "text-xs text-white/58" : "text-sm font-semibold text-white"}>
+                        <div className={showTeamColumn ? "text-sm text-white/58" : "text-base font-semibold text-white"}>
                           {formatDate(result.quizDate)}
                         </div>
                       </div>
@@ -684,6 +734,13 @@ const ManualResultsPanel = () => {
                         {result.doplnovacek ?? "-"}
                       </div>
                     </div>
+                    {result.maxBodyVKole !== null || result.clenu !== null || result.tip56Question ? (
+                      <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-white/72">
+                        {result.maxBodyVKole !== null ? <span>Max: {result.maxBodyVKole}</span> : null}
+                        {result.clenu !== null ? <span>Členů: {result.clenu}</span> : null}
+                        {result.tip56Question ? <span>56. otázka ★</span> : null}
+                      </div>
+                    ) : null}
                     <div className="mt-2 text-sm text-white/78">{result.pub ?? "-"}</div>
                     {result.note ? <div className="mt-1 text-sm text-white/58">{result.note}</div> : null}
                   </div>
@@ -700,6 +757,9 @@ const ManualResultsPanel = () => {
                     <th className="px-3 py-2 text-right font-semibold">Pořadí</th>
                     <th className="px-3 py-2 text-right font-semibold">Body</th>
                     <th className="px-3 py-2 text-right font-semibold">Doplňovačky</th>
+                    <th className="px-3 py-2 text-right font-semibold">Max</th>
+                    <th className="px-3 py-2 text-right font-semibold">Členů</th>
+                    <th className="px-3 py-2 text-center font-semibold">56.</th>
                     <th className="px-3 py-2 font-semibold">Hospoda</th>
                     <th className="px-3 py-2 font-semibold">Poznámka</th>
                     <th className="px-3 py-2 font-semibold" />
@@ -709,7 +769,7 @@ const ManualResultsPanel = () => {
                   {visibleResults.map((result) =>
                     editingId === result.id ? (
                       <tr key={result.id} className="bg-white/[0.03]">
-                        <td colSpan={showTeamColumn ? 8 : 7} className="px-3 py-3">
+                        <td colSpan={showTeamColumn ? 11 : 10} className="px-3 py-3">
                           <div className="grid grid-cols-4 gap-3">
                             {renderEditFields(result)}
                             {renderEditActions(result)}
@@ -723,6 +783,9 @@ const ManualResultsPanel = () => {
                         <td className="px-3 py-2 text-right text-white">{result.orderInQuiz !== null ? `${result.orderInQuiz}.` : "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.points ?? "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.doplnovacek ?? "-"}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.maxBodyVKole ?? "-"}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.clenu ?? "-"}</td>
+                        <td className="px-3 py-2 text-center text-amber-200">{result.tip56Question ? "★" : ""}</td>
                         <td className="px-3 py-2 text-white/78">{result.pub ?? "-"}</td>
                         <td className="px-3 py-2 text-white/58">{result.note ?? "-"}</td>
                         <td className="whitespace-nowrap px-3 py-2">
