@@ -607,7 +607,7 @@ const ManualResultsPanel = () => {
         onClick={() => startEdit(result)}
         aria-label={`Upravit výsledek ${result.teamName}`}
         title="Upravit"
-        className="flex h-10 w-10 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10"
+        className="flex h-8 w-8 items-center justify-center rounded-md sm:h-10 sm:w-10 border border-white/24 text-white/72 hover:bg-white/10"
       >
         <PencilIcon />
       </button>
@@ -617,7 +617,7 @@ const ManualResultsPanel = () => {
         disabled={rejectingId === result.id}
         aria-label={`Vymazat výsledek ${result.teamName}`}
         title="Vymazat"
-        className="flex h-10 w-10 items-center justify-center rounded-md border border-red-300/24 text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
+        className="flex h-8 w-8 items-center justify-center rounded-md sm:h-10 sm:w-10 border border-red-300/24 text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
       >
         {rejectingId === result.id ? "…" : <TrashIcon />}
       </button>
