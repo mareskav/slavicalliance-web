@@ -734,13 +734,20 @@ const ManualResultsPanel = () => {
                         {result.doplnovacek ?? "-"}
                       </div>
                     </div>
-                    {result.maxBodyVKole !== null || result.clenu !== null || result.tip56Question ? (
-                      <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-white/72">
-                        {result.maxBodyVKole !== null ? <span>Max: {result.maxBodyVKole}</span> : null}
-                        {result.clenu !== null ? <span>Členů: {result.clenu}</span> : null}
-                        {result.tip56Question ? <span>56. otázka ★</span> : null}
+                    <div className="mt-1 grid grid-cols-3 gap-2 text-sm text-white">
+                      <div>
+                        <span className="text-white/45">Max: </span>
+                        {result.maxBodyVKole ?? "-"}
                       </div>
-                    ) : null}
+                      <div>
+                        <span className="text-white/45">Členů: </span>
+                        {result.clenu ?? "-"}
+                      </div>
+                      <div>
+                        <span className="text-white/45">56.: </span>
+                        {result.tip56Question ? <span className="text-amber-200">★</span> : "-"}
+                      </div>
+                    </div>
                     <div className="mt-2 text-sm text-white/78">{result.pub ?? "-"}</div>
                     {result.note ? <div className="mt-1 text-sm text-white/58">{result.note}</div> : null}
                   </div>
