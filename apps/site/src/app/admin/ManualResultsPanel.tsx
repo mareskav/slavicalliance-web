@@ -28,6 +28,7 @@ const DEFAULT_TEAM_NAME = "Slavic Alliance"
 
 // Sentinel select value for "this team isn't in the list, let me type a name".
 const CUSTOM_TEAM_VALUE = "__custom__"
+const ALL_TEAMS_VALUE = "__all__"
 
 // The team <select>'s value has to carry both the id and the name together:
 // the same team_id can be reused under a different name over time (and vice
@@ -271,6 +272,7 @@ const ManualResultsPanel = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<FormState>(buildDefaultForm([]))
   const [savingEdit, setSavingEdit] = useState(false)
+  const [teamFilter, setTeamFilter] = useState(DEFAULT_TEAM_NAME)
 
   const loadResults = async () => {
     setLoading(true)
@@ -496,7 +498,23 @@ const ManualResultsPanel = () => {
     }
   }
 
-  const visibleResults = results.filter((result) => result.status !== "rejected")
+  const activeResults = results.filter((result) => result.status !== "rejected")
+  const filterTeamNames = Array.from(
+    new Set([DEFAULT_TEAM_NAME, ...activeResults.map((result) => result.teamName)])
+  ).sort((a, b) =>
+    a === DEFAULT_TEAM_NAME ? -1 : b === DEFAULT_TEAM_NAME ? 1 : a.localeCompare(b, "cs")
+  )
+  const showTeamColumn = teamFilter === ALL_TEAMS_VALUE
+  const visibleResults = showTeamColumn
+    ? activeResults
+    : activeResults.filter((result) => result.teamName === teamFilter)
+
+  const handleTeamFilterChange = (value: string) => {
+    setTeamFilter(value)
+    // Keep the "new result" form on the team being browsed, so adding rows for it needs no extra clicks.
+    const team = teams.find((option) => option.name === value)
+    if (team && !editingId) setForm((prev) => ({ ...prev, teamSelection: encodeTeamOption(team) }))
+  }
 
   const renderEditFields = (result: ManualResult) => (
     <ResultFormFields
@@ -603,14 +621,29 @@ const ManualResultsPanel = () => {
       </form>
 
       <div className="rounded-md border border-white/12 bg-[#05070c]">
-        <h2 className="border-b border-white/12 p-4 text-base font-semibold text-white">
-          Zadané výsledky
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/12 p-4">
+          <h2 className="text-base font-semibold text-white">Zadané výsledky</h2>
+          <label className="flex items-center gap-2 text-sm text-white/72">
+            Tým
+            <select
+              value={teamFilter}
+              onChange={(event) => handleTeamFilterChange(event.target.value)}
+              className="h-9 min-w-0 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+            >
+              {filterTeamNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+              <option value={ALL_TEAMS_VALUE}>Všechny týmy</option>
+            </select>
+          </label>
+        </div>
 
         {loading && results.length === 0 ? (
           <p className="p-4 text-sm text-white/58">Načítání...</p>
         ) : visibleResults.length === 0 ? (
-          <p className="p-4 text-sm text-white/58">Zatím žádné ručně zadané výsledky.</p>
+          <p className="p-4 text-sm text-white/58">Pro tento tým zatím nejsou žádné ručně zadané výsledky.</p>
         ) : (
           <>
             {/* Card layout avoids sideways-scrolling a wide table on narrow screens. */}
@@ -628,8 +661,12 @@ const ManualResultsPanel = () => {
                   <div key={result.id} className="rounded-md border border-white/12 bg-white/[0.02] p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
-                        <div className="text-xs text-white/58">{formatDate(result.quizDate)}</div>
+                        {showTeamColumn ? (
+                          <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
+                        ) : null}
+                        <div className={showTeamColumn ? "text-xs text-white/58" : "text-sm font-semibold text-white"}>
+                          {formatDate(result.quizDate)}
+                        </div>
                       </div>
                       <div className="flex shrink-0 gap-1">{renderRowButtons(result)}</div>
                     </div>
@@ -659,7 +696,7 @@ const ManualResultsPanel = () => {
                 <thead className="border-b border-white/12 text-xs uppercase text-white/45">
                   <tr>
                     <th className="px-3 py-2 font-semibold">Datum</th>
-                    <th className="px-3 py-2 font-semibold">Tým</th>
+                    {showTeamColumn ? <th className="px-3 py-2 font-semibold">Tým</th> : null}
                     <th className="px-3 py-2 text-right font-semibold">Pořadí</th>
                     <th className="px-3 py-2 text-right font-semibold">Body</th>
                     <th className="px-3 py-2 text-right font-semibold">Doplňovačky</th>
@@ -672,7 +709,7 @@ const ManualResultsPanel = () => {
                   {visibleResults.map((result) =>
                     editingId === result.id ? (
                       <tr key={result.id} className="bg-white/[0.03]">
-                        <td colSpan={8} className="px-3 py-3">
+                        <td colSpan={showTeamColumn ? 8 : 7} className="px-3 py-3">
                           <div className="grid grid-cols-4 gap-3">
                             {renderEditFields(result)}
                             {renderEditActions(result)}
@@ -682,7 +719,7 @@ const ManualResultsPanel = () => {
                     ) : (
                       <tr key={result.id}>
                         <td className="whitespace-nowrap px-3 py-2 text-white">{formatDate(result.quizDate)}</td>
-                        <td className="px-3 py-2 text-white">{result.teamName}</td>
+                        {showTeamColumn ? <td className="px-3 py-2 text-white">{result.teamName}</td> : null}
                         <td className="px-3 py-2 text-right text-white">{result.orderInQuiz !== null ? `${result.orderInQuiz}.` : "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.points ?? "-"}</td>
                         <td className="px-3 py-2 text-right text-white">{result.doplnovacek ?? "-"}</td>
