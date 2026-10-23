@@ -709,7 +709,7 @@ const ManualResultsPanel = () => {
                   </div>
                 ) : (
                   <div key={result.id} className="rounded-md border border-white/12 bg-white/[0.02] p-3">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         {showTeamColumn ? (
                           <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
