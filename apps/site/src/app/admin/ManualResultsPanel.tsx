@@ -116,6 +116,46 @@ const toLocalIsoDate = (iso: string) => {
   return `${year}-${month}-${day}`
 }
 
+const iconProps = {
+  width: 18,
+  height: 18,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true
+}
+
+const PencilIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+)
+
+const TrashIcon = () => (
+  <svg {...iconProps}>
+    <path d="M3 6h18" />
+    <path d="M8 6V4h8v2" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
+  </svg>
+)
+
+const CheckIcon = () => (
+  <svg {...iconProps}>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg {...iconProps}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </svg>
+)
+
 const ManualResultsPanel = () => {
   const [results, setResults] = useState<ManualResult[]>([])
   const [loading, setLoading] = useState(true)
@@ -430,7 +470,7 @@ const ManualResultsPanel = () => {
           Body
           <input
             type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
             min={0}
             step="0.5"
             value={form.points}
@@ -443,7 +483,7 @@ const ManualResultsPanel = () => {
           Doplňovačky
           <input
             type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
             min={0}
             step="1"
             value={form.doplnovacek}
@@ -547,7 +587,7 @@ const ManualResultsPanel = () => {
                         Body
                         <input
                           type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
                           min={0}
                           step="0.5"
                           value={editForm.points}
@@ -559,7 +599,7 @@ const ManualResultsPanel = () => {
                         Doplňovačky
                         <input
                           type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
                           min={0}
                           step="1"
                           value={editForm.doplnovacek}
@@ -592,25 +632,53 @@ const ManualResultsPanel = () => {
                         type="button"
                         onClick={() => handleSaveEdit(result.id)}
                         disabled={savingEdit}
-                        className="h-9 flex-1 rounded-md border border-sky-300/24 text-xs font-semibold text-sky-200 hover:bg-sky-500/10 disabled:cursor-wait disabled:opacity-70"
+                        aria-label="Uložit"
+                        title="Uložit"
+                        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-sky-300/24 text-sm font-semibold text-sky-200 hover:bg-sky-500/10 disabled:cursor-wait disabled:opacity-70"
                       >
-                        {savingEdit ? "Ukládám..." : "Uložit"}
+                        <CheckIcon />
+                        {savingEdit ? "Ukládám..." : null}
                       </button>
                       <button
                         type="button"
                         onClick={cancelEdit}
                         disabled={savingEdit}
-                        className="h-9 flex-1 rounded-md border border-white/24 text-xs font-semibold text-white/72 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
+                        aria-label="Zrušit úpravy"
+                        title="Zrušit úpravy"
+                        className="flex h-10 w-12 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
                       >
-                        Zpět
+                        <CloseIcon />
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div key={result.id} className="rounded-md border border-white/12 bg-white/[0.02] p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold text-white">{result.teamName}</span>
-                      <span className="text-xs text-white/58">{formatDate(result.quizDate)}</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
+                        <div className="text-xs text-white/58">{formatDate(result.quizDate)}</div>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(result)}
+                          aria-label={`Upravit výsledek ${result.teamName}`}
+                          title="Upravit"
+                          className="flex h-10 w-10 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10"
+                        >
+                          <PencilIcon />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReject(result.id, result.teamName)}
+                          disabled={rejectingId === result.id}
+                          aria-label={`Vymazat výsledek ${result.teamName}`}
+                          title="Vymazat"
+                          className="flex h-10 w-10 items-center justify-center rounded-md border border-red-300/24 text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {rejectingId === result.id ? "…" : <TrashIcon />}
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-white">
                       <div>
@@ -624,23 +692,6 @@ const ManualResultsPanel = () => {
                     </div>
                     <div className="mt-2 text-sm text-white/78">{result.pub ?? "-"}</div>
                     {result.note ? <div className="mt-1 text-sm text-white/58">{result.note}</div> : null}
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(result)}
-                        className="h-9 flex-1 rounded-md border border-white/24 text-xs font-semibold text-white/72 hover:bg-white/10"
-                      >
-                        Upravit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleReject(result.id, result.teamName)}
-                        disabled={rejectingId === result.id}
-                        className="h-9 flex-1 rounded-md border border-red-300/24 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        {rejectingId === result.id ? "Mažu..." : "Vymazat"}
-                      </button>
-                    </div>
                   </div>
                 )
               )}
@@ -705,7 +756,7 @@ const ManualResultsPanel = () => {
                       <td className="px-3 py-2">
                         <input
                           type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
                           min={0}
                           step="0.5"
                           value={editForm.points}
@@ -718,7 +769,7 @@ const ManualResultsPanel = () => {
                       <td className="px-3 py-2">
                         <input
                           type="text"
-            inputMode="decimal"
+                          inputMode="decimal"
                           min={0}
                           step="1"
                           value={editForm.doplnovacek}
