@@ -7,6 +7,7 @@ export type ManualResult = {
   teamId: number | null
   teamName: string
   quizDate: string
+  orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
   pub: string | null
@@ -21,6 +22,7 @@ export type ManualResultInput = {
   teamId: number | null
   teamName: string
   quizDate: string
+  orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
   pub: string | null
@@ -32,6 +34,7 @@ export type ManualResultRow = {
   team_id: number | null
   team_name: string
   quiz_date: Date
+  order_in_quiz: number | null
   points: number | null
   doplnovacek: number | null
   pub: string | null
@@ -48,6 +51,7 @@ export const mapManualResultRow = (row: ManualResultRow): ManualResult => ({
   teamId: row.team_id,
   teamName: row.team_name,
   quizDate: row.quiz_date.toISOString(),
+  orderInQuiz: row.order_in_quiz,
   points: row.points === null ? null : Number(row.points),
   doplnovacek: row.doplnovacek === null ? null : Number(row.doplnovacek),
   pub: row.pub,
@@ -63,6 +67,7 @@ const manualResultColumns = `
   team_id,
   team_name,
   quiz_date,
+  order_in_quiz,
   points,
   doplnovacek,
   pub,
@@ -97,14 +102,15 @@ export const insertManualResult = async (
   const result = await queryManualResultsDatabase<ManualResultRow>(
     `
       insert into public.quiz_manual_results
-        (team_id, team_name, quiz_date, points, doplnovacek, pub, note, submitted_by)
-      values ($1, $2, $3, $4, $5, $6, $7, $8)
+        (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, submitted_by)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       returning ${manualResultColumns}
     `,
     [
       input.teamId,
       input.teamName,
       input.quizDate,
+      input.orderInQuiz,
       input.points,
       input.doplnovacek,
       input.pub,
@@ -138,6 +144,7 @@ export const updateManualResult = async (
   if (input.teamId !== undefined) setField("team_id", input.teamId)
   if (input.teamName !== undefined) setField("team_name", input.teamName)
   if (input.quizDate !== undefined) setField("quiz_date", input.quizDate)
+  if (input.orderInQuiz !== undefined) setField("order_in_quiz", input.orderInQuiz)
   if (input.points !== undefined) setField("points", input.points)
   if (input.doplnovacek !== undefined) setField("doplnovacek", input.doplnovacek)
   if (input.pub !== undefined) setField("pub", input.pub)

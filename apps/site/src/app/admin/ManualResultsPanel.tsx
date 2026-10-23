@@ -8,6 +8,7 @@ type ManualResult = {
   teamId: number | null
   teamName: string
   quizDate: string
+  orderInQuiz: number | null
   points: number | null
   doplnovacek: number | null
   pub: string | null
@@ -58,6 +59,7 @@ type FormState = {
   teamSelection: string
   customTeamName: string
   quizDate: string
+  orderInQuiz: string
   points: string
   doplnovacek: string
   pub: string
@@ -71,6 +73,7 @@ const buildDefaultForm = (teams: TeamOption[]): FormState => {
     teamSelection: defaultTeam ? encodeTeamOption(defaultTeam) : "",
     customTeamName: "",
     quizDate: "",
+    orderInQuiz: "",
     points: "",
     doplnovacek: "",
     pub: "",
@@ -156,6 +159,106 @@ const CloseIcon = () => (
   </svg>
 )
 
+const inputClass =
+  "h-10 w-full min-w-0 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+
+// One field layout for both the "new result" form and inline editing, so the two stay identical.
+// Two columns on mobile (date | order, points | doplňovačky), four from `sm` up.
+const ResultFormFields = ({
+  form,
+  setForm,
+  teamOptions
+}: {
+  form: FormState
+  setForm: (updater: (prev: FormState) => FormState) => void
+  teamOptions: TeamOption[]
+}) => {
+  const labelClass = "flex min-w-0 flex-col gap-1 text-sm text-white/72"
+  const update = (key: keyof FormState) => (event: { target: { value: string } }) =>
+    setForm((prev) => ({ ...prev, [key]: event.target.value }))
+
+  return (
+    <>
+      <label className={`${labelClass} col-span-2`}>
+        Tým *
+        <select value={form.teamSelection} onChange={update("teamSelection")} className={inputClass} required>
+          <option value="" disabled>
+            Vyberte tým
+          </option>
+          {teamOptions.map((team) => (
+            <option key={encodeTeamOption(team)} value={encodeTeamOption(team)}>
+              {team.name}
+            </option>
+          ))}
+          <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
+        </select>
+      </label>
+
+      {form.teamSelection === CUSTOM_TEAM_VALUE ? (
+        <label className={`${labelClass} col-span-2`}>
+          Název nového týmu *
+          <input
+            type="text"
+            value={form.customTeamName}
+            onChange={update("customTeamName")}
+            placeholder="Zadej název týmu"
+            className={inputClass}
+            required
+          />
+        </label>
+      ) : null}
+
+      <label className={labelClass}>
+        Datum kvízu *
+        <input type="date" value={form.quizDate} onChange={update("quizDate")} className={inputClass} required />
+      </label>
+
+      <label className={labelClass}>
+        Pořadí
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="např. 2"
+          value={form.orderInQuiz}
+          onChange={update("orderInQuiz")}
+          className={inputClass}
+        />
+      </label>
+
+      <label className={labelClass}>
+        Body
+        <input type="text" inputMode="decimal" value={form.points} onChange={update("points")} className={inputClass} />
+      </label>
+
+      <label className={labelClass}>
+        Doplňovačky
+        <input
+          type="text"
+          inputMode="decimal"
+          value={form.doplnovacek}
+          onChange={update("doplnovacek")}
+          className={inputClass}
+        />
+      </label>
+
+      <label className={`${labelClass} col-span-2`}>
+        Hospoda
+        <input type="text" list="pub-names-list" value={form.pub} onChange={update("pub")} className={inputClass} />
+      </label>
+
+      <label className={`${labelClass} col-span-2 sm:col-span-4`}>
+        Poznámka
+        <textarea
+          value={form.note}
+          onChange={update("note")}
+          rows={2}
+          className="w-full rounded-md border border-white/14 bg-white px-3 py-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
+        />
+      </label>
+    </>
+  )
+}
+
 const ManualResultsPanel = () => {
   const [results, setResults] = useState<ManualResult[]>([])
   const [loading, setLoading] = useState(true)
@@ -232,8 +335,8 @@ const ManualResultsPanel = () => {
       return
     }
 
-    if (Number.isNaN(parseOptionalNumber(form.points)) || Number.isNaN(parseOptionalNumber(form.doplnovacek))) {
-      setError("Body a doplňovačky musí být číslo.")
+    if ([form.orderInQuiz, form.points, form.doplnovacek].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
+      setError("Pořadí, body a doplňovačky musí být číslo.")
       return
     }
 
@@ -248,6 +351,7 @@ const ManualResultsPanel = () => {
           teamName: selectedTeam.name,
           teamId: selectedTeam.teamId,
           quizDate: form.quizDate,
+          orderInQuiz: parseOptionalNumber(form.orderInQuiz),
           points: parseOptionalNumber(form.points),
           doplnovacek: parseOptionalNumber(form.doplnovacek),
           pub: form.pub.trim() ? form.pub.trim() : null,
@@ -317,6 +421,7 @@ const ManualResultsPanel = () => {
       teamSelection: encodeTeamOption({ teamId: result.teamId, name: result.teamName }),
       customTeamName: "",
       quizDate: toLocalIsoDate(result.quizDate),
+      orderInQuiz: result.orderInQuiz !== null ? String(result.orderInQuiz) : "",
       points: result.points !== null ? String(result.points) : "",
       doplnovacek: result.doplnovacek !== null ? String(result.doplnovacek) : "",
       pub: result.pub ?? "",
@@ -342,8 +447,8 @@ const ManualResultsPanel = () => {
       return
     }
 
-    if (Number.isNaN(parseOptionalNumber(editForm.points)) || Number.isNaN(parseOptionalNumber(editForm.doplnovacek))) {
-      setError("Body a doplňovačky musí být číslo.")
+    if ([editForm.orderInQuiz, editForm.points, editForm.doplnovacek].some((value) => Number.isNaN(parseOptionalNumber(value)))) {
+      setError("Pořadí, body a doplňovačky musí být číslo.")
       return
     }
 
@@ -359,6 +464,7 @@ const ManualResultsPanel = () => {
           teamName: selectedTeam.name,
           teamId: selectedTeam.teamId,
           quizDate: editForm.quizDate,
+          orderInQuiz: parseOptionalNumber(editForm.orderInQuiz),
           points: parseOptionalNumber(editForm.points),
           doplnovacek: parseOptionalNumber(editForm.doplnovacek),
           pub: editForm.pub.trim() ? editForm.pub.trim() : null,
@@ -392,6 +498,64 @@ const ManualResultsPanel = () => {
 
   const visibleResults = results.filter((result) => result.status !== "rejected")
 
+  const renderEditFields = (result: ManualResult) => (
+    <ResultFormFields
+      form={editForm}
+      setForm={setEditForm}
+      teamOptions={buildEditTeamOptions(teams, { teamId: result.teamId, name: result.teamName })}
+    />
+  )
+
+  const renderEditActions = (result: ManualResult) => (
+    <div className="col-span-full flex gap-2 sm:justify-end">
+      <button
+        type="button"
+        onClick={() => handleSaveEdit(result.id)}
+        disabled={savingEdit}
+        aria-label="Uložit"
+        title="Uložit"
+        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-sky-300/24 px-4 text-sm font-semibold text-sky-200 hover:bg-sky-500/10 disabled:cursor-wait disabled:opacity-70 sm:flex-none"
+      >
+        <CheckIcon />
+        {savingEdit ? "Ukládám..." : "Uložit"}
+      </button>
+      <button
+        type="button"
+        onClick={cancelEdit}
+        disabled={savingEdit}
+        aria-label="Zrušit úpravy"
+        title="Zrušit úpravy"
+        className="flex h-10 w-12 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
+      >
+        <CloseIcon />
+      </button>
+    </div>
+  )
+
+  const renderRowButtons = (result: ManualResult) => (
+    <>
+      <button
+        type="button"
+        onClick={() => startEdit(result)}
+        aria-label={`Upravit výsledek ${result.teamName}`}
+        title="Upravit"
+        className="flex h-10 w-10 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10"
+      >
+        <PencilIcon />
+      </button>
+      <button
+        type="button"
+        onClick={() => handleReject(result.id, result.teamName)}
+        disabled={rejectingId === result.id}
+        aria-label={`Vymazat výsledek ${result.teamName}`}
+        title="Vymazat"
+        className="flex h-10 w-10 items-center justify-center rounded-md border border-red-300/24 text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
+      >
+        {rejectingId === result.id ? "…" : <TrashIcon />}
+      </button>
+    </>
+  )
+
   return (
     <section className="mt-4 flex flex-col gap-5">
       {error ? (
@@ -417,101 +581,11 @@ const ManualResultsPanel = () => {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 gap-3 rounded-md border border-white/12 bg-white/[0.04] p-4 sm:grid-cols-2"
+        className="grid grid-cols-2 gap-3 rounded-md border border-white/12 bg-white/[0.04] p-4 sm:grid-cols-4"
       >
         <h2 className="col-span-full text-base font-semibold text-white">Nový výsledek</h2>
 
-        <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Název týmu *
-          <select
-            value={form.teamSelection}
-            onChange={(event) => setForm((prev) => ({ ...prev, teamSelection: event.target.value }))}
-            className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-            required
-          >
-            <option value="" disabled>
-              Vyberte tým
-            </option>
-            {teams.map((team) => (
-              <option key={encodeTeamOption(team)} value={encodeTeamOption(team)}>
-                {team.name}
-              </option>
-            ))}
-            <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
-          </select>
-        </label>
-
-        {form.teamSelection === CUSTOM_TEAM_VALUE ? (
-          <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-            Název nového týmu *
-            <input
-              type="text"
-              value={form.customTeamName}
-              onChange={(event) => setForm((prev) => ({ ...prev, customTeamName: event.target.value }))}
-              placeholder="Zadej název týmu"
-              className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-              required
-            />
-          </label>
-        ) : null}
-
-        <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Datum kvízu *
-          <input
-            type="date"
-            value={form.quizDate}
-            onChange={(event) => setForm((prev) => ({ ...prev, quizDate: event.target.value }))}
-            className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-            required
-          />
-        </label>
-
-        <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Body
-          <input
-            type="text"
-                          inputMode="decimal"
-            min={0}
-            step="0.5"
-            value={form.points}
-            onChange={(event) => setForm((prev) => ({ ...prev, points: event.target.value }))}
-            className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-          />
-        </label>
-
-        <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Doplňovačky
-          <input
-            type="text"
-                          inputMode="decimal"
-            min={0}
-            step="1"
-            value={form.doplnovacek}
-            onChange={(event) => setForm((prev) => ({ ...prev, doplnovacek: event.target.value }))}
-            className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-          />
-        </label>
-
-        <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Hospoda
-          <input
-            type="text"
-            list="pub-names-list"
-            value={form.pub}
-            onChange={(event) => setForm((prev) => ({ ...prev, pub: event.target.value }))}
-            className="h-10 rounded-md border border-white/14 bg-white px-3 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-          />
-        </label>
-
-        <label className="col-span-full flex min-w-0 flex-col gap-1 text-sm text-white/72">
-          Poznámka
-          <textarea
-            value={form.note}
-            onChange={(event) => setForm((prev) => ({ ...prev, note: event.target.value }))}
-            rows={2}
-            className="rounded-md border border-white/14 bg-white px-3 py-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-          />
-        </label>
+        <ResultFormFields form={form} setForm={setForm} teamOptions={teams} />
 
         <datalist id="pub-names-list">
           {pubNames.map((pubName) => (
@@ -533,7 +607,7 @@ const ManualResultsPanel = () => {
           Zadané výsledky
         </h2>
 
-        {loading ? (
+        {loading && results.length === 0 ? (
           <p className="p-4 text-sm text-white/58">Načítání...</p>
         ) : visibleResults.length === 0 ? (
           <p className="p-4 text-sm text-white/58">Zatím žádné ručně zadané výsledky.</p>
@@ -543,113 +617,12 @@ const ManualResultsPanel = () => {
             <div className="flex flex-col gap-3 p-3 sm:hidden">
               {visibleResults.map((result) =>
                 editingId === result.id ? (
-                  <div key={result.id} className="flex flex-col gap-2 rounded-md border border-white/14 bg-white/[0.04] p-3">
-                    <label className="flex flex-col gap-1 text-xs text-white/58">
-                      Datum
-                      <input
-                        type="date"
-                        value={editForm.quizDate}
-                        onChange={(event) => setEditForm((prev) => ({ ...prev, quizDate: event.target.value }))}
-                        className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-xs text-white/58">
-                      Tým
-                      <select
-                        value={editForm.teamSelection}
-                        onChange={(event) => setEditForm((prev) => ({ ...prev, teamSelection: event.target.value }))}
-                        className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                      >
-                        {buildEditTeamOptions(teams, { teamId: result.teamId, name: result.teamName }).map((team) => (
-                          <option key={encodeTeamOption(team)} value={encodeTeamOption(team)}>
-                            {team.name}
-                          </option>
-                        ))}
-                        <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
-                      </select>
-                    </label>
-                    {editForm.teamSelection === CUSTOM_TEAM_VALUE ? (
-                      <label className="flex flex-col gap-1 text-xs text-white/58">
-                        Název nového týmu
-                        <input
-                          type="text"
-                          value={editForm.customTeamName}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, customTeamName: event.target.value }))
-                          }
-                          placeholder="Zadej název týmu"
-                          className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </label>
-                    ) : null}
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="flex flex-col gap-1 text-xs text-white/58">
-                        Body
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          min={0}
-                          step="0.5"
-                          value={editForm.points}
-                          onChange={(event) => setEditForm((prev) => ({ ...prev, points: event.target.value }))}
-                          className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs text-white/58">
-                        Doplňovačky
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          min={0}
-                          step="1"
-                          value={editForm.doplnovacek}
-                          onChange={(event) => setEditForm((prev) => ({ ...prev, doplnovacek: event.target.value }))}
-                          className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </label>
-                    </div>
-                    <label className="flex flex-col gap-1 text-xs text-white/58">
-                      Hospoda
-                      <input
-                        type="text"
-                        list="pub-names-list"
-                        value={editForm.pub}
-                        onChange={(event) => setEditForm((prev) => ({ ...prev, pub: event.target.value }))}
-                        className="h-9 rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1 text-xs text-white/58">
-                      Poznámka
-                      <textarea
-                        value={editForm.note}
-                        onChange={(event) => setEditForm((prev) => ({ ...prev, note: event.target.value }))}
-                        rows={2}
-                        className="rounded-md border border-white/14 bg-white px-2 py-1 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                      />
-                    </label>
-                    <div className="mt-1 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSaveEdit(result.id)}
-                        disabled={savingEdit}
-                        aria-label="Uložit"
-                        title="Uložit"
-                        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-sky-300/24 text-sm font-semibold text-sky-200 hover:bg-sky-500/10 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        <CheckIcon />
-                        {savingEdit ? "Ukládám..." : null}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        disabled={savingEdit}
-                        aria-label="Zrušit úpravy"
-                        title="Zrušit úpravy"
-                        className="flex h-10 w-12 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        <CloseIcon />
-                      </button>
-                    </div>
+                  <div
+                    key={result.id}
+                    className="grid grid-cols-2 gap-3 rounded-md border border-white/14 bg-white/[0.04] p-3"
+                  >
+                    {renderEditFields(result)}
+                    {renderEditActions(result)}
                   </div>
                 ) : (
                   <div key={result.id} className="rounded-md border border-white/12 bg-white/[0.02] p-3">
@@ -658,35 +631,19 @@ const ManualResultsPanel = () => {
                         <div className="truncate text-sm font-semibold text-white">{result.teamName}</div>
                         <div className="text-xs text-white/58">{formatDate(result.quizDate)}</div>
                       </div>
-                      <div className="flex shrink-0 gap-1">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(result)}
-                          aria-label={`Upravit výsledek ${result.teamName}`}
-                          title="Upravit"
-                          className="flex h-10 w-10 items-center justify-center rounded-md border border-white/24 text-white/72 hover:bg-white/10"
-                        >
-                          <PencilIcon />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReject(result.id, result.teamName)}
-                          disabled={rejectingId === result.id}
-                          aria-label={`Vymazat výsledek ${result.teamName}`}
-                          title="Vymazat"
-                          className="flex h-10 w-10 items-center justify-center rounded-md border border-red-300/24 text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {rejectingId === result.id ? "…" : <TrashIcon />}
-                        </button>
-                      </div>
+                      <div className="flex shrink-0 gap-1">{renderRowButtons(result)}</div>
                     </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm text-white">
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-sm text-white">
+                      <div>
+                        <span className="text-white/45">Pořadí: </span>
+                        {result.orderInQuiz ?? "-"}
+                      </div>
                       <div>
                         <span className="text-white/45">Body: </span>
                         {result.points ?? "-"}
                       </div>
                       <div>
-                        <span className="text-white/45">Doplňovačky: </span>
+                        <span className="text-white/45">Dopl.: </span>
                         {result.doplnovacek ?? "-"}
                       </div>
                     </div>
@@ -698,159 +655,47 @@ const ManualResultsPanel = () => {
             </div>
 
             <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-150 text-left text-sm">
-              <thead className="border-b border-white/12 text-xs uppercase text-white/45">
-                <tr>
-                  <th className="px-3 py-2 font-semibold">Datum</th>
-                  <th className="px-3 py-2 font-semibold">Tým</th>
-                  <th className="px-3 py-2 text-right font-semibold">Body</th>
-                  <th className="px-3 py-2 text-right font-semibold">Doplňovačky</th>
-                  <th className="px-3 py-2 font-semibold">Hospoda</th>
-                  <th className="px-3 py-2 font-semibold">Poznámka</th>
-                  <th className="px-3 py-2 font-semibold" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/8">
-                {visibleResults.map((result) =>
-                  editingId === result.id ? (
-                    <tr key={result.id} className="bg-white/[0.03]">
-                      <td className="px-3 py-2">
-                        <input
-                          type="date"
-                          value={editForm.quizDate}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, quizDate: event.target.value }))
-                          }
-                          className="h-8 w-full rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <select
-                          value={editForm.teamSelection}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, teamSelection: event.target.value }))
-                          }
-                          className="h-8 w-full rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        >
-                          {buildEditTeamOptions(teams, { teamId: result.teamId, name: result.teamName }).map(
-                            (team) => (
-                              <option key={encodeTeamOption(team)} value={encodeTeamOption(team)}>
-                                {team.name}
-                              </option>
-                            )
-                          )}
-                          <option value={CUSTOM_TEAM_VALUE}>Jiný tým (nový název)…</option>
-                        </select>
-                        {editForm.teamSelection === CUSTOM_TEAM_VALUE ? (
-                          <input
-                            type="text"
-                            value={editForm.customTeamName}
-                            onChange={(event) =>
-                              setEditForm((prev) => ({ ...prev, customTeamName: event.target.value }))
-                            }
-                            placeholder="Název nového týmu"
-                            className="mt-1 h-8 w-full rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                          />
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          min={0}
-                          step="0.5"
-                          value={editForm.points}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, points: event.target.value }))
-                          }
-                          className="h-8 w-full rounded-md border border-white/14 bg-white px-2 text-right text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          min={0}
-                          step="1"
-                          value={editForm.doplnovacek}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, doplnovacek: event.target.value }))
-                          }
-                          className="h-8 w-full rounded-md border border-white/14 bg-white px-2 text-right text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <input
-                          type="text"
-                          list="pub-names-list"
-                          value={editForm.pub}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, pub: event.target.value }))
-                          }
-                          className="h-8 w-full rounded-md border border-white/14 bg-white px-2 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        <textarea
-                          value={editForm.note}
-                          onChange={(event) =>
-                            setEditForm((prev) => ({ ...prev, note: event.target.value }))
-                          }
-                          rows={2}
-                          className="w-full rounded-md border border-white/14 bg-white px-2 py-1 text-slate-950 outline-none ring-sky-300/40 focus:ring-4"
-                        />
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleSaveEdit(result.id)}
-                          disabled={savingEdit}
-                          className="h-8 rounded-md border border-sky-300/24 px-3 text-xs font-semibold text-sky-200 hover:bg-sky-500/10 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {savingEdit ? "Ukládám..." : "Uložit"}
-                        </button>{" "}
-                        <button
-                          type="button"
-                          onClick={cancelEdit}
-                          disabled={savingEdit}
-                          className="h-8 rounded-md border border-white/24 px-3 text-xs font-semibold text-white/72 hover:bg-white/10 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          Zpět
-                        </button>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={result.id}>
-                      <td className="whitespace-nowrap px-3 py-2 text-white">
-                        {formatDate(result.quizDate)}
-                      </td>
-                      <td className="px-3 py-2 text-white">{result.teamName}</td>
-                      <td className="px-3 py-2 text-right text-white">{result.points ?? "-"}</td>
-                      <td className="px-3 py-2 text-right text-white">{result.doplnovacek ?? "-"}</td>
-                      <td className="px-3 py-2 text-white/78">{result.pub ?? "-"}</td>
-                      <td className="px-3 py-2 text-white/58">{result.note ?? "-"}</td>
-                      <td className="whitespace-nowrap px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => startEdit(result)}
-                          className="h-8 rounded-md border border-white/24 px-3 text-xs font-semibold text-white/72 hover:bg-white/10"
-                        >
-                          Upravit
-                        </button>{" "}
-                        <button
-                          type="button"
-                          onClick={() => handleReject(result.id, result.teamName)}
-                          disabled={rejectingId === result.id}
-                          className="h-8 rounded-md border border-red-300/24 px-3 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {rejectingId === result.id ? "Mažu..." : "Vymazat"}
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+              <table className="w-full min-w-150 text-left text-sm">
+                <thead className="border-b border-white/12 text-xs uppercase text-white/45">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">Datum</th>
+                    <th className="px-3 py-2 font-semibold">Tým</th>
+                    <th className="px-3 py-2 text-right font-semibold">Pořadí</th>
+                    <th className="px-3 py-2 text-right font-semibold">Body</th>
+                    <th className="px-3 py-2 text-right font-semibold">Doplňovačky</th>
+                    <th className="px-3 py-2 font-semibold">Hospoda</th>
+                    <th className="px-3 py-2 font-semibold">Poznámka</th>
+                    <th className="px-3 py-2 font-semibold" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/8">
+                  {visibleResults.map((result) =>
+                    editingId === result.id ? (
+                      <tr key={result.id} className="bg-white/[0.03]">
+                        <td colSpan={8} className="px-3 py-3">
+                          <div className="grid grid-cols-4 gap-3">
+                            {renderEditFields(result)}
+                            {renderEditActions(result)}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={result.id}>
+                        <td className="whitespace-nowrap px-3 py-2 text-white">{formatDate(result.quizDate)}</td>
+                        <td className="px-3 py-2 text-white">{result.teamName}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.orderInQuiz ?? "-"}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.points ?? "-"}</td>
+                        <td className="px-3 py-2 text-right text-white">{result.doplnovacek ?? "-"}</td>
+                        <td className="px-3 py-2 text-white/78">{result.pub ?? "-"}</td>
+                        <td className="px-3 py-2 text-white/58">{result.note ?? "-"}</td>
+                        <td className="whitespace-nowrap px-3 py-2">
+                          <div className="flex justify-end gap-1">{renderRowButtons(result)}</div>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
             </div>
           </>
         )}

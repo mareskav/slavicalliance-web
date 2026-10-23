@@ -77,4 +77,29 @@ export const refreshSnapshotsNow = async (env: ResultsEnv, identities: TeamIdent
   }
 }
 
+// Snapshot refresh must never delay (or hang) the admin response: the DB row is
+// already written, so patch snapshots and dispatch the full publish after the
+// response, bounded by a timeout so a stuck connection cannot pin the request.
+export const refreshSnapshotsInBackground = (
+  env: ResultsEnv,
+  identities: TeamIdentity[],
+  waitUntil?: (promise: Promise<unknown>) => void
+) => {
+  const timeout = new Promise<void>((resolve) =>
+    setTimeout(() => {
+      console.error("Incremental snapshot refresh timed out.")
+      resolve()
+    }, 25000)
+  )
+  const work = Promise.race([refreshSnapshotsNow(env, identities), timeout]).then(() =>
+    requestSnapshotPublish(env)
+  )
+
+  if (waitUntil) {
+    waitUntil(work)
+  } else {
+    void work
+  }
+}
+
 export { getSession, isAdmin, json }

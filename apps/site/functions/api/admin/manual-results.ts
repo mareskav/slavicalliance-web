@@ -6,7 +6,7 @@ import {
   updateManualResult,
   type ManualResultInput
 } from "../../../../../packages/results-data/src/manual-results"
-import { applyDbEnv, getSession, isOriginAllowed, json, refreshSnapshotsNow, requestSnapshotPublish, type ResultsEnv } from "../../_shared/results-db"
+import { applyDbEnv, getSession, isOriginAllowed, json, refreshSnapshotsInBackground, type ResultsEnv } from "../../_shared/results-db"
 
 interface Context {
   env: ResultsEnv
@@ -25,6 +25,7 @@ type ManualResultRequestBody = {
   teamId?: unknown
   teamName?: unknown
   quizDate?: unknown
+  orderInQuiz?: unknown
   points?: unknown
   doplnovacek?: unknown
   pub?: unknown
@@ -61,6 +62,15 @@ const validateManualResultInput = (body: ManualResultRequestBody): ValidationRes
     return { ok: false, error: "Quiz date cannot be in the future." }
   }
 
+  let orderInQuiz: number | null = null
+  if (body.orderInQuiz !== undefined && body.orderInQuiz !== null && body.orderInQuiz !== "") {
+    const parsed = Number(body.orderInQuiz)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return { ok: false, error: "Order must be a positive whole number." }
+    }
+    orderInQuiz = parsed
+  }
+
   let points: number | null = null
   if (body.points !== undefined && body.points !== null && body.points !== "") {
     const parsed = Number(body.points)
@@ -82,7 +92,7 @@ const validateManualResultInput = (body: ManualResultRequestBody): ValidationRes
   const pub = typeof body.pub === "string" && body.pub.trim() ? body.pub.trim() : null
   const note = typeof body.note === "string" && body.note.trim() ? body.note.trim() : null
 
-  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, points, doplnovacek, pub, note } }
+  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, pub, note } }
 }
 
 const isUniqueViolation = (error: unknown) =>
@@ -126,8 +136,7 @@ export const onRequestPost = async ({ env, request, waitUntil }: Context) => {
 
     applyDbEnv(env)
     const result = await insertManualResult(validation.value, session.role)
-    await refreshSnapshotsNow(env, [result])
-    waitUntil?.(requestSnapshotPublish(env))
+    refreshSnapshotsInBackground(env, [result], waitUntil)
     return json({ result }, { status: 201 })
   } catch (error) {
     if (isUniqueViolation(error)) {
@@ -174,8 +183,7 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
         return json({ error: "Not found." }, { status: 404 })
       }
 
-      await refreshSnapshotsNow(env, [result])
-      waitUntil?.(requestSnapshotPublish(env))
+      refreshSnapshotsInBackground(env, [result], waitUntil)
       return json({ result })
     }
 
@@ -183,6 +191,7 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
       teamId: body.teamId,
       teamName: body.teamName,
       quizDate: body.quizDate,
+      orderInQuiz: body.orderInQuiz,
       points: body.points,
       doplnovacek: body.doplnovacek,
       pub: body.pub,
@@ -196,6 +205,7 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
       const validation = validateManualResultInput({
         teamName: partial.teamName ?? "placeholder",
         quizDate: partial.quizDate ?? todayIsoDate(),
+        orderInQuiz: partial.orderInQuiz,
         teamId: partial.teamId,
         points: partial.points,
         doplnovacek: partial.doplnovacek,
@@ -219,6 +229,12 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
             : Number(partial.teamId),
       teamName: typeof partial.teamName === "string" ? partial.teamName.trim() : undefined,
       quizDate: typeof partial.quizDate === "string" ? partial.quizDate : undefined,
+      orderInQuiz:
+        partial.orderInQuiz === undefined
+          ? undefined
+          : partial.orderInQuiz === null || partial.orderInQuiz === ""
+            ? null
+            : Number(partial.orderInQuiz),
       points:
         partial.points === undefined
           ? undefined
@@ -239,8 +255,7 @@ export const onRequestPatch = async ({ env, request, waitUntil }: Context) => {
       return json({ error: "Not found." }, { status: 404 })
     }
 
-    await refreshSnapshotsNow(env, previous ? [previous, result] : [result])
-    waitUntil?.(requestSnapshotPublish(env))
+    refreshSnapshotsInBackground(env, previous ? [previous, result] : [result], waitUntil)
     return json({ result })
   } catch (error) {
     if (isUniqueViolation(error)) {

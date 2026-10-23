@@ -277,6 +277,7 @@ const manualResultColumns = `
   team_id,
   team_name,
   quiz_date,
+  order_in_quiz,
   points,
   doplnovacek,
   pub,
@@ -292,6 +293,7 @@ const mapManualResultRow = (row) => ({
   teamId: row.team_id,
   teamName: row.team_name,
   quizDate: row.quiz_date.toISOString(),
+  orderInQuiz: row.order_in_quiz,
   points: row.points === null ? null : Number(row.points),
   doplnovacek: row.doplnovacek === null ? null : Number(row.doplnovacek),
   pub: row.pub,
@@ -343,6 +345,15 @@ const validateManualResultInput = (body) => {
     points = parsed
   }
 
+  let orderInQuiz = null
+  if (body.orderInQuiz !== undefined && body.orderInQuiz !== null && body.orderInQuiz !== "") {
+    const parsed = Number(body.orderInQuiz)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return { ok: false, error: "Order must be a positive whole number." }
+    }
+    orderInQuiz = parsed
+  }
+
   let doplnovacek = null
   if (body.doplnovacek !== undefined && body.doplnovacek !== null && body.doplnovacek !== "") {
     const parsed = Number(body.doplnovacek)
@@ -355,7 +366,7 @@ const validateManualResultInput = (body) => {
   const pub = typeof body.pub === "string" && body.pub.trim() ? body.pub.trim() : null
   const note = typeof body.note === "string" && body.note.trim() ? body.note.trim() : null
 
-  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, points, doplnovacek, pub, note } }
+  return { ok: true, value: { teamId, teamName, quizDate: body.quizDate, orderInQuiz, points, doplnovacek, pub, note } }
 }
 
 const isUniqueViolation = (error) => error && typeof error === "object" && error.code === "23505"
@@ -580,15 +591,15 @@ const handleLocalApi = async (request, response, pathname) => {
       }
 
       try {
-        const { teamId, teamName, quizDate, points, doplnovacek, pub, note } = validation.value
+        const { teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, pub, note } = validation.value
         const result = await pool.query(
           `
             insert into public.quiz_manual_results
-              (team_id, team_name, quiz_date, points, doplnovacek, pub, note, submitted_by)
-            values ($1, $2, $3, $4, $5, $6, $7, $8)
+              (team_id, team_name, quiz_date, order_in_quiz, points, doplnovacek, pub, note, submitted_by)
+            values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             returning ${manualResultColumns}
           `,
-          [teamId, teamName, quizDate, points, doplnovacek, pub, note, session.role]
+          [teamId, teamName, quizDate, orderInQuiz, points, doplnovacek, pub, note, session.role]
         )
         json(response, { result: mapManualResultRow(result.rows[0]) }, { status: 201 })
       } catch (error) {
@@ -637,6 +648,7 @@ const handleLocalApi = async (request, response, pathname) => {
           const validation = validateManualResultInput({
             teamName: body.teamName ?? "placeholder",
             quizDate: body.quizDate ?? todayIsoDate(),
+            orderInQuiz: body.orderInQuiz,
             teamId: body.teamId,
             points: body.points,
             doplnovacek: body.doplnovacek,
@@ -657,6 +669,7 @@ const handleLocalApi = async (request, response, pathname) => {
               team_id = coalesce($2, team_id),
               team_name = coalesce($3, team_name),
               quiz_date = coalesce($4, quiz_date),
+              order_in_quiz = coalesce($9, order_in_quiz),
               points = coalesce($5, points),
               doplnovacek = coalesce($6, doplnovacek),
               pub = coalesce($7, pub),
@@ -678,6 +691,7 @@ const handleLocalApi = async (request, response, pathname) => {
                 : Number(body.doplnovacek),
             typeof body.pub === "string" ? body.pub.trim() : null,
             typeof body.note === "string" ? body.note.trim() : null,
+            body.orderInQuiz === undefined ? null : body.orderInQuiz === null || body.orderInQuiz === "" ? null : Number(body.orderInQuiz),
           ]
         )
 

@@ -98,6 +98,7 @@ describe("manual-results route", () => {
     const validBody = {
       teamName: "Slavic Alliance",
       quizDate: "2026-01-10",
+      orderInQuiz: 2,
       points: 80,
       pub: "Test Pub",
       note: "note"
@@ -123,6 +124,7 @@ describe("manual-results route", () => {
         null,
         "Slavic Alliance",
         "2026-01-10",
+        2,
         80,
         null,
         "Test Pub",
