@@ -138,15 +138,17 @@ export const TeamTable = ({
               </div>
             </td>
             <td className="px-1 py-2.5 sm:px-1.5 md:px-4 md:py-3">
-              <p className="whitespace-nowrap font-semibold leading-5 text-white">
-                <span className="md:hidden">{formatCompactDate(result.quizDate)}</span>
-                <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
-              </p>
-              {result.source === "manual" ? (
-                <span className="mt-1 inline-flex text-white/45" title="Ručně zadaný výsledek">
-                  <Info className="h-3.5 w-3.5" aria-label="Ručně zadaný výsledek" />
-                </span>
-              ) : null}
+              <div className="flex items-center gap-1.5">
+                <p className="whitespace-nowrap font-semibold leading-5 text-white">
+                  <span className="md:hidden">{formatCompactDate(result.quizDate)}</span>
+                  <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
+                </p>
+                {result.source === "manual" ? (
+                  <span className="inline-flex shrink-0 text-white/45" title="Ručně zadaný výsledek">
+                    <Info className="h-3.5 w-3.5" aria-label="Ručně zadaný výsledek" />
+                  </span>
+                ) : null}
+              </div>
             </td>
             <td className="px-1 py-2.5 text-right sm:px-1.5 md:px-3 md:py-3">
               <span className="text-base font-bold text-white md:text-lg">
