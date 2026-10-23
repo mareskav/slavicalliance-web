@@ -23,7 +23,7 @@ export const Placement = ({ place }: { place: number | null }) => {
           className={`flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${placeBadgeClassNames[place]}`}
           aria-label={`${place}. místo`}
         >
-          {place}
+          {place}.
         </span>
         <span className="w-6" aria-hidden="true" />
         <span className="sr-only">{place}. místo</span>

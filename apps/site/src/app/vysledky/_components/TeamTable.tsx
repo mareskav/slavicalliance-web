@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowUpRight, MapPin, Star } from "lucide-react"
+import { ArrowUpRight, Info, MapPin, Star } from "lucide-react"
 
 import type { QuizResult } from "@repo/results-data/quiz-results"
 import { formatCompactDate, formatDate, formatNumber } from "../_lib/formatters"
@@ -143,12 +143,8 @@ export const TeamTable = ({
                 <span className="hidden md:inline">{formatDate(result.quizDate)}</span>
               </p>
               {result.source === "manual" ? (
-                <span
-                  className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-200/24 bg-amber-300/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100"
-                  title="Ručně zadaný výsledek"
-                >
-                  <AlertTriangle className="h-3 w-3" />
-                  <span className="hidden sm:inline">Ručně</span>
+                <span className="mt-1 inline-flex text-white/45" title="Ručně zadaný výsledek">
+                  <Info className="h-3.5 w-3.5" aria-label="Ručně zadaný výsledek" />
                 </span>
               ) : null}
             </td>
