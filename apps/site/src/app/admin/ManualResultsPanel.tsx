@@ -88,6 +88,14 @@ const resolveSelectedTeam = (form: FormState): TeamOption | null => {
   return decodeTeamOption(form.teamSelection)
 }
 
+// Mobile keyboards in the Czech locale type "46,5"; Number() would turn that into NaN (saved as null).
+const parseOptionalNumber = (value: string): number | null => {
+  const trimmed = value.trim().replace(",", ".")
+  if (!trimmed) return null
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
+
 const formatDate = (iso: string) => {
   try {
     return new Date(iso).toLocaleDateString("cs-CZ")
@@ -184,18 +192,24 @@ const ManualResultsPanel = () => {
       return
     }
 
+    if (Number.isNaN(parseOptionalNumber(form.points)) || Number.isNaN(parseOptionalNumber(form.doplnovacek))) {
+      setError("Body a doplňovačky musí být číslo.")
+      return
+    }
+
     setSubmitting(true)
 
     try {
       const response = await fetch("/api/admin/manual-results", {
         method: "POST",
+        signal: AbortSignal.timeout(30000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName: selectedTeam.name,
           teamId: selectedTeam.teamId,
           quizDate: form.quizDate,
-          points: form.points.trim() ? Number(form.points) : null,
-          doplnovacek: form.doplnovacek.trim() ? Number(form.doplnovacek) : null,
+          points: parseOptionalNumber(form.points),
+          doplnovacek: parseOptionalNumber(form.doplnovacek),
           pub: form.pub.trim() ? form.pub.trim() : null,
           note: form.note.trim() ? form.note.trim() : null
         })
@@ -229,6 +243,7 @@ const ManualResultsPanel = () => {
     try {
       const response = await fetch("/api/admin/manual-results", {
         method: "PATCH",
+        signal: AbortSignal.timeout(30000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, action: "reject" })
       })
@@ -287,19 +302,25 @@ const ManualResultsPanel = () => {
       return
     }
 
+    if (Number.isNaN(parseOptionalNumber(editForm.points)) || Number.isNaN(parseOptionalNumber(editForm.doplnovacek))) {
+      setError("Body a doplňovačky musí být číslo.")
+      return
+    }
+
     setSavingEdit(true)
 
     try {
       const response = await fetch("/api/admin/manual-results", {
         method: "PATCH",
+        signal: AbortSignal.timeout(30000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id,
           teamName: selectedTeam.name,
           teamId: selectedTeam.teamId,
           quizDate: editForm.quizDate,
-          points: editForm.points.trim() ? Number(editForm.points) : null,
-          doplnovacek: editForm.doplnovacek.trim() ? Number(editForm.doplnovacek) : null,
+          points: parseOptionalNumber(editForm.points),
+          doplnovacek: parseOptionalNumber(editForm.doplnovacek),
           pub: editForm.pub.trim() ? editForm.pub.trim() : null,
           note: editForm.note.trim() ? editForm.note.trim() : null
         })
@@ -312,8 +333,16 @@ const ManualResultsPanel = () => {
 
       markResultsFresh()
 
+      // Show the saved row right away from the PATCH response; the (slow, Neon-backed)
+      // list reload runs in the background so the button doesn't hang on "Ukládám...".
+      const payload = await response.json().catch(() => null)
+      if (payload?.result) {
+        setResults((prev) => prev.map((row) => (row.id === id ? payload.result : row)))
+      }
+
       cancelEdit()
-      await loadResults()
+      setSavingEdit(false)
+      void loadResults()
     } catch (saveError: unknown) {
       setError(saveError instanceof Error ? saveError.message : "Uložení se nezdařilo.")
     } finally {
@@ -400,7 +429,8 @@ const ManualResultsPanel = () => {
         <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
           Body
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             min={0}
             step="0.5"
             value={form.points}
@@ -412,7 +442,8 @@ const ManualResultsPanel = () => {
         <label className="flex min-w-0 flex-col gap-1 text-sm text-white/72">
           Doplňovačky
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             min={0}
             step="1"
             value={form.doplnovacek}
@@ -515,7 +546,8 @@ const ManualResultsPanel = () => {
                       <label className="flex flex-col gap-1 text-xs text-white/58">
                         Body
                         <input
-                          type="number"
+                          type="text"
+            inputMode="decimal"
                           min={0}
                           step="0.5"
                           value={editForm.points}
@@ -526,7 +558,8 @@ const ManualResultsPanel = () => {
                       <label className="flex flex-col gap-1 text-xs text-white/58">
                         Doplňovačky
                         <input
-                          type="number"
+                          type="text"
+            inputMode="decimal"
                           min={0}
                           step="1"
                           value={editForm.doplnovacek}
@@ -671,7 +704,8 @@ const ManualResultsPanel = () => {
                       </td>
                       <td className="px-3 py-2">
                         <input
-                          type="number"
+                          type="text"
+            inputMode="decimal"
                           min={0}
                           step="0.5"
                           value={editForm.points}
@@ -683,7 +717,8 @@ const ManualResultsPanel = () => {
                       </td>
                       <td className="px-3 py-2">
                         <input
-                          type="number"
+                          type="text"
+            inputMode="decimal"
                           min={0}
                           step="1"
                           value={editForm.doplnovacek}
