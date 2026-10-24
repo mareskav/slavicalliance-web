@@ -35,7 +35,7 @@ export const regularLeagueStandingQuery = (membershipFilter: string) => `
       resolved_team_id as team_id, team_name, identity_key, team_pub,
       league_points, quiz_date, id, league_week + 1 as league_round
     from results_in_league
-    order by team_name, identity_key, league_week, quiz_date desc, id desc
+    order by team_name, identity_key, league_week, quiz_date asc, id asc
   ),
   team_totals as (
     select team_id, team_name, identity_key,

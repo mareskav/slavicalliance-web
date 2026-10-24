@@ -43,7 +43,7 @@ postgres("regular standings identity in PostgreSQL", () => {
     expect(data).toHaveLength(2)
     expect(data.map((row) => row.duplicate_name_count)).toEqual([2, 2])
     expect(data[0].league_results.map((r: { points: number }) => r.points)).toEqual([40, 43])
-    expect(data[1].league_results.map((r: { points: number }) => r.points)).toEqual([30, 32])
+    expect(data[1].league_results.map((r: { points: number }) => r.points)).toEqual([30, 31]) // first quiz of the week counts, the later 32 does not
   })
   it("does not merge different names sharing an id, and resolves only unambiguous missing ids", async () => {
     const data = await rows()
