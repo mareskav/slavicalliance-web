@@ -63,6 +63,7 @@ export type LeagueResultPoints = {
   round: number
   points: number
   date: string
+  members?: number
 }
 
 export type LeagueStandingTeam = {
@@ -519,7 +520,8 @@ const mapLeagueStandingRows = (
     leagueResults: row.league_results.map((result) => ({
       round: Number(result.round),
       points: Number(result.points),
-      date: new Date(result.date).toISOString()
+      date: new Date(result.date).toISOString(),
+      ...(result.members == null ? {} : { members: Number(result.members) })
     }))
   }))
 

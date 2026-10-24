@@ -36,6 +36,14 @@ const getLeaguePoints = (
   return selectedTotal - droppedTotal
 }
 
+// Official tiebreaks for the inter-pub league: fewer members over the counted
+// rounds, then the highest score from a single quiz.
+const getLeagueMembers = (team: LeagueStandingTeam, selectedRoundCount: number) =>
+  getSelectedLeagueResults(team, selectedRoundCount).reduce((total, result) => total + (result.members ?? 0), 0)
+
+const getBestQuizPoints = (team: LeagueStandingTeam, selectedRoundCount: number) =>
+  Math.max(0, ...getSelectedLeagueResults(team, selectedRoundCount).map((result) => result.points))
+
 export const getLeagueTeamsWithPlacements = (
   teams: LeagueStandingTeam[],
   cutCount: LeagueCutCount,
@@ -50,18 +58,27 @@ export const getLeagueTeamsWithPlacements = (
       return compared
     }
 
-    return a.teamName.localeCompare(b.teamName, "cs") || a.teamKey.localeCompare(b.teamKey, "cs")
+    return (
+      getLeagueMembers(a, selectedRoundCount) - getLeagueMembers(b, selectedRoundCount) ||
+      getBestQuizPoints(b, selectedRoundCount) - getBestQuizPoints(a, selectedRoundCount) ||
+      a.teamName.localeCompare(b.teamName, "cs") ||
+      a.teamKey.localeCompare(b.teamKey, "cs")
+    )
   })
 
   const placements = new Map<string, number>()
-  let previousPoints: number | null = null
+  let previousScore: string | null = null
   let previousPlacement = 0
 
   teamsByPoints.forEach((team, index) => {
-    const points = getLeaguePoints(team, cutCount, selectedRoundCount)
-    const placement = previousPoints === points ? previousPlacement : index + 1
+    const score = [
+      getLeaguePoints(team, cutCount, selectedRoundCount),
+      getLeagueMembers(team, selectedRoundCount),
+      getBestQuizPoints(team, selectedRoundCount)
+    ].join("|")
+    const placement = previousScore === score ? previousPlacement : index + 1
     placements.set(team.teamKey, placement)
-    previousPoints = points
+    previousScore = score
     previousPlacement = placement
   })
 

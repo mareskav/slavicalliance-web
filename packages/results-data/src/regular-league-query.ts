@@ -47,14 +47,14 @@ export const regularLeagueStandingQuery = (membershipFilter: string) => `
   picked_results as (
     select distinct on (team_name, identity_key, league_week)
       resolved_team_id as team_id, team_name, identity_key, team_pub,
-      league_points, quiz_date, id, league_week + 1 as league_round
+      league_points, coalesce(clenu, 0) as members, quiz_date, id, league_week + 1 as league_round
     from results_in_league
     order by team_name, identity_key, league_week, quiz_date asc, id asc
   ),
   team_totals as (
     select team_id, team_name, identity_key,
       (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
-      json_agg(json_build_object('round', league_round, 'points', league_points, 'date', quiz_date)
+      json_agg(json_build_object('round', league_round, 'points', league_points, 'members', members, 'date', quiz_date)
         order by league_round, quiz_date, id) as league_results
     from picked_results
     group by team_id, team_name, identity_key
