@@ -17,6 +17,8 @@ import {
   S3Client
 } from "@aws-sdk/client-s3"
 
+process.env.QUIZ_RESULTS_QUERY_TIMEOUT_MS ??= "60000"
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const dryRun = process.argv.includes("--dry-run")
 const manifestKey = "manifest.json"

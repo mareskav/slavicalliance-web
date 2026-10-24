@@ -103,14 +103,18 @@ const getPool = () => {
     throw new Error("DATABASE_URL is missing.")
   }
 
+  // The web runtime keeps tight limits; the offline snapshot publisher bulk-loads
+  // every team's results and raises them via QUIZ_RESULTS_QUERY_TIMEOUT_MS.
+  const queryTimeoutMs = Number(process.env.QUIZ_RESULTS_QUERY_TIMEOUT_MS) || 4000
+
   pool ??= new Pool({
     connectionString,
     connectionTimeoutMillis: 2000,
     idleTimeoutMillis: 5000,
     max: 2,
     maxLifetimeSeconds: 60,
-    query_timeout: 4000,
-    statement_timeout: 4000
+    query_timeout: queryTimeoutMs,
+    statement_timeout: queryTimeoutMs
   })
   return pool
 }
