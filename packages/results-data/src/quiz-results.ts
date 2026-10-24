@@ -540,6 +540,10 @@ const getTotalRegularLeagueRounds = (league: LeagueRow) =>
 // Names are not unique either: a row is also dropped when its pub (ignoring the
 // weekday suffix) belongs to a same-named team in another league but not to the
 // one in this league. Rows whose pub is unknown to every league are kept.
+//
+// When every member row of a name carries its Hospodsky kviz Team key, that key
+// decides: a keyed result must match one of them, an unkeyed one must have been
+// played in a member pub. Names with any keyless member row keep the rules above.
 const pubKey = (column: string) =>
   `lower(trim(regexp_replace(trim(${column}), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')))`
 
@@ -573,6 +577,32 @@ const leagueMembershipFilter = (resultsAlias: string) => `
           where member.league_url = $3
             and member.team_name = ${resultsAlias}.team_name
             and ${pubKey("member.pub")} = ${pubKey(`${resultsAlias}.pub`)}
+        )
+      )
+      and (
+        exists (
+          select 1 from public.quiz_league_teams member
+          where member.league_url = $3
+            and member.team_name = ${resultsAlias}.team_name
+            and member.hk_team_key is null
+        )
+        or (
+          ${resultsAlias}.hk_team_key is not null
+          and exists (
+            select 1 from public.quiz_league_teams member
+            where member.league_url = $3
+              and member.team_name = ${resultsAlias}.team_name
+              and member.hk_team_key = ${resultsAlias}.hk_team_key
+          )
+        )
+        or (
+          ${resultsAlias}.hk_team_key is null
+          and exists (
+            select 1 from public.quiz_league_teams member
+            where member.league_url = $3
+              and member.team_name = ${resultsAlias}.team_name
+              and ${pubKey("member.pub")} = ${pubKey(`${resultsAlias}.pub`)}
+          )
         )
       )
     )

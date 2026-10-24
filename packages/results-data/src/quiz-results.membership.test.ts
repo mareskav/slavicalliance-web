@@ -109,6 +109,16 @@ describe("league membership filter", () => {
     expect(standingsSql).toContain("regexp_replace(trim(member.pub)")
   })
 
+  it("lets the Team key decide when every member row of a name carries one", async () => {
+    mockDatabase()
+
+    await getLongTermLeagueStandings("178")
+
+    const [[standingsSql]] = standingsCalls()
+    expect(standingsSql).toContain("member.hk_team_key is null")
+    expect(standingsSql).toContain("member.hk_team_key = quiz_results.hk_team_key")
+  })
+
   it.each(["42P01", "42501"])("falls back to unfiltered standings on error %s", async (code) => {
     mockDatabase({ failMembershipWith: code })
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
