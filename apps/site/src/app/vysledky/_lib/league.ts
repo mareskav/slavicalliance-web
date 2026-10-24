@@ -3,7 +3,7 @@ import type { LeagueCutCount } from "./constants"
 import type { LeagueStandingDisplayTeam } from "./types"
 
 const getSelectedLeagueResults = (team: LeagueStandingTeam, selectedRoundCount: number) => {
-  return team.leagueResults.slice(0, selectedRoundCount)
+  return team.leagueResults.filter((result) => result.round <= selectedRoundCount)
 }
 
 const getDroppedPoints = (

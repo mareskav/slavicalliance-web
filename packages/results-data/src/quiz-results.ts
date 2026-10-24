@@ -510,9 +510,10 @@ const mapLeagueStandingRows = (
 ) =>
   rows.map((row) => ({
     teamId: row.team_id,
+    // A Team-key identity is unique per team even when profile id and name are shared.
     teamKey:
-      row.team_id === null && row.identity_key
-        ? `${getTeamKey(null, row.team_name)}:identity:${row.identity_key}`
+      row.identity_key && (row.team_id === null || row.identity_key.startsWith('["team"'))
+        ? `${getTeamKey(row.team_id, row.team_name)}:identity:${row.identity_key}`
         : getTeamKey(row.team_id, row.team_name),
     teamName: row.team_name,
     teamPub: row.team_pub,
@@ -550,7 +551,15 @@ const pubKey = (column: string) =>
 // Pubs whose quizzes the organiser does not count for a league even though a
 // member team played there (verified against the official table).
 const NON_LEAGUE_PUBS: Record<string, string[]> = {
-  "https://www.hospodskykviz.cz/vysledky/499": ["restaurace park podviňák"],
+  "https://www.hospodskykviz.cz/vysledky/499": [
+    "restaurace park podviňák",
+    "klicperův dům",
+    "burgr's club",
+    "univerzitní kvíz čvut",
+    "sportbar penalta",
+    "pivovarská pivnice frankies",
+    "hospůdka u náhonu"
+  ],
 }
 
 const leagueMembershipFilter = (resultsAlias: string) => `
@@ -577,6 +586,15 @@ const leagueMembershipFilter = (resultsAlias: string) => `
           where member.league_url = $3
             and member.team_name = ${resultsAlias}.team_name
             and ${pubKey("member.pub")} = ${pubKey(`${resultsAlias}.pub`)}
+        )
+        and not (
+          ${resultsAlias}.hk_team_key is not null
+          and exists (
+            select 1 from public.quiz_league_teams member
+            where member.league_url = $3
+              and member.team_name = ${resultsAlias}.team_name
+              and member.hk_team_key = ${resultsAlias}.hk_team_key
+          )
         )
       )
       and (
