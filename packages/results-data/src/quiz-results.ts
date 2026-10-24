@@ -541,7 +541,17 @@ const getTotalRegularLeagueRounds = (league: LeagueRow) =>
 const pubKey = (column: string) =>
   `lower(trim(regexp_replace(trim(${column}), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')))`
 
+// Pubs whose quizzes the organiser does not count for a league even though a
+// member team played there (verified against the official table).
+const NON_LEAGUE_PUBS: Record<string, string[]> = {
+  "https://www.hospodskykviz.cz/vysledky/499": ["restaurace park podviňák"],
+}
+
 const leagueMembershipFilter = (resultsAlias: string) => `
+  and not (
+    $3 = 'https://www.hospodskykviz.cz/vysledky/499'
+    and ${pubKey(`${resultsAlias}.pub`)} = any(array[${NON_LEAGUE_PUBS["https://www.hospodskykviz.cz/vysledky/499"].map((p) => `'${p}'`).join(",")}])
+  )
   and (
     not exists (select 1 from public.quiz_league_teams where league_url = $3)
     or (
