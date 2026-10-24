@@ -63,6 +63,11 @@ export const sortLeagueTeams = <Team extends LeagueStandingDisplayTeam>(
       return applyDirection(compared, direction)
     }
 
+    if (sort === "points" || sort === "rounds") {
+      const byPlacement = a.placement - b.placement
+      if (byPlacement !== 0) return byPlacement
+    }
+
     return a.teamName.localeCompare(b.teamName, "cs") || a.teamKey.localeCompare(b.teamKey, "cs")
   })
 }

@@ -36,8 +36,9 @@ const getLeaguePoints = (
   return selectedTotal - droppedTotal
 }
 
-// Official tiebreaks for the inter-pub league: fewer members over the counted
-// rounds, then the highest score from a single quiz.
+// Tiebreaks as applied by the official table (verified against league 499; the
+// written rules list members first): the highest score from a single quiz, then
+// fewer members over the counted rounds.
 const getLeagueMembers = (team: LeagueStandingTeam, selectedRoundCount: number) =>
   getSelectedLeagueResults(team, selectedRoundCount).reduce((total, result) => total + (result.members ?? 0), 0)
 
@@ -59,8 +60,8 @@ export const getLeagueTeamsWithPlacements = (
     }
 
     return (
-      getLeagueMembers(a, selectedRoundCount) - getLeagueMembers(b, selectedRoundCount) ||
       getBestQuizPoints(b, selectedRoundCount) - getBestQuizPoints(a, selectedRoundCount) ||
+      getLeagueMembers(a, selectedRoundCount) - getLeagueMembers(b, selectedRoundCount) ||
       a.teamName.localeCompare(b.teamName, "cs") ||
       a.teamKey.localeCompare(b.teamKey, "cs")
     )
