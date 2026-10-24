@@ -1,12 +1,26 @@
 // A profile id can be shared by different names; a name can have many profiles.
 // Keep both. Venue only resolves missing ids when exactly one known profile of
 // that name played there in this league period. Never split travelling profiles.
+// Stored points already lose one point per member above the pub's limit, but the
+// league only penalises members above 8. The limit is not published per pub, so
+// only limits verified against the official table are listed (lower-cased pub name).
+const PUB_MEMBER_LIMITS: Record<string, number> = {
+  "dno pytle - vinohrady": 6,
+}
+const pubLimitCase = `case lower(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')))
+${Object.entries(PUB_MEMBER_LIMITS)
+  .map(([pub, limit]) => `        when '${pub}' then ${limit}`)
+  .join(" ")}
+        else null end`
+
 export const regularLeagueStandingQuery = (membershipFilter: string) => `
   with result_candidates as (
     select *,
       coalesce(nullif(rtrim(trim(pub_url), '/'), ''), nullif(trim(pub), ''), 'unknown-event:' || id) as venue_key,
       nullif(trim(regexp_replace(trim(pub), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')), '') as team_pub,
-      (coalesce(points, 0) - coalesce(doplnovacek, 0))::float8 as league_points,
+      (coalesce(points, 0) - coalesce(doplnovacek, 0)
+        + case when ${pubLimitCase} is null then 0
+          else greatest(coalesce(clenu, 0) - ${pubLimitCase}, 0) - greatest(coalesce(clenu, 0) - 8, 0) end)::float8 as league_points,
       floor((quiz_date - $1::date)::numeric / 7)::int as league_week
     from public.quiz_results
     where quiz_date between $1 and $2
