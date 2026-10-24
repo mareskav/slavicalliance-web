@@ -11,22 +11,24 @@ postgres("regular standings identity in PostgreSQL", () => {
     await client.connect()
     await client.query(`create temp table standings_test (
       id serial, team_id int, team_name text, quiz_date date, pub text, pub_url text,
-      points float8, doplnovacek int, league_name text)`)
-    await client.query(`insert into standings_test (team_id,team_name,quiz_date,pub,pub_url,points,doplnovacek,league_name) values
-      (10,'Homonym','2026-09-14','A','/a',40,0,null),
-      (20,'Homonym','2026-09-15','B','/b',30,0,null),
-      (10,'Homonym','2026-09-21','C','/c',45,2,null),
-      (20,'Homonym','2026-09-22','B','/b',31,0,null),
-      (10,'Another name','2026-09-14','A','/a',20,0,null),
-      (null,'Legacy','2026-09-14','D','/d',25,0,null),
-      (30,'Legacy','2026-09-21','D','/d',26,0,null),
-      (null,'Unknown','2026-09-14','E','/e',15,0,null),
-      (null,'Unknown','2026-09-15','F','/f',16,0,null),
-      (10,'Homonym','2026-09-23','C','/c',99,0,'Special'),
-      (20,'Homonym','2026-09-23','B','/b',32,0,null),
-      (40,'Ambiguous','2026-09-14','G','/g',10,0,null),
-      (50,'Ambiguous','2026-09-15','G','/g',11,0,null),
-      (null,'Ambiguous','2026-09-21','G','/g',12,0,null)`)
+      points float8, doplnovacek int, league_name text, hk_team_key int, clenu int)`)
+    await client.query(`insert into standings_test (team_id,team_name,quiz_date,pub,pub_url,points,doplnovacek,league_name,hk_team_key) values
+      (10,'Homonym','2026-09-14','A','/a',40,0,null,null),
+      (20,'Homonym','2026-09-15','B','/b',30,0,null,null),
+      (10,'Homonym','2026-09-21','C','/c',45,2,null,null),
+      (20,'Homonym','2026-09-22','B','/b',31,0,null,null),
+      (10,'Another name','2026-09-14','A','/a',20,0,null,null),
+      (null,'Legacy','2026-09-14','D','/d',25,0,null,null),
+      (30,'Legacy','2026-09-21','D','/d',26,0,null,null),
+      (null,'Unknown','2026-09-14','E','/e',15,0,null,null),
+      (null,'Unknown','2026-09-15','F','/f',16,0,null,null),
+      (10,'Homonym','2026-09-23','C','/c',99,0,'Special',null),
+      (20,'Homonym','2026-09-23','B','/b',32,0,null,null),
+      (40,'Ambiguous','2026-09-14','G','/g',10,0,null,null),
+      (50,'Ambiguous','2026-09-15','G','/g',11,0,null,null),
+      (null,'Ambiguous','2026-09-21','G','/g',12,0,null,null),
+      (777,'Moved','2026-09-14','H','/h',30,0,null,500),
+      (888,'Moved','2026-09-21','I','/i',35,0,null,500)`)
   })
   afterAll(async () => {
     await client?.end()
@@ -44,6 +46,11 @@ postgres("regular standings identity in PostgreSQL", () => {
     expect(data.map((row) => row.duplicate_name_count)).toEqual([2, 2])
     expect(data[0].league_results.map((r: { points: number }) => r.points)).toEqual([40, 43])
     expect(data[1].league_results.map((r: { points: number }) => r.points)).toEqual([30, 31]) // first quiz of the week counts, the later 32 does not
+  })
+  it("joins profiles that share a Team key and keeps their results in one team", async () => {
+    const moved = (await rows()).filter((row) => row.team_name === "Moved")
+    expect(moved).toHaveLength(1)
+    expect(moved[0].league_results.map((r: { points: number }) => r.points)).toEqual([30, 35])
   })
   it("does not merge different names sharing an id, and resolves only unambiguous missing ids", async () => {
     const data = await rows()

@@ -1,3 +1,6 @@
+// The Hospodsky kviz Team key (hk_team_key) is the stable identity. Rows without it
+// inherit the key of their (name, profile id) when that pair has exactly one key,
+// otherwise they fall back to the profile / venue rules below.
 // A profile id can be shared by different names; a name can have many profiles.
 // Keep both. Venue only resolves missing ids when exactly one known profile of
 // that name played there in this league period. Never split travelling profiles.
@@ -31,15 +34,26 @@ export const regularLeagueStandingQuery = (membershipFilter: string) => `
     from result_candidates
     group by team_name, venue_key
   ),
+  profile_keys as (
+    select team_name, team_id, min(hk_team_key) as profile_key
+    from result_candidates
+    where team_id is not null
+    group by team_name, team_id
+    having count(distinct hk_team_key) = 1
+  ),
   resolved_results as (
     select c.*,
-      coalesce(c.team_id, case when v.profile_count = 1 then v.profile_id end) as resolved_team_id
+      coalesce(c.team_id, case when v.profile_count = 1 then v.profile_id end) as resolved_team_id,
+      coalesce(c.hk_team_key, k.profile_key) as resolved_hk_key
     from result_candidates c
     join venue_profiles v using (team_name, venue_key)
+    left join profile_keys k on k.team_name = c.team_name and k.team_id = c.team_id
   ),
   results_in_league as (
     select *,
-      case when resolved_team_id is not null
+      case when resolved_hk_key is not null
+        then jsonb_build_array('team', resolved_hk_key)::text
+        when resolved_team_id is not null
         then jsonb_build_array('profile', resolved_team_id)::text
         else jsonb_build_array('venue', venue_key)::text end as identity_key
     from resolved_results
@@ -52,12 +66,12 @@ export const regularLeagueStandingQuery = (membershipFilter: string) => `
     order by team_name, identity_key, league_week, quiz_date asc, id asc
   ),
   team_totals as (
-    select team_id, team_name, identity_key,
+    select (array_agg(team_id order by quiz_date desc, id desc))[1] as team_id, team_name, identity_key,
       (array_agg(team_pub order by quiz_date desc, id desc))[1] as team_pub,
       json_agg(json_build_object('round', league_round, 'points', league_points, 'members', members, 'date', quiz_date)
         order by league_round, quiz_date, id) as league_results
     from picked_results
-    group by team_id, team_name, identity_key
+    group by team_name, identity_key
   )
   select team_id, team_name, identity_key, team_pub, league_results,
     count(*) over (partition by team_name)::int as duplicate_name_count
