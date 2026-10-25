@@ -565,7 +565,7 @@ const NON_LEAGUE_PUBS: Record<string, string[]> = {
 const leagueMembershipFilter = (resultsAlias: string) => `
   and not (
     $3 = 'https://www.hospodskykviz.cz/vysledky/499'
-    and ${pubKey(`${resultsAlias}.pub`)} = any(array[${NON_LEAGUE_PUBS["https://www.hospodskykviz.cz/vysledky/499"].map((p) => `'${p}'`).join(",")}])
+    and ${pubKey(`${resultsAlias}.pub`)} = any(array[${NON_LEAGUE_PUBS["https://www.hospodskykviz.cz/vysledky/499"].map((p) => `'${p.replace(/'/g, "''")}'`).join(",")}])
   )
   and (
     not exists (select 1 from public.quiz_league_teams where league_url = $3)
