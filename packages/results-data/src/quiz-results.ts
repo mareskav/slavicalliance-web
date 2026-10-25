@@ -549,7 +549,9 @@ const pubKey = (column: string) =>
   `lower(trim(regexp_replace(trim(${column}), '[[:space:]]+(PO|ÚT|ST|ČT|PÁ|SO|NE)$', '')))`
 
 // Pubs whose quizzes the organiser does not count for a league even though a
-// member team played there (verified against the official table).
+// member team played there (verified against the official table). Hospůdka U
+// Náhonu is deliberately absent: the official 499 table counts its quizzes for
+// the teams registered there (Ajnštajni, No name, Líné mozky, IQ 107).
 const NON_LEAGUE_PUBS: Record<string, string[]> = {
   "https://www.hospodskykviz.cz/vysledky/499": [
     "restaurace park podviňák",
@@ -557,8 +559,7 @@ const NON_LEAGUE_PUBS: Record<string, string[]> = {
     "burgr's club",
     "univerzitní kvíz čvut",
     "sportbar penalta",
-    "pivovarská pivnice frankies",
-    "hospůdka u náhonu"
+    "pivovarská pivnice frankies"
   ],
 }
 
