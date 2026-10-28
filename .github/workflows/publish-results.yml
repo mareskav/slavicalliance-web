@@ -2,12 +2,13 @@ name: Publish results snapshots
 
 on:
   schedule:
-    # Shortly after the quiz-scrapper sync (12:17 Europe/Prague). One run a day
-    # keeps Neon network transfer down; update-results.ps1 publishes on its own.
+    # Shortly after the quiz-scrapper syncs (12:17 and 22:17 Europe/Prague).
     - cron: "45 12 * * *"
       timezone: "Europe/Prague"
-  # Manual trigger only: saving a manual result no longer dispatches a full
-  # publish (the incremental patch already updates the team snapshot and index).
+    - cron: "45 22 * * 0-5"
+      timezone: "Europe/Prague"
+  # Triggered by the admin API after a manual result is saved, and from
+  # quiz-scrapper's local Neon sync script.
   workflow_dispatch:
 
 permissions:
