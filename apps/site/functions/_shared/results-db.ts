@@ -62,8 +62,8 @@ export const requestSnapshotPublish = async (env: ResultsEnv) => {
 
 // After a manual-result write: patch the touched teams' snapshots right away so
 // the admin sees the result as soon as the response arrives. Awaitable, never throws.
-// The next scheduled or local publish corrects anything the patch cannot, e.g.
-// collation-dependent ordering.
+// The full publish (requestSnapshotPublish, queued via waitUntil by the caller)
+// later corrects anything the patch cannot, e.g. collation-dependent ordering.
 export const refreshSnapshotsNow = async (env: ResultsEnv, identities: TeamIdentity[]) => {
   if (!env.RESULTS_DATA_BUCKET) {
     return
@@ -91,9 +91,9 @@ export const refreshSnapshotsInBackground = (
       resolve()
     }, 25000)
   )
-  // No full publish is dispatched here: the incremental patch already updates the
-  // team snapshot and index, and a full publish reads nearly the whole Neon DB.
-  const work = Promise.race([refreshSnapshotsNow(env, identities), timeout])
+  const work = Promise.race([refreshSnapshotsNow(env, identities), timeout]).then(() =>
+    requestSnapshotPublish(env)
+  )
 
   if (waitUntil) {
     waitUntil(work)
