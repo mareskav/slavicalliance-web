@@ -559,7 +559,9 @@ const NON_LEAGUE_PUBS: Record<string, string[]> = {
     "burgr's club",
     "univerzitní kvíz čvut",
     "sportbar penalta",
-    "pivovarská pivnice frankies"
+    "pivovarská pivnice frankies",
+    "pivovarský dvůr",
+    "univerzitní kvíz uk"
   ],
 }
 
