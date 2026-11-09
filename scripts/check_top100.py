@@ -5,12 +5,13 @@ slavicalliance.cz/vysledky renders (data.slavicalliance.cz/league/<id>.json) and
 the official page hospodskykviz.cz/vysledky/<hk id>. Teams are matched by the
 Hospodsky kviz team key (official /tym/<key> vs identity:["team", <key>]).
 
-Rule (robust to ties): take every team whose official rank <= TOP (the official
-table shares ranks on ties, so a whole tie group is in or out). Each must be in
-the snapshot with the same points and the same placement as the site computes
-it (points desc, best quiz desc, fewer members; equal score -> shared place).
-Symmetrically, every snapshot team placed <= TOP must be in the official top.
-Also fails when the snapshot's last result is older than --max-age-days.
+Rule: take the official top TOP (the official table shares ranks on ties, so a whole
+tie group at the boundary is in or out). The same teams must be in the same order in
+our snapshot ranking (points desc, best quiz desc, fewer members). Points and exact
+placements are NOT compared: our league counts fewer quizzes than the official table
+(excluded venues), so absolute scores always differ. Teams of one official tie group
+may appear in any order. Also fails when the snapshot's last result is older than
+--max-age-days.
 
 Exit 0 = ok, 1 = mismatch/stale, 2 = fetch/parse failure.
 """
@@ -101,17 +102,44 @@ def main() -> int:
         if age > args.max_age_days:
             problems.append(f"snapshot stale: lastResultDate={last} ({age} days)")
 
-    for key, (rank, name, points) in sorted(official.items(), key=lambda kv: kv[1][0]):
+    # official groups of equal rank, top part only
+    groups: list[list[str]] = []
+    last_rank = None
+    for key, (rank, _name, _pts) in sorted(official.items(), key=lambda kv: kv[1][0]):
         if rank > args.top:
-            continue
-        mine = ours.get(key)
-        if mine is None:
-            problems.append(f"#{rank} {name} ({key}): missing on slavicalliance")
-        elif abs(mine[2] - points) > 1e-9 or mine[0] != rank:
-            problems.append(f"#{rank} {name} ({key}): official {points} @{rank}, ours {mine[2]} @{mine[0]}")
-    for key, (place, name, points) in ours.items():
-        if place <= args.top and official.get(key, (10**9,))[0] > args.top:
-            problems.append(f"ours @{place} {name} ({key}) {points}: not in official top {args.top}")
+            break
+        if rank != last_rank:
+            groups.append([])
+            last_rank = rank
+        groups[-1].append(key)
+    total = sum(len(g) for g in groups)
+    our_order = list(ours)  # insertion order = our ranking
+    our_pos = {k: i + 1 for i, k in enumerate(our_order)}
+    our_top = set(our_order[:total])
+    start = 1
+    misplaced: list[tuple[int, str]] = []
+    for group in groups:
+        end = start + len(group) - 1
+        for key in group:
+            name, rank = official[key][1], official[key][0]
+            pos = our_pos.get(key)
+            if pos is None:
+                problems.append(f"#{rank} {name} ({key}): missing on slavicalliance")
+            elif pos < start or pos > end:
+                misplaced.append((abs(pos - (start + end) // 2), f"#{rank} {name} ({key}): ours is at position {pos}"))
+        start = end + 1
+    missing_set = [k for g in groups for k in g if k in our_pos and k not in our_top]
+    extra = [k for k in our_order[:total] if k not in official or official[k][0] > args.top]
+    for key in extra:
+        problems.append(f"ours @{our_pos[key]} {ours[key][1]} ({key}): not in official top {args.top}")
+    misplaced.sort(reverse=True)
+    problems.extend(line for _, line in misplaced[:15])
+    summary = (f"top {total} teams: {len(misplaced)} in a different position, "
+               f"{len(missing_set)} official top teams outside our top, {len(extra)} of our top not in official top")
+    if len(misplaced) > 15:
+        problems.append(f"... and {len(misplaced) - 15} more teams in a different position")
+    if misplaced or extra or missing_set:
+        problems.insert(0, summary)
 
     print(f"{snap['leagueName']}: official={len(official)} ours={len(ours)} top={args.top} problems={len(problems)}")
     for line in problems[:60]:
