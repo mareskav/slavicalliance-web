@@ -552,9 +552,10 @@ const pubKey = (column: string) =>
 // member team played there (verified against the official table). Hospůdka U
 // Náhonu is deliberately absent: the official 499 table counts its quizzes for
 // the teams registered there (Ajnštajni, No name, Líné mozky, IQ 107).
+// Restaurace Park Podviňák is absent too: by 2026-11-10 the official 499 table
+// counts its quizzes (Ping Kings 14. 10., HPHK, Nebezpeční farmáři, C-core-A).
 const NON_LEAGUE_PUBS: Record<string, string[]> = {
   "https://www.hospodskykviz.cz/vysledky/499": [
-    "restaurace park podviňák",
     "klicperův dům",
     "burgr's club",
     "univerzitní kvíz čvut",
